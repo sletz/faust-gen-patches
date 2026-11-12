@@ -68,6 +68,20 @@
         <div>Originals: Max Bruckert, <a href="https://github.com/mxbrckrt/GEN-patches">GEN-patches</a> (gen~, Max 8/9, RNBO, Daisy/Oopsy)</div>
     </footer>
 
+    <script>
+        // Opened as file://: browsers do not load module scripts, AudioWorklets or
+        // wasm from there, so nothing of the page runs. Say how to serve it.
+        if (location.protocol === "file:") {
+            const note = document.createElement("div");
+            note.style.cssText = "max-width:1240px;margin:16px auto;padding:14px 18px;border:1px solid #38bdf8;" +
+                "border-radius:8px;background:#151a22;color:#e2e8f0;font:14px/1.5 Inter,sans-serif";
+            note.innerHTML = "<b>This page must be served over http</b>: opened as a file, the browser blocks its " +
+                "scripts, the AudioWorklet and the WebAssembly modules. In the repository run " +
+                "<code style='color:#38bdf8'>make web-serve</code> and open " +
+                "<a style='color:#38bdf8' href='http://127.0.0.1:8766/web/'>http://127.0.0.1:8766/web/</a>.";
+            document.body.insertBefore(note, document.querySelector("main"));
+        }
+    </script>
     <script type="module" src="app.js"></script>
 </body>
 </html>
