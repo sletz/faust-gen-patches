@@ -1,0 +1,90 @@
+{
+	"name": "curvature-shaper",
+	"filename": "curvature-shaper.dsp",
+	"version": "0.9.6",
+	"compile_options": "-lang wasm -double",
+	"library_list": ["dsp/genops.lib"],
+	"include_pathnames": ["dsp","/Users/letz/Developpements/RUST/faust-gen-patches/../faust-rs/target/share/faust","/usr/local/share/faust","/usr/share/faust"],
+	"size": 48,
+	"inputs": 2,
+	"outputs": 2,
+	"sr_index": 0,
+	"meta": [ 
+		{ "/Users/letz/Developpements/RUST/faust-gen-patches/dsp/genops.lib/license": "MIT" },
+		{ "/Users/letz/Developpements/RUST/faust-gen-patches/dsp/genops.lib/name": "genops" },
+		{ "/Users/letz/Developpements/RUST/faust-gen-patches/dsp/genops.lib/version": "1.0.0" },
+		{ "author": "Max Bruckert (gen~), Faust port" },
+		{ "compile_options": "-lang wasm -double" },
+		{ "filename": "curvature-shaper.dsp" },
+		{ "license": "MIT" },
+		{ "name": "curvature-shaper" }
+	],
+	"ui": [ 
+		{
+			"type": "vgroup",
+			"label": "curvature-shaper",
+			"items": [ 
+				{
+					"type": "hslider",
+					"label": "a",
+					"varname": "fHslider0",
+					"shortname": "a",
+					"address": "/curvature-shaper/a",
+					"index": 40,
+					"init": 0,
+					"min": -10,
+					"max": 10,
+					"step": 0.001
+				},
+				{
+					"type": "hslider",
+					"label": "b",
+					"varname": "fHslider4",
+					"shortname": "b",
+					"address": "/curvature-shaper/b",
+					"index": 32,
+					"init": 1,
+					"min": -10,
+					"max": 10,
+					"step": 0.001
+				},
+				{
+					"type": "hslider",
+					"label": "clamp_in",
+					"varname": "fHslider1",
+					"shortname": "clamp_in",
+					"address": "/curvature-shaper/clamp_in",
+					"index": 8,
+					"init": 1,
+					"min": 0,
+					"max": 1,
+					"step": 1
+				},
+				{
+					"type": "hslider",
+					"label": "shape",
+					"varname": "fHslider2",
+					"shortname": "shape",
+					"address": "/curvature-shaper/shape",
+					"index": 16,
+					"init": 0,
+					"min": -1,
+					"max": 1,
+					"step": 0.001
+				},
+				{
+					"type": "hslider",
+					"label": "steepness",
+					"varname": "fHslider3",
+					"shortname": "steepness",
+					"address": "/curvature-shaper/steepness",
+					"index": 24,
+					"init": 4,
+					"min": 0.5,
+					"max": 10,
+					"step": 0.01
+				}
+			]
+		}
+	]
+}

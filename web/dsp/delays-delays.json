@@ -1,0 +1,231 @@
+{
+	"name": "delays-delays",
+	"filename": "delays-delays.dsp",
+	"version": "0.9.6",
+	"compile_options": "-lang wasm -double",
+	"library_list": ["dsp/genops.lib","/usr/local/share/faust/maths.lib","/usr/local/share/faust/platform.lib","/usr/local/share/faust/basics.lib"],
+	"include_pathnames": ["dsp","/Users/letz/Developpements/RUST/faust-gen-patches/../faust-rs/target/share/faust","/usr/local/share/faust","/usr/share/faust"],
+	"size": 100669096,
+	"inputs": 2,
+	"outputs": 20,
+	"sr_index": 0,
+	"meta": [ 
+		{ "/Users/letz/Developpements/RUST/faust-gen-patches/dsp/genops.lib/license": "MIT" },
+		{ "/Users/letz/Developpements/RUST/faust-gen-patches/dsp/genops.lib/name": "genops" },
+		{ "/Users/letz/Developpements/RUST/faust-gen-patches/dsp/genops.lib/version": "1.0.0" },
+		{ "/usr/local/share/faust/basics.lib/name": "Faust Basic Element Library" },
+		{ "/usr/local/share/faust/basics.lib/version": "1.23.6" },
+		{ "/usr/local/share/faust/maths.lib/author": "GRAME" },
+		{ "/usr/local/share/faust/maths.lib/copyright": "GRAME" },
+		{ "/usr/local/share/faust/maths.lib/license": "LicenseRef-LGPL-2.1-or-later-with-Faust-exception" },
+		{ "/usr/local/share/faust/maths.lib/name": "Faust Math Library" },
+		{ "/usr/local/share/faust/maths.lib/version": "2.9.3" },
+		{ "/usr/local/share/faust/platform.lib/name": "Generic Platform Library" },
+		{ "/usr/local/share/faust/platform.lib/version": "1.3.1" },
+		{ "author": "Max Bruckert (gen~), Faust port" },
+		{ "compile_options": "-lang wasm -double" },
+		{ "filename": "delays-delays.dsp" },
+		{ "license": "MIT" },
+		{ "name": "delays-delays" }
+	],
+	"ui": [ 
+		{
+			"type": "vgroup",
+			"label": "delays-delays",
+			"items": [ 
+				{
+					"type": "hslider",
+					"label": "clear",
+					"varname": "fHslider9",
+					"shortname": "clear",
+					"address": "/delays-delays/clear",
+					"index": 88,
+					"init": 0,
+					"min": 0,
+					"max": 1,
+					"step": 1
+				},
+				{
+					"type": "hslider",
+					"label": "ducking",
+					"varname": "fHslider8",
+					"shortname": "ducking",
+					"address": "/delays-delays/ducking",
+					"index": 144,
+					"init": 0,
+					"min": 0,
+					"max": 1,
+					"step": 0.001
+				},
+				{
+					"type": "hslider",
+					"label": "f_direction",
+					"varname": "fHslider4",
+					"shortname": "f_direction",
+					"address": "/delays-delays/f_direction",
+					"index": 80,
+					"meta": [
+						{ "style": "menu{'desc':0;'asc':1;'random':2;'amplitude':3}" }
+					],
+					"init": 0,
+					"min": 0,
+					"max": 3,
+					"step": 1
+				},
+				{
+					"type": "hslider",
+					"label": "f_end",
+					"varname": "fHslider3",
+					"shortname": "f_end",
+					"address": "/delays-delays/f_end",
+					"index": 72,
+					"meta": [
+						{ "unit": "Hz" }
+					],
+					"init": 800,
+					"min": 20,
+					"max": 16000,
+					"step": 1
+				},
+				{
+					"type": "hslider",
+					"label": "f_mix",
+					"varname": "fHslider1",
+					"shortname": "f_mix",
+					"address": "/delays-delays/f_mix",
+					"index": 112,
+					"init": 0,
+					"min": 0,
+					"max": 100,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "f_start",
+					"varname": "fHslider2",
+					"shortname": "f_start",
+					"address": "/delays-delays/f_start",
+					"index": 64,
+					"meta": [
+						{ "unit": "Hz" }
+					],
+					"init": 16000,
+					"min": 20,
+					"max": 16000,
+					"step": 1
+				},
+				{
+					"type": "hslider",
+					"label": "f_type",
+					"varname": "fHslider6",
+					"shortname": "f_type",
+					"address": "/delays-delays/f_type",
+					"index": 56,
+					"init": 0,
+					"min": 0,
+					"max": 2,
+					"step": 0.001
+				},
+				{
+					"type": "hslider",
+					"label": "feedback",
+					"varname": "fHslider7",
+					"shortname": "feedback",
+					"address": "/delays-delays/feedback",
+					"index": 136,
+					"init": 0,
+					"min": 0,
+					"max": 100,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "gain",
+					"varname": "fHslider13",
+					"shortname": "gain",
+					"address": "/delays-delays/gain",
+					"index": 104,
+					"init": 1,
+					"min": 0,
+					"max": 5,
+					"step": 0.001
+				},
+				{
+					"type": "hslider",
+					"label": "mc_mode",
+					"varname": "fHslider14",
+					"shortname": "mc_mode",
+					"address": "/delays-delays/mc_mode",
+					"index": 16,
+					"meta": [
+						{ "style": "menu{'stereo':0;'16 channels':1}" }
+					],
+					"init": 0,
+					"min": 0,
+					"max": 1,
+					"step": 1
+				},
+				{
+					"type": "hslider",
+					"label": "mix",
+					"varname": "fHslider12",
+					"shortname": "mix",
+					"address": "/delays-delays/mix",
+					"index": 96,
+					"init": 0.5,
+					"min": 0,
+					"max": 1,
+					"step": 0.001
+				},
+				{
+					"type": "hslider",
+					"label": "offset",
+					"varname": "fHslider11",
+					"shortname": "offset",
+					"address": "/delays-delays/offset",
+					"index": 24,
+					"init": 0,
+					"min": 0,
+					"max": 1,
+					"step": 0.001
+				},
+				{
+					"type": "hslider",
+					"label": "res",
+					"varname": "fHslider5",
+					"shortname": "res",
+					"address": "/delays-delays/res",
+					"index": 128,
+					"init": 0,
+					"min": 0,
+					"max": 100,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "smooth_time",
+					"varname": "fHslider0",
+					"shortname": "smooth_time",
+					"address": "/delays-delays/smooth_time",
+					"index": 32,
+					"init": 0.9,
+					"min": 0,
+					"max": 1,
+					"step": 0.001
+				},
+				{
+					"type": "hslider",
+					"label": "spread",
+					"varname": "fHslider10",
+					"shortname": "spread",
+					"address": "/delays-delays/spread",
+					"index": 8,
+					"init": 0,
+					"min": -100,
+					"max": 100,
+					"step": 0.01
+				}
+			]
+		}
+	]
+}

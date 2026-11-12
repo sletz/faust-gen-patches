@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GEN~ DSP Library in Faust | WebAssembly</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <header>
+        <div class="header-top">
+            <span class="sys-badge">Faust &bull; WebAssembly &bull; 64-Bit DSP</span>
+            <span class="meta-author">gen~ originals: Max Bruckert &bull; 2026 &bull; Faust ports</span>
+        </div>
+        <h1>GEN~ Audio DSP Library in Faust</h1>
+        <p class="header-desc">
+            The 21 gen~ models and 4 utilities of Max Bruckert's
+            <a href="https://github.com/mxbrckrt/GEN-patches">GEN-patches</a>, ported to Faust and checked
+            sample by sample against the C++ that Max exports from each patch. Every card plays its port in the
+            browser: the Faust program compiled to WebAssembly by faust-rs, in double precision, in an AudioWorklet.
+            Open <b>Play</b> on a card to hear it and drive it.
+        </p>
+        <div class="metrics-strip" id="metrics"></div>
+    </header>
+
+    <div class="controls-wrapper">
+        <div class="controls-inner">
+            <div class="search-row">
+                <svg class="search-icon-svg" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
+                </svg>
+                <input type="text" id="searchInput" class="search-field" placeholder="Filter models by identifier, transfer function, architecture, parameter name...">
+            </div>
+            <div class="category-row" id="categoryRow">
+                <button class="cat-btn active" data-category="all">All Models (21)</button>
+                <button class="cat-btn" data-category="physical">Physical Modeling</button>
+                <button class="cat-btn" data-category="reverbs">Spatial & Reverbs</button>
+                <button class="cat-btn" data-category="delays">Delays & Echoes</button>
+                <button class="cat-btn" data-category="filters">Filters & Equalizers</button>
+                <button class="cat-btn" data-category="distortion">Distortion & Saturation</button>
+                <button class="cat-btn" data-category="granular">Granular & Microsound</button>
+                <button class="cat-btn" data-category="stochastic">Stochastic & Logic</button>
+                <button class="cat-btn" data-category="modulation">Modulation & LFO</button>
+                <button class="cat-btn" data-category="utilities">Utilities (4)</button>
+            </div>
+            <div class="master-row">
+                <span class="master-label">Master</span>
+                <input type="range" id="master" min="-40" max="6" step="0.5" value="-6" title="Master gain (double-click: -6 dB)">
+                <span id="masterVal">-6.0 dB</span>
+                <span>soft clip above -2 dBFS, never above 0 dBFS</span>
+                <span class="now-playing" id="nowPlaying">nothing playing</span>
+            </div>
+        </div>
+    </div>
+
+    <main>
+        <div class="alpha-legend" id="resultsCount"></div>
+        <div class="catalog-grid" id="modelsGrid"></div>
+        <h2 class="section-title" id="utilitiesTitle">Utilities</h2>
+        <div class="catalog-grid" id="utilitiesGrid"></div>
+    </main>
+
+    <footer>
+        <div>Faust ports of GEN-patches &bull; MIT &bull; compiled by faust-rs (<code>make web</code>)</div>
+        <div>Originals: Max Bruckert, <a href="https://github.com/mxbrckrt/GEN-patches">GEN-patches</a> (gen~, Max 8/9, RNBO, Daisy/Oopsy)</div>
+    </footer>
+
+    <script type="module" src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,195 @@
+{
+	"name": "volt-drama",
+	"filename": "volt-drama.dsp",
+	"version": "0.9.6",
+	"compile_options": "-lang wasm -double",
+	"library_list": ["dsp/genops.lib","/usr/local/share/faust/maths.lib","/usr/local/share/faust/platform.lib","/usr/local/share/faust/basics.lib"],
+	"include_pathnames": ["dsp","/Users/letz/Developpements/RUST/faust-gen-patches/../faust-rs/target/share/faust","/usr/local/share/faust","/usr/share/faust"],
+	"size": 2163160,
+	"inputs": 2,
+	"outputs": 2,
+	"sr_index": 0,
+	"meta": [ 
+		{ "/Users/letz/Developpements/RUST/faust-gen-patches/dsp/genops.lib/license": "MIT" },
+		{ "/Users/letz/Developpements/RUST/faust-gen-patches/dsp/genops.lib/name": "genops" },
+		{ "/Users/letz/Developpements/RUST/faust-gen-patches/dsp/genops.lib/version": "1.0.0" },
+		{ "/usr/local/share/faust/basics.lib/name": "Faust Basic Element Library" },
+		{ "/usr/local/share/faust/basics.lib/version": "1.23.6" },
+		{ "/usr/local/share/faust/maths.lib/author": "GRAME" },
+		{ "/usr/local/share/faust/maths.lib/copyright": "GRAME" },
+		{ "/usr/local/share/faust/maths.lib/license": "LicenseRef-LGPL-2.1-or-later-with-Faust-exception" },
+		{ "/usr/local/share/faust/maths.lib/name": "Faust Math Library" },
+		{ "/usr/local/share/faust/maths.lib/version": "2.9.3" },
+		{ "/usr/local/share/faust/platform.lib/name": "Generic Platform Library" },
+		{ "/usr/local/share/faust/platform.lib/version": "1.3.1" },
+		{ "author": "Max Bruckert (gen~), Faust port" },
+		{ "compile_options": "-lang wasm -double" },
+		{ "filename": "volt-drama.dsp" },
+		{ "license": "MIT" },
+		{ "name": "volt-drama" }
+	],
+	"ui": [ 
+		{
+			"type": "vgroup",
+			"label": "volt-drama",
+			"items": [ 
+				{
+					"type": "hslider",
+					"label": "cutoff",
+					"varname": "fHslider4",
+					"shortname": "cutoff",
+					"address": "/volt-drama/cutoff",
+					"index": 184,
+					"meta": [
+						{ "unit": "Hz" }
+					],
+					"init": 20000,
+					"min": 50,
+					"max": 20000,
+					"step": 0.1
+				},
+				{
+					"type": "hslider",
+					"label": "drive",
+					"varname": "fHslider2",
+					"shortname": "drive",
+					"address": "/volt-drama/drive",
+					"index": 72,
+					"init": 0.3,
+					"min": 0,
+					"max": 1,
+					"step": 0.001
+				},
+				{
+					"type": "hslider",
+					"label": "feedback",
+					"varname": "fHslider1",
+					"shortname": "feedback",
+					"address": "/volt-drama/feedback",
+					"index": 16,
+					"init": 0.4,
+					"min": 0,
+					"max": 1,
+					"step": 0.001
+				},
+				{
+					"type": "hslider",
+					"label": "gainout",
+					"varname": "fHslider10",
+					"shortname": "gainout",
+					"address": "/volt-drama/gainout",
+					"index": 152,
+					"meta": [
+						{ "unit": "dB" }
+					],
+					"init": 0,
+					"min": -60,
+					"max": 12,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "mix_global",
+					"varname": "fHslider6",
+					"shortname": "mix_global",
+					"address": "/volt-drama/mix_global",
+					"index": 80,
+					"meta": [
+						{ "unit": "%" }
+					],
+					"init": 50,
+					"min": 0,
+					"max": 100,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "shape",
+					"varname": "fHslider3",
+					"shortname": "shape",
+					"address": "/volt-drama/shape",
+					"index": 24,
+					"init": 0.5,
+					"min": 0,
+					"max": 1,
+					"step": 0.001
+				},
+				{
+					"type": "hslider",
+					"label": "spread",
+					"varname": "fHslider5",
+					"shortname": "spread",
+					"address": "/volt-drama/spread",
+					"index": 32,
+					"meta": [
+						{ "unit": "ms" }
+					],
+					"init": 10,
+					"min": 0,
+					"max": 50,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "time",
+					"varname": "fHslider0",
+					"shortname": "time",
+					"address": "/volt-drama/time",
+					"index": 8,
+					"meta": [
+						{ "unit": "ms" }
+					],
+					"init": 250,
+					"min": 1,
+					"max": 1000,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "uni_detune",
+					"varname": "fHslider8",
+					"shortname": "uni_detune",
+					"address": "/volt-drama/uni_detune",
+					"index": 40,
+					"meta": [
+						{ "unit": "%" }
+					],
+					"init": 30,
+					"min": 0,
+					"max": 100,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "uni_mix",
+					"varname": "fHslider7",
+					"shortname": "uni_mix",
+					"address": "/volt-drama/uni_mix",
+					"index": 88,
+					"meta": [
+						{ "unit": "%" }
+					],
+					"init": 50,
+					"min": 0,
+					"max": 100,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "uni_width",
+					"varname": "fHslider9",
+					"shortname": "uni_width",
+					"address": "/volt-drama/uni_width",
+					"index": 144,
+					"meta": [
+						{ "unit": "%" }
+					],
+					"init": 100,
+					"min": 0,
+					"max": 100,
+					"step": 0.01
+				}
+			]
+		}
+	]
+}

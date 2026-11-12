@@ -1,0 +1,119 @@
+{
+	"name": "householder-fdn-16",
+	"filename": "householder-fdn-16.dsp",
+	"version": "0.9.6",
+	"compile_options": "-lang wasm -double",
+	"library_list": ["/usr/local/share/faust/signals.lib","/usr/local/share/faust/maths.lib","/usr/local/share/faust/basics.lib","dsp/genops.lib","/usr/local/share/faust/platform.lib"],
+	"include_pathnames": ["dsp","/Users/letz/Developpements/RUST/faust-gen-patches/../faust-rs/target/share/faust","/usr/local/share/faust","/usr/share/faust"],
+	"size": 4194560,
+	"inputs": 2,
+	"outputs": 2,
+	"sr_index": 0,
+	"meta": [ 
+		{ "/Users/letz/Developpements/RUST/faust-gen-patches/dsp/genops.lib/license": "MIT" },
+		{ "/Users/letz/Developpements/RUST/faust-gen-patches/dsp/genops.lib/name": "genops" },
+		{ "/Users/letz/Developpements/RUST/faust-gen-patches/dsp/genops.lib/version": "1.0.0" },
+		{ "/usr/local/share/faust/basics.lib/name": "Faust Basic Element Library" },
+		{ "/usr/local/share/faust/basics.lib/version": "1.23.6" },
+		{ "/usr/local/share/faust/maths.lib/author": "GRAME" },
+		{ "/usr/local/share/faust/maths.lib/copyright": "GRAME" },
+		{ "/usr/local/share/faust/maths.lib/license": "LicenseRef-LGPL-2.1-or-later-with-Faust-exception" },
+		{ "/usr/local/share/faust/maths.lib/name": "Faust Math Library" },
+		{ "/usr/local/share/faust/maths.lib/version": "2.9.3" },
+		{ "/usr/local/share/faust/platform.lib/name": "Generic Platform Library" },
+		{ "/usr/local/share/faust/platform.lib/version": "1.3.1" },
+		{ "/usr/local/share/faust/signals.lib/name": "Faust Routing Library" },
+		{ "/usr/local/share/faust/signals.lib/version": "1.8.0" },
+		{ "author": "Max Bruckert (gen~), Faust port" },
+		{ "compile_options": "-lang wasm -double" },
+		{ "filename": "householder-fdn-16.dsp" },
+		{ "license": "MIT" },
+		{ "name": "householder-fdn-16" }
+	],
+	"ui": [ 
+		{
+			"type": "vgroup",
+			"label": "householder-fdn-16",
+			"items": [ 
+				{
+					"type": "hslider",
+					"label": "damping",
+					"varname": "fHslider3",
+					"shortname": "damping",
+					"address": "/householder-fdn-16/damping",
+					"index": 32,
+					"init": 0.35,
+					"min": 0,
+					"max": 1,
+					"step": 0.001
+				},
+				{
+					"type": "hslider",
+					"label": "decay",
+					"varname": "fHslider4",
+					"shortname": "decay",
+					"address": "/householder-fdn-16/decay",
+					"index": 56,
+					"init": 4.5,
+					"min": 0.1,
+					"max": 30,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "mix",
+					"varname": "fHslider5",
+					"shortname": "mix",
+					"address": "/householder-fdn-16/mix",
+					"index": 64,
+					"meta": [
+						{ "unit": "%" }
+					],
+					"init": 50,
+					"min": 0,
+					"max": 100,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "mod_amt",
+					"varname": "fHslider2",
+					"shortname": "mod_amt",
+					"address": "/householder-fdn-16/mod_amt",
+					"index": 40,
+					"init": 3,
+					"min": 0,
+					"max": 20,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "mod_rate",
+					"varname": "fHslider1",
+					"shortname": "mod_rate",
+					"address": "/householder-fdn-16/mod_rate",
+					"index": 24,
+					"meta": [
+						{ "unit": "Hz" }
+					],
+					"init": 0.7,
+					"min": 0.1,
+					"max": 5,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "size",
+					"varname": "fHslider0",
+					"shortname": "size",
+					"address": "/householder-fdn-16/size",
+					"index": 8,
+					"init": 1,
+					"min": 0.1,
+					"max": 2,
+					"step": 0.001
+				}
+			]
+		}
+	]
+}
