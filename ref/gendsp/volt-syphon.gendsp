@@ -1,0 +1,159 @@
+{
+    "patcher": {
+        "fileversion": 1,
+        "appversion": {
+            "major": 9,
+            "minor": 1,
+            "revision": 4,
+            "architecture": "x64",
+            "modernui": 1
+        },
+        "classnamespace": "dsp.gen",
+        "rect": [
+            134.0,
+            174.0,
+            901.0,
+            913.0
+        ],
+        "boxes": [
+            {
+                "box": {
+                    "code": "/**\n * ============================================================================\n * @file volt-syphon.gendsp / volt-syphon.maxpat\n * @title VOLT-SYPHON (Starving Battery Dual-Engine Ring Modulator)\n * @author Max Bruckert (assisted by Gemini)\n *\n * @description\n * Experimental ring modulator simulating dying battery power (voltage sag /\n * starving circuitry). Features dual internal carrier engines:\n *   - Engine 1: Fixed pitch carrier oscillator\n *   - Engine 2: Dynamic pitch-tracking oscillator following input amplitude\n * Includes asymmetric cross-modulation, compression sag, audio gating, and\n * instability noise modulations.\n *\n * @inlets\n *   in1 : Audio Input (or Modulator)\n *   in2 : Carrier Audio In (optional external carrier)\n *\n * @outlets\n *   out1 : Modulated Audio Left\n *   out2 : Modulated Audio Right\n *\n * @parameters\n *   freq_main     (20..5000 Hz, def: 800) : Fixed carrier oscillator frequency\n *   freq_main_amp (0..1, def: 0.05)       : Fixed oscillator level\n *   freq_min      (20..2000 Hz, def: 80)  : Sweep tracking minimum frequency\n *   freq_max      (20..5000 Hz, def: 800) : Sweep tracking maximum frequency\n *   autofollow    (0..100 %, def: 0)      : Crossfade to pitch-following carrier\n *   sag           (0..100 %, def: 0)      : Battery starve voltage drop amount\n *   gate          (0..100 %, def: 0)      : Dynamic input gate threshold\n *   instability   (0..100 %, def: 20)     : Battery fluctuation micro-jitter\n *   compression   (0..100 %, def: 50)     : Dying battery dynamic compression\n *   selfmod       (0..100 %, def: 0)      : Carrier-to-carrier cross modulation\n *   tone          (0..100 %, def: 50)     : Post-modulation lowpass filtering\n *   mix           (0..100 %, def: 100)    : Dry / Wet blend\n *   gainout       (-60..12 dB, def: 0)    : Master makeup gain\n * ============================================================================\n */\nParam freq_main(800, min=20, max=5000);       // Fr\u00e9quence du sinus fixe\nParam freq_main_amp(0.05, min=0, max=1);     // Amplitude du sinus fixe (def: 0.05)\n\n// --- Param\u00e8tres du Sweep Oscillator (Auto-follow) ---\nParam freq_min(80, min=20, max=2000);   \nParam freq_max(800, min=20, max=5000);  \nParam autofollow(0, min=0, max=100);    // 0% = Main Osc, 100% = Sweep Osc\n\n// --- Param\u00e8tres de Starvation & Modulation ---\nParam mix(100, min=0, max=100);\nParam gate(0, min=0, max=100);\nParam sag(0, min=0, max=100);\nParam tone(50, min=0, max=100);\nParam instability(20, min=0, max=100);\nParam compression(50, min=0, max=100);\nParam selfmod(0, min=0, max=100);\nParam gainout(0, min=-60, max=12);\n\n// --- Param\u00e8tres Techniques ---\nParam rise(2, min=2, max=2000);\nParam fall(500, min=2, max=2000);\nParam gate_gainin(3, min=0, max=15);\n\n// --- M\u00e9moires ---\nHistory h_phase_main(0);\nHistory h_phase_sweep(0);\nHistory h_pitch_env(0); \nHistory h_env_L(0), h_env_R(0), h_lp_L(0), h_lp_R(0);\nHistory h_drift(0), h_comp_L(0), h_comp_R(0);\nHistory h_dc_in_L(0), h_dc_out_L(0), h_dc_in_R(0), h_dc_out_R(0);\n\n// ------------------------------------------------------------------------------------------\n// 1. G\u00c9N\u00c9RATION DES OSCILLATEURS INTERNES\n// ------------------------------------------------------------------------------------------\n\n// A. Main Oscillator (Sinus Fixe)\nh_phase_main += (freq_main / samplerate);\nif (h_phase_main > 1) h_phase_main -= 1;\nmain_sine = sin(h_phase_main * TWOPI) * freq_main_amp;\n\n// B. Sweep Oscillator (Suiveur d'Enveloppe)\nh_pitch_env = mix(abs(in1) * gate_gainin, h_pitch_env, 0.995);\np_norm = clamp(h_pitch_env, 0, 1);\nratio = freq_max / max(freq_min, 1);\nsweep_f = freq_min * pow(ratio, p_norm);\n\nh_phase_sweep += (sweep_f / samplerate);\nif (h_phase_sweep > 1) h_phase_sweep -= 1;\nsweep_sine = sin(h_phase_sweep * TWOPI) * 0.4; // Amplitude fixe 0.4 pour le sweep\n\n// C. M\u00e9lange des deux moteurs\ninput_presence = abs(in1) > 0.0001;\ncarrier_base = mix(main_sine, sweep_sine, autofollow / 100) * (input_presence ? 1.0 : 0.0);\n\n// ------------------------------------------------------------------------------------------\n// 2. LOGIQUE DE STARVATION ET SELF-MOD\n// ------------------------------------------------------------------------------------------\ng_val = gate / 100;\nh_drift = mix(noise() * (instability / 100) * 0.01, h_drift, 0.999);\nd_gate = clamp(g_val + h_drift, 0, 1);\n\nv_scale = (gate <= 0) ? 3.3 : 0.6; \n\n// R\u00e9-injection de l'entr\u00e9e dans le porteur\ncarrier_L = mix(carrier_base, in1, selfmod / 100);\ncarrier_R = mix(carrier_base, in2, selfmod / 100);\n\n// ------------------------------------------------------------------------------------------\n// 3. TRAITEMENT ST\u00c9R\u00c9O (GATE / SAG / TONE)\n// ------------------------------------------------------------------------------------------\n\n// Canal L\nsrc_L = in1 * gate_gainin;\nis_above_L = (abs(src_L) > d_gate) && input_presence;\nt_L = is_above_L ? mix(1.0, tanh(src_L - d_gate), sag / 100) : 0;\nh_env_L = fixdenorm(mix(t_L, h_env_L, clamp(t60(mstosamps(max((t_L > h_env_L ? rise : fall), 1))), 0, 1)));\nh_lp_L = mix(h_env_L, h_lp_L, clamp(1.0 - ((tone / 100) * (1.0 - h_env_L)), 0.01, 1));\n\n// Canal D\nsrc_R = in2 * gate_gainin;\nis_above_R = (abs(src_R) > d_gate) && input_presence;\nt_R = is_above_R ? mix(1.0, tanh(src_R - d_gate), sag / 100) : 0;\nh_env_R = fixdenorm(mix(t_R, h_env_R, clamp(t60(mstosamps(max((t_R > h_env_R ? rise : fall), 1))), 0, 1)));\nh_lp_R = mix(h_env_R, h_lp_R, clamp(1.0 - ((tone / 100) * (1.0 - h_env_R)), 0.01, 1));\n\n// ------------------------------------------------------------------------------------------\n// 4. COMPRESSION, GAIN ET DC BLOCKER\n// ------------------------------------------------------------------------------------------\ncomp_val = compression / 100;\n\n// Application de la Ring-Mod\nmod_L = carrier_L * h_lp_L * v_scale;\nmod_R = carrier_R * h_lp_R * v_scale;\n\n// Compression / Makeup\nh_comp_L = mix(abs(mod_L), h_comp_L, 0.99);\nh_comp_R = mix(abs(mod_R), h_comp_R, 0.99);\nwet_L = (mod_L / (1.0 + h_comp_L * comp_val * 10.0)) * (1.0 + comp_val * 4.0);\nwet_R = (mod_R / (1.0 + h_comp_R * comp_val * 10.0)) * (1.0 + comp_val * 4.0);\n\n// Gain dB et Soft Clip\nout_amp = dbtoa(gainout);\nsig_L = tanh(wet_L * out_amp);\nsig_R = tanh(wet_R * out_amp);\n\n// DC Blocker\ndc_L = sig_L - h_dc_in_L + (0.995 * h_dc_out_L);\nh_dc_in_L = sig_L; h_dc_out_L = dc_L;\ndc_R = sig_R - h_dc_in_R + (0.995 * h_dc_out_R);\nh_dc_in_R = sig_R; h_dc_out_R = dc_R;\n\nout1 = mix(in1, dc_L, mix / 100);\nout2 = mix(in2, dc_R, mix / 100);",
+                    "fontface": 0,
+                    "fontname": "<Monospaced>",
+                    "fontsize": 12.0,
+                    "id": "obj-1",
+                    "maxclass": "codebox",
+                    "numinlets": 2,
+                    "numoutlets": 2,
+                    "outlettype": [
+                        "",
+                        ""
+                    ],
+                    "patching_rect": [
+                        22.0,
+                        48.0,
+                        788.0,
+                        765.0
+                    ]
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-50",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        791.0,
+                        839.0,
+                        35.0,
+                        22.0
+                    ],
+                    "text": "out 2"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-49",
+                    "maxclass": "newobj",
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        791.0,
+                        22.0,
+                        83.0,
+                        22.0
+                    ],
+                    "text": "in 2 audioin-R"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-3",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        22.0,
+                        839.0,
+                        35.0,
+                        22.0
+                    ],
+                    "text": "out 1"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-22",
+                    "maxclass": "newobj",
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        22.0,
+                        22.0,
+                        81.0,
+                        22.0
+                    ],
+                    "text": "in 1 audioin-L"
+                }
+            }
+        ],
+        "lines": [
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-3",
+                        0
+                    ],
+                    "source": [
+                        "obj-1",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-50",
+                        0
+                    ],
+                    "source": [
+                        "obj-1",
+                        1
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-1",
+                        0
+                    ],
+                    "source": [
+                        "obj-22",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-1",
+                        1
+                    ],
+                    "source": [
+                        "obj-49",
+                        0
+                    ]
+                }
+            }
+        ]
+    }
+}

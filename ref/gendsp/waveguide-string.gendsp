@@ -1,0 +1,171 @@
+{
+    "patcher": {
+        "fileversion": 1,
+        "appversion": {
+            "major": 9,
+            "minor": 1,
+            "revision": 5,
+            "architecture": "x64",
+            "modernui": 1
+        },
+        "classnamespace": "dsp.gen",
+        "rect": [
+            84.0,
+            100.0,
+            850.0,
+            800.0
+        ],
+        "bglocked": 0,
+        "openinpresentation": 0,
+        "default_fontsize": 12.0,
+        "default_fontface": 0,
+        "default_fontname": "Arial",
+        "gridonopen": 1,
+        "gridsize": [
+            15.0,
+            15.0
+        ],
+        "gridsnaponopen": 1,
+        "objectsnaponopen": 1,
+        "statusbarvisible": 2,
+        "toolbarvisible": 1,
+        "boxes": [
+            {
+                "box": {
+                    "id": "obj-in1",
+                    "maxclass": "newobj",
+                    "text": "in 1",
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        40.0,
+                        20.0,
+                        30.0,
+                        22.0
+                    ]
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-in2",
+                    "maxclass": "newobj",
+                    "text": "in 2",
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        120.0,
+                        20.0,
+                        30.0,
+                        22.0
+                    ]
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-codebox",
+                    "maxclass": "codebox",
+                    "text": "",
+                    "numinlets": 2,
+                    "numoutlets": 2,
+                    "outlettype": [
+                        "",
+                        ""
+                    ],
+                    "patching_rect": [
+                        40.0,
+                        60.0,
+                        750.0,
+                        650.0
+                    ],
+                    "code": "/**\n * ============================================================================\n * @file waveguide-string.gendsp / waveguide-string.maxpat\n * @title 4-VOICE POLYPHONIC WAVEGUIDE STRING PHYSICAL MODEL\n * @author Max Bruckert (assisted by Gemini)\n *\n * @description\n * 4-Voice polyphonic waveguide physical model based on an extended\n * Karplus-Strong formulation.\n *\n * ARCHITECTURAL SPECIFICATIONS:\n * - Exciter: Internal shaped burst generator (impulse/pink) + external audio strike\n * - Pick Comb Filter: Dual-comb spatial pick position model with slow +/-5%\n *   organic dual-LFO timbre modulation and cubic fractional interpolation\n * - Core: 4 Parallel Waveguide Delay Lines with fractional delay lengths\n * - Detune: Continuous spread from unison / micro-pitch chorus (a few Hz)\n *   up to extreme inharmonic noise spectra (wide multi-octave dispersion)\n * - Dispersion: Individual 1st-order allpass filters modeling string stiffness\n * - Loss: Frequency-dependent 1-pole damping filters per voice\n * - Termination: Non-linear bridge contact saturation with dynamic twang\n * - Gain Weighting: Normalized 4-voice sum preventing loop divergence/explosion\n * - Spatialization: Distributed stereo panning + Dry/Wet mix control\n *\n * @inlets\n *   in1 : Audio Excitation / External Strike Input (Signal > 0.1 triggers)\n *   in2 : Pitch Modulation CV (Additive frequency offset in Hz)\n *\n * @outlets\n *   out1 : Mixed String Audio Left (Dry/Wet)\n *   out2 : Mixed String Audio Right (Dry/Wet)\n *\n * @parameters\n *   freq       (20..2000 Hz, def: 110)  : Fundamental string center pitch\n *   detune     (0..100 %, def: 5)       : Voice detune (0=unison, 10=chorus, 100=noise cloud)\n *   decay_time (0.1..20 s, def: 3.5)    : T60 decay time\n *   damping    (0..1, def: 0.3)         : High-frequency absorption loss per cycle\n *   stiffness  (0..1, def: 0.15)        : Inharmonic allpass dispersion coefficient\n *   pick_pos   (0.01..0.99, def: 0.22)  : Pick / Strike position ratio (+/-5% LFO modulated)\n *   strike_res (0..1, def: 0.5)         : Excitation burst hardness / bandwidth\n *   nl_bridge  (0..1, def: 0.25)        : Non-linear bridge saturation / twang\n *   trig       (0..1, def: 0)           : Manual trigger impulse\n *   mix        (0..100 %, def: 100)     : Dry / Wet balance\n * ============================================================================\n */\n\nParam freq(110, min=20, max=2000);\nParam detune(5, min=0, max=100);\nParam decay_time(3.5, min=0.1, max=20);\nParam damping(0.3, min=0, max=1);\nParam stiffness(0.15, min=0, max=1);\nParam pick_pos(0.22, min=0.01, max=0.99);\nParam strike_res(0.5, min=0, max=1);\nParam nl_bridge(0.25, min=0, max=1);\nParam trig(0, min=0, max=1);\nParam mix_pct(100, name=\"mix\", min=0, max=100);\n\n// 4 Waveguide delay lines (up to 2 seconds per string)\nDelay str1(samplerate * 2), str2(samplerate * 2);\nDelay str3(samplerate * 2), str4(samplerate * 2);\nDelay pick_del(4096);\n\n// Filter & LFO memories\nHistory h_damp1(0), h_damp2(0), h_damp3(0), h_damp4(0);\nHistory h_ap_in1(0), h_ap_out1(0);\nHistory h_ap_in2(0), h_ap_out2(0);\nHistory h_ap_in3(0), h_ap_out3(0);\nHistory h_ap_in4(0), h_ap_out4(0);\n\nHistory h_trig(0);\nHistory h_burst_cnt(0);\nHistory h_pick_ph1(0), h_pick_ph2(0);\n\n// --- 1. Exciter & Slow +/-5% Modulated Pick Comb Filter ---\next_trig = (in1 > 0.1) && (h_trig <= 0.1);\nh_trig = in1;\nis_trig = ext_trig || (trig > 0);\n\nif (is_trig) {\n    h_burst_cnt = clamp(mstosamps(scale(strike_res, 0, 1, 0.5, 8.0)), 4, 1200);\n}\n\nexc_noise = 0;\nif (h_burst_cnt > 0) {\n    exc_noise = noise() * (h_burst_cnt / 1200.0);\n    h_burst_cnt -= 1;\n}\n\nraw_exc = (in1 * 0.5) + (exc_noise * 0.8);\n\n// Dual-LFO lent (0.13 Hz & 0.21 Hz) modulant pick_pos de +/-5% (+/-0.05) pour faire \u00e9voluer le timbre\nh_pick_ph1 = wrap(h_pick_ph1 + (0.13 / samplerate), 0.0, 1.0);\nh_pick_ph2 = wrap(h_pick_ph2 + (0.21 / samplerate), 0.0, 1.0);\npick_lfo = (0.65 * sin(h_pick_ph1 * twopi)) + (0.35 * sin(h_pick_ph2 * twopi));\neff_pick_pos = clamp(pick_pos + (pick_lfo * 0.05), 0.01, 0.99);\n\nbase_f = clamp(freq + in2, 10, samplerate * 0.45);\npick_samps = clamp(eff_pick_pos * (samplerate / base_f), 1, 4000);\npick_sig = raw_exc - pick_del.read(pick_samps, interp=\"cubic\");\npick_del.write(raw_exc);\n\n// --- 2. 4-Voice Detune & Frequencies Calculation ---\ndetune_norm = detune * 0.01;\nfine_hz = detune_norm * 4.5;\nwide_oct = pow(detune_norm, 1.7) * 2.5;\n\nf1 = clamp((base_f - fine_hz) * pow(2.0, -wide_oct * 1.00), 10, samplerate * 0.45);\nf2 = clamp((base_f - (fine_hz * 0.33)) * pow(2.0, -wide_oct * 0.35), 10, samplerate * 0.45);\nf3 = clamp((base_f + (fine_hz * 0.33)) * pow(2.0, wide_oct * 0.35), 10, samplerate * 0.45);\nf4 = clamp((base_f + fine_hz) * pow(2.0, wide_oct * 1.00), 10, samplerate * 0.45);\n\nd1_samps = clamp(samplerate / f1 - 2.0, 2, samplerate - 10);\nd2_samps = clamp(samplerate / f2 - 2.0, 2, samplerate - 10);\nd3_samps = clamp(samplerate / f3 - 2.0, 2, samplerate - 10);\nd4_samps = clamp(samplerate / f4 - 2.0, 2, samplerate - 10);\n\nsig1 = str1.read(d1_samps);\nsig2 = str2.read(d2_samps);\nsig3 = str3.read(d3_samps);\nsig4 = str4.read(d4_samps);\n\n// --- 3. Dispersion Allpass Filters (String Stiffness) ---\nap_coeff = scale(stiffness, 0, 1, 0.0, 0.72);\n\ndisp1 = (sig1 * -ap_coeff) + h_ap_in1 + (h_ap_out1 * ap_coeff);\nh_ap_in1 = sig1; h_ap_out1 = disp1;\n\ndisp2 = (sig2 * -ap_coeff) + h_ap_in2 + (h_ap_out2 * ap_coeff);\nh_ap_in2 = sig2; h_ap_out2 = disp2;\n\ndisp3 = (sig3 * -ap_coeff) + h_ap_in3 + (h_ap_out3 * ap_coeff);\nh_ap_in3 = sig3; h_ap_out3 = disp3;\n\ndisp4 = (sig4 * -ap_coeff) + h_ap_in4 + (h_ap_out4 * ap_coeff);\nh_ap_in4 = sig4; h_ap_out4 = disp4;\n\n// --- 4. 1-Pole Lowpass Damping Filters ---\ndamp_alpha = scale(damping, 0, 1, 0.96, 0.04);\n\ndamp1 = (disp1 * (1.0 - damp_alpha)) + (h_damp1 * damp_alpha); h_damp1 = damp1;\ndamp2 = (disp2 * (1.0 - damp_alpha)) + (h_damp2 * damp_alpha); h_damp2 = damp2;\ndamp3 = (disp3 * (1.0 - damp_alpha)) + (h_damp3 * damp_alpha); h_damp3 = damp3;\ndamp4 = (disp4 * (1.0 - damp_alpha)) + (h_damp4 * damp_alpha); h_damp4 = damp4;\n\n// --- 5. Non-Linear Bridge Termination & Feedback ---\ndrive_term = 1.0 + (nl_bridge * 3.0);\n\ngain1 = pow(0.001, 1.0 / max(decay_time * f1, 0.1));\ngain2 = pow(0.001, 1.0 / max(decay_time * f2, 0.1));\ngain3 = pow(0.001, 1.0 / max(decay_time * f3, 0.1));\ngain4 = pow(0.001, 1.0 / max(decay_time * f4, 0.1));\n\nsat1 = tanh(damp1 * gain1 * drive_term) / drive_term;\nsat2 = tanh(damp2 * gain2 * drive_term) / drive_term;\nsat3 = tanh(damp3 * gain3 * drive_term) / drive_term;\nsat4 = tanh(damp4 * gain4 * drive_term) / drive_term;\n\nstr1.write(pick_sig + sat1);\nstr2.write(pick_sig + sat2);\nstr3.write(pick_sig + sat3);\nstr4.write(pick_sig + sat4);\n\n// --- 6. Gain Weighting, Stereo Spatialization & Dry/Wet Mix ---\noutL = (sat1 * 0.35) + (sat2 * 0.15) + (sat3 * 0.28) + (sat4 * 0.12);\noutR = (sat1 * 0.12) + (sat2 * 0.28) + (sat3 * 0.15) + (sat4 * 0.35);\n\nwetL = tanh(outL * 1.2);\nwetR = tanh(outR * 1.2);\n\nbal = clamp(mix_pct * 0.01, 0.0, 1.0);\nout1 = mix(in1, wetL, bal);\nout2 = mix(in1, wetR, bal);\n"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-out1",
+                    "maxclass": "newobj",
+                    "text": "out 1",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        40.0,
+                        730.0,
+                        35.0,
+                        22.0
+                    ]
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-out2",
+                    "maxclass": "newobj",
+                    "text": "out 2",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        120.0,
+                        730.0,
+                        35.0,
+                        22.0
+                    ]
+                }
+            }
+        ],
+        "lines": [
+            {
+                "patchline": {
+                    "source": [
+                        "obj-in1",
+                        0
+                    ],
+                    "destination": [
+                        "obj-codebox",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "source": [
+                        "obj-in2",
+                        0
+                    ],
+                    "destination": [
+                        "obj-codebox",
+                        1
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "source": [
+                        "obj-codebox",
+                        0
+                    ],
+                    "destination": [
+                        "obj-out1",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "source": [
+                        "obj-codebox",
+                        1
+                    ],
+                    "destination": [
+                        "obj-out2",
+                        0
+                    ]
+                }
+            }
+        ]
+    }
+}

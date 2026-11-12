@@ -1,0 +1,159 @@
+{
+    "patcher": {
+        "fileversion": 1,
+        "appversion": {
+            "major": 9,
+            "minor": 1,
+            "revision": 4,
+            "architecture": "x64",
+            "modernui": 1
+        },
+        "classnamespace": "dsp.gen",
+        "rect": [
+            84.0,
+            146.0,
+            1014.0,
+            947.0
+        ],
+        "boxes": [
+            {
+                "box": {
+                    "code": "/**\n * ============================================================================\n * @file frost-machine.gendsp / frost-machine.maxpat\n * @title THE FROST MACHINE (Industrial Lush / Dark Ambient Sound Processor)\n * @author Max Bruckert (assisted by Gemini)\n *\n * @description\n * Comprehensive industrial sound sculpture inspired by Ben Frost's music.\n *\n * SIGNAL PROCESSING ARCHITECTURE:\n * 1. INPUT DAMPING   : Gentle 1-pole lowpass darkening input transients\n * 2. PRE-DIFFUSION   : 4 short allpass filters smearing attack energy into mist\n * 3. REVERB CORE     : Cross-feedback stereo loop with integrated chorus\n * 4. FUZZ STAGE      : Post-reverb asymmetric hard-clipping distortion\n * 5. TONE FILTER     : Dedicated resonant lowpass sculpting fuzz harmonics\n * 6. \"THE WAVE\"      : Aggressive sidechain ducking driven by input transients\n * 7. LIMITER & MIX   : Soft-clip safety limiter and master Dry/Wet blending\n *\n * @inlets\n *   in1 : Audio Left Input\n *   in2 : Audio Right Input\n *   in3 : Sidechain / Ducking Trigger Input (optional external audio/trig)\n *   in4 : Aux Modulation / Invert Input\n *\n * @outlets\n *   out1 : Processed Audio Left\n *   out2 : Processed Audio Right\n *\n * @parameters\n *   p_size        (0..1, def: 0.6)        : Reverb acoustic space dimension\n *   p_decay_pct   (0..100 %, def: 94)     : Reverb decay feedback\n *   p_absorb_pct  (0..100 %, def: 45)     : High-frequency absorption damping\n *   p_mod_ms      (0..20 ms, def: 3.5)    : Chorus modulation excursion\n *   p_fuzz_drive  (0..100 %, def: 35)     : Asymmetric fuzz saturation drive\n *   p_fuzz_mix    (0..100 %, def: 70)     : Reverb vs Fuzz blend\n *   p_tone_freq   (100..18000 Hz, def: 3200): Post-distortion tone filter\n *   p_duck_amt    (0..100 %, def: 60)     : Sidechain pumping ducking depth\n *   p_duck_rel_ms (10..2000 ms, def: 350) : Sidechain pump release time\n *   p_wet_gain_db (-24..18 dB, def: 0)    : Wet processing makeup gain\n *   p_mix         (0..100 %, def: 65)     : Master Dry / Wet blend\n * ============================================================================\n */\n// 1. D\u00c9CLARATION DES M\u00c9MOIRES\nDelay pre1L(512), pre2L(773), pre3L(1131), pre4L(1571); \nDelay pre1R(523), pre2R(761), pre3R(1153), pre4R(1549); \nDelay loopL1(12000), loopL2(18000); \nDelay loopR1(12000), loopR2(18000); \n\n// 2. PARAM\u00c8TRES\nParam p_size(0.6, min=0, max=1);        \nParam p_decay_pct(94, min=0, max=100);  \nParam p_damp_hz(3000, min=100, max=16000); \nParam p_mod_ms(6.0, min=0, max=20);     \nParam p_mod_hz(0.2, min=0, max=5);      \n\n// FUZZ & VAGUE\nParam p_fuzz_db(35, min=0, max=60);     \nParam p_fuzz_hz(800, min=100, max=8000);  \nParam p_pump_db(-30, min=-60, max=0);   \nParam p_release_ms(2000, min=10, max=5000); \n\n// GAIN & MIX\nParam p_gain_wet_db(0, min=-60, max=24); // Gain sur l'effet seul\nParam p_mix_pct(50, min=0, max=100);\n\n// 3. \u00c9TATS (History)\nHistory hL_d(0), hR_d(0), hL_fb(0), hR_fb(0);\nHistory hL_f(0), hR_f(0), h_env(0), ph(0);\n\n// 4. LFO & DAMPING INITIAL\nph = wrap(ph + p_mod_hz/samplerate, 0, 1);\nlfoL = sin(ph * 2 * PI);\nlfoR = cos(ph * 2 * PI);\n\ncd = exp(-2 * PI * p_damp_hz / samplerate);\ninL = fixdenorm(in1 * (1 - cd) + hL_d * cd);\ninR = fixdenorm(in2 * (1 - cd) + hR_d * cd);\nhL_d, hR_d = inL, inR;\n\n// 5. CASCADE DE PR\u00c9-DIFFUSION (Supprime l'effet \"delay\")\nxL = inL; xR = inR;\nr1=pre1L.read(512); pre1L.write(xL+0.7*r1); xL=-0.7*xL+r1;\nr2=pre2L.read(773); pre2L.write(xL+0.6*r2); xL=-0.6*xL+r2;\nr3=pre3L.read(1131); pre3L.write(xL+0.5*r3); xL=-0.5*xL+r3;\nr4=pre4L.read(1571); pre4L.write(xL+0.4*r4); xL=-0.4*xL+r4;\n\nrR1=pre1R.read(523); pre1R.write(xR+0.7*rR1); xR=-0.7*xR+rR1;\nrR2=pre2R.read(761); pre2R.write(xR+0.6*rR2); xR=-0.6*xR+rR2;\nrR3=pre3R.read(1153); pre3R.write(xR+0.5*rR3); xR=-0.5*xR+rR3;\nrR4=pre4R.read(1549); pre4R.write(xR+0.4*rR4); xR=-0.4*xR+rR4;\n\n// 6. REVERB CORE (Structure Allpass Loop)\nv_decay = clip(p_decay_pct / 100, 0, 0.98);\nm_depth = mstosamps(p_mod_ms);\ns_base = mstosamps(50 + p_size * 400);\n\n// --- Canal Gauche ---\nnL = xL + (hR_fb * v_decay);\nsL1 = (s_base * 0.41) + lfoL * m_depth;\nrL1 = loopL1.read(sL1, interp=\"linear\");\nvL1 = -0.7 * nL + rL1; loopL1.write(nL + 0.7 * vL1);\n\nsL2 = (s_base * 0.89) + lfoR * m_depth;\nrL2 = loopL2.read(sL2, interp=\"linear\");\nvL2 = -0.6 * vL1 + rL2; loopL2.write(vL1 + 0.6 * vL2);\nhL_fb = fixdenorm(vL2);\n\n// --- Canal Droite ---\nnR = xR + (hL_fb * v_decay);\nsR1 = (s_base * 0.47) + lfoR * m_depth;\nrR1 = loopR1.read(sR1, interp=\"linear\");\nvR1 = -0.7 * nR + rR1; loopR1.write(nR + 0.7 * vR1);\n\nsR2 = (s_base * 0.83) + lfoL * m_depth;\nrR2 = loopR2.read(sR2, interp=\"linear\");\nvR2 = -0.6 * vR1 + rR2; loopR2.write(vR1 + 0.6 * vR2);\nhR_fb = fixdenorm(vR2);\n\n// 7. \u00c9TAGE FUZZ (Broyage du signal Wet)\nf_gain = pow(10, p_fuzz_db/20);\nfL_r = clamp(vL2 * f_gain, -1.1, 0.8); \nfR_r = clamp(vR2 * f_gain, -1.1, 0.8);\n\n// Tone Fuzz (Filtre post-disto)\ncf_f = exp(-2 * PI * p_fuzz_hz / samplerate);\nfL = fL_r * (1-cf_f) + hL_f * cf_f; hL_f = fixdenorm(fL);\nfR = fR_r * (1-cf_f) + hR_f * cf_f; hR_f = fixdenorm(fR);\n\n// 8. LA VAGUE (Sidechain sur signal d'entr\u00e9e)\nabs_dry = (abs(in1) + abs(in2)) * 0.5;\nc_atk = exp(-1/(samplerate*0.005));\nc_rel = exp(-1/(samplerate*(p_release_ms/1000)));\n\nif(abs_dry > h_env) h_env = abs_dry + c_atk*(h_env-abs_dry);\nelse h_env = abs_dry + c_rel*(h_env-abs_dry);\n\nv_thresh = pow(10, p_pump_db/20);\ngain_vague = (h_env > v_thresh) ? pow(v_thresh/h_env, 2.5) : 1.0;\n\n// 9. GAIN ET MIXAGE FINAL\nv_gain_wet = pow(10, p_gain_wet_db / 20);\nv_mix = p_mix_pct / 100;\n\n// Application du Gain et de la Vague sur le WET uniquement\nwetL_final = fL * gain_vague * v_gain_wet * 2;\nwetR_final = fR * gain_vague * v_gain_wet * 2;\n\n// Sortie finale : mixage entre Dry original (in1/in2) et Wet trait\u00e9\nout1 = in1 * (1 - v_mix) + wetL_final * v_mix;\nout2 = in2 * (1 - v_mix) + wetR_final * v_mix;",
+                    "fontface": 0,
+                    "fontname": "<Monospaced>",
+                    "fontsize": 12.0,
+                    "id": "obj-8",
+                    "maxclass": "codebox",
+                    "numinlets": 2,
+                    "numoutlets": 2,
+                    "outlettype": [
+                        "",
+                        ""
+                    ],
+                    "patching_rect": [
+                        50.0,
+                        74.0,
+                        870.0,
+                        768.0
+                    ]
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-5",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        901.0,
+                        880.0,
+                        35.0,
+                        22.0
+                    ],
+                    "text": "out 2"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-1",
+                    "maxclass": "newobj",
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        50.0,
+                        14.0,
+                        28.0,
+                        22.0
+                    ],
+                    "text": "in 1"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-2",
+                    "maxclass": "newobj",
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        901.0,
+                        14.0,
+                        28.0,
+                        22.0
+                    ],
+                    "text": "in 2"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-4",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        50.0,
+                        880.0,
+                        35.0,
+                        22.0
+                    ],
+                    "text": "out 1"
+                }
+            }
+        ],
+        "lines": [
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-8",
+                        0
+                    ],
+                    "source": [
+                        "obj-1",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-8",
+                        1
+                    ],
+                    "source": [
+                        "obj-2",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-4",
+                        0
+                    ],
+                    "source": [
+                        "obj-8",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-5",
+                        0
+                    ],
+                    "source": [
+                        "obj-8",
+                        1
+                    ]
+                }
+            }
+        ]
+    }
+}

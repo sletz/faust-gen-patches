@@ -1,0 +1,157 @@
+{
+    "patcher": {
+        "fileversion": 1,
+        "appversion": {
+            "major": 9,
+            "minor": 1,
+            "revision": 4,
+            "architecture": "x64",
+            "modernui": 1
+        },
+        "classnamespace": "dsp.gen",
+        "rect": [
+            192.0,
+            272.0,
+            810.0,
+            553.0
+        ],
+        "boxes": [
+            {
+                "box": {
+                    "id": "obj-2",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        738.0,
+                        461.0,
+                        35.0,
+                        22.0
+                    ],
+                    "text": "out 3"
+                }
+            },
+            {
+                "box": {
+                    "code": "/**\n * ============================================================================\n * @file bernoulli-gate.gendsp / bernouilli.maxpat\n * @title BERNOULLI-GATE (Probabilistic Clock & Gate Router)\n * @author Max Bruckert (assisted by Gemini)\n *\n * @description\n * Dual-output probabilistic gate and trigger distributor inspired by Mutable\n * Instruments Branches. On each incoming trigger (or internal clock cycle),\n * a Bernoulli trial evaluates against probability: outcome A routes to Out 1,\n * outcome B routes to Out 2. Also provides a binary latch state on Out 3.\n *\n * @inlets\n *   in1 : Audio Trigger / Clock Input (Zero-crossing detector in external mode)\n *\n * @outlets\n *   out1 : Pulse Output A (1-sample impulse on outcome A)\n *   out2 : Pulse Output B (1-sample impulse on outcome B)\n *   out3 : Latched Binary State (0 when A was selected, 1 when B was selected)\n *\n * @parameters\n *   probability (0..1, def: 0.5)      : Probability weighting towards Output B\n *   trigmode    (0..1, def: 0)        : Clock mode (0 = External in1, 1 = Internal clock)\n *   frequency   (0.1..100 Hz, def: 1) : Internal clock rate (used when trigmode = 1)\n * ============================================================================\n */\nParam probability(0.5, min=0, max=1);\nParam trigmode(0, min=0, max=1);\nParam frequency(1, min=0.1, max=100);\n\nHistory h_in(0);      // M\u00e9moire pour le zero-crossing de in1\nHistory h_phasor(0);  // M\u00e9moire pour le trigger interne\nHistory h_state(0);   // \u00c9tat m\u00e9moris\u00e9 (0 ou 1)\n\n// --- 1. D\u00e9tection du Trigger (\u00c9v\u00e9nement) ---\n\n// Trigger Interne : D\u00e9tecte quand le phasor recommence un cycle\np = phasor(frequency);\ntrig_int = p < h_phasor; \nh_phasor = p;\n\n// Trigger Externe : D\u00e9tecte quand in1 passe de n\u00e9gatif \u00e0 positif\ntrig_phasor_ext = in1 < h_in;\ntrig_zero_cross = (in1 > 0) && (h_in <= 0);\ntrig_ext = trig_phasor_ext || trig_zero_cross;\nh_in = in1;\n\n// S\u00e9lection de la source de d\u00e9clenchement\ntrig = (trigmode >= 0.5) ? trig_int : trig_ext;\n\n// --- 2. Logique de Bernoulli & Sorties ---\n\n// Initialisation des impulsions \u00e0 0 par d\u00e9faut (\u00e0 chaque \u00e9chantillon)\npulse_A = 0;\npulse_B = 0;\n\nif (trig) {\n    // Calcul de la d\u00e9cision :\n    // noise() est entre -1 et 1. On le compare au seuil proba mapp\u00e9.\n    threshold = (probability * 2) - 1;\n    \n    if (noise() < threshold) {\n        // R\u00e9sultat B\n        h_state = 1;\n        pulse_B = 1;\n    } else {\n        // R\u00e9sultat A\n        h_state = 0;\n        pulse_A = 1;\n    }\n}\n\n// --- 3. Assignation des Sorties ---\n\nout1 = pulse_A; // Impulsion courte A\nout2 = pulse_B; // Impulsion courte B\nout3 = h_state; // \u00c9tat persistant (0 ou 1)",
+                    "fontface": 0,
+                    "fontname": "<Monospaced>",
+                    "fontsize": 12.0,
+                    "id": "obj-1",
+                    "maxclass": "codebox",
+                    "numinlets": 1,
+                    "numoutlets": 3,
+                    "outlettype": [
+                        "",
+                        "",
+                        ""
+                    ],
+                    "patching_rect": [
+                        24.0,
+                        95.0,
+                        733.0,
+                        353.0
+                    ]
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-8",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        381.0,
+                        461.0,
+                        47.0,
+                        22.0
+                    ],
+                    "text": "out 2 B"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-6",
+                    "maxclass": "newobj",
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        24.0,
+                        37.0,
+                        48.0,
+                        22.0
+                    ],
+                    "text": "in 1 trig"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-11",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        24.0,
+                        461.0,
+                        46.0,
+                        22.0
+                    ],
+                    "text": "out 1 A"
+                }
+            }
+        ],
+        "lines": [
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-11",
+                        0
+                    ],
+                    "source": [
+                        "obj-1",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-2",
+                        0
+                    ],
+                    "source": [
+                        "obj-1",
+                        2
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-8",
+                        0
+                    ],
+                    "source": [
+                        "obj-1",
+                        1
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-1",
+                        0
+                    ],
+                    "source": [
+                        "obj-6",
+                        0
+                    ]
+                }
+            }
+        ]
+    }
+}

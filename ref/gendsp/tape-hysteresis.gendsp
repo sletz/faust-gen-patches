@@ -1,0 +1,171 @@
+{
+    "patcher": {
+        "fileversion": 1,
+        "appversion": {
+            "major": 9,
+            "minor": 1,
+            "revision": 5,
+            "architecture": "x64",
+            "modernui": 1
+        },
+        "classnamespace": "dsp.gen",
+        "rect": [
+            84.0,
+            100.0,
+            850.0,
+            800.0
+        ],
+        "bglocked": 0,
+        "openinpresentation": 0,
+        "default_fontsize": 12.0,
+        "default_fontface": 0,
+        "default_fontname": "Arial",
+        "gridonopen": 1,
+        "gridsize": [
+            15.0,
+            15.0
+        ],
+        "gridsnaponopen": 1,
+        "objectsnaponopen": 1,
+        "statusbarvisible": 2,
+        "toolbarvisible": 1,
+        "boxes": [
+            {
+                "box": {
+                    "id": "obj-in1",
+                    "maxclass": "newobj",
+                    "text": "in 1",
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        40.0,
+                        20.0,
+                        30.0,
+                        22.0
+                    ]
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-in2",
+                    "maxclass": "newobj",
+                    "text": "in 2",
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        120.0,
+                        20.0,
+                        30.0,
+                        22.0
+                    ]
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-codebox",
+                    "maxclass": "codebox",
+                    "text": "",
+                    "numinlets": 2,
+                    "numoutlets": 2,
+                    "outlettype": [
+                        "",
+                        ""
+                    ],
+                    "patching_rect": [
+                        40.0,
+                        60.0,
+                        750.0,
+                        650.0
+                    ],
+                    "code": "/**\n * ============================================================================\n * @file tape-hysteresis.gendsp / tape-hysteresis.maxpat\n * @title JILES-ATHERTON MAGNETIC TAPE HYSTERESIS WAVESHAPER\n * @author Max Bruckert (assisted by Gemini)\n *\n * @description\n * Physical model of magnetic domain tape hysteresis based on the discrete\n * Jiles-Atherton differential model. Simulates magnetic remanence, coercive force,\n * high-frequency flux tape drag, and organic saturation with true DC blocking.\n *\n * @inlets\n *   in1 : Audio Left Input\n *   in2 : Audio Right Input\n *\n * @outlets\n *   out1 : Tape Processed Left\n *   out2 : Tape Processed Right\n * ============================================================================\n */\n\n// Jiles-Atherton Non-Linear Differential Hysteresis Step (must precede Param/History)\nhysteresis_step(in_sig, h_prev, m_prev, k_coerc, rem_val) {\n    alpha_rem = clamp(rem_val, 0.0, 1.0) * 0.45;\n    k_c = max(0.02, k_coerc);\n\n    // Effective magnetic field H_e = H + alpha * M\n    he = in_sig + (alpha_rem * m_prev);\n\n    // Anhysteretic Langevin magnetization M_an approximation\n    man = tanh(he * 1.4);\n\n    // Field step dH and sweep direction delta (+1 rising, -1 falling)\n    dh = in_sig - h_prev;\n    del = (dh >= 0.0) ? 1.0 : -1.0;\n    diff_m = man - m_prev;\n\n    // Irreversible pinning only when domain lag aligns with sweep direction\n    dm_irr = 0.0;\n    if ((del * diff_m) > 0.0) {\n        pin_denom = max(k_c - (del * alpha_rem * diff_m), 0.02);\n        dm_irr = (del * diff_m / pin_denom) * dh;\n    }\n\n    // Reversible domain wall bowing + bounded magnetization update\n    dm_rev = 0.22 * diff_m * min(1.0, abs(dh) * 4.0);\n    m_new = clamp(m_prev + (dm_irr * 0.75) + dm_rev, -1.2, 1.2);\n    return m_new;\n}\n\nParam drive(40, min=0, max=100);\nParam bias(50, min=0, max=100);\nParam coercivity(0.3, min=0.01, max=1.0);\nParam remanence(0.25, min=0, max=1.0);\nParam speed_khz(15, min=4, max=20);\nParam mix_pct(100, name=\"mix\", min=0, max=100);\nParam gainout(0, min=-24, max=12);\n\nHistory m_stateL(0), m_stateR(0);\nHistory h_prevL(0), h_prevR(0);\nHistory h_lpfL(0), h_lpfR(0);\nHistory h_dcInL(0), h_dcInR(0);\nHistory h_dcOutL(0), h_dcOutR(0);\n\n// Input drive & magnetic field bias scaling\nh_scale = 1.0 + (drive * 0.06);\nb_offset = (bias - 50.0) * 0.005;\n\nh_inL = (in1 * h_scale) + b_offset;\nh_inR = (in2 * h_scale) + b_offset;\n\nmagL = hysteresis_step(h_inL, h_prevL, m_stateL, coercivity, remanence);\nmagR = hysteresis_step(h_inR, h_prevR, m_stateR, coercivity, remanence);\nm_stateL = magL;\nm_stateR = magR;\nh_prevL = h_inL;\nh_prevR = h_inR;\n\n// High-frequency playback head tape loss (1-pole lowpass based on tape speed)\nlpf_alpha = clamp(1.0 - (speed_khz * 1000.0 / samplerate) * 2.0, 0.05, 0.85);\nhead_L = (magL * (1.0 - lpf_alpha)) + (h_lpfL * lpf_alpha);\nhead_R = (magR * (1.0 - lpf_alpha)) + (h_lpfR * lpf_alpha);\nh_lpfL = head_L;\nh_lpfR = head_R;\n\n// True 10 Hz 1-pole DC Blocker (removes magnetic remanence & bias DC offset)\ndc_alpha = 0.9985;\ndc_L = head_L - h_dcInL + (dc_alpha * h_dcOutL);\ndc_R = head_R - h_dcInR + (dc_alpha * h_dcOutR);\nh_dcInL = head_L;\nh_dcInR = head_R;\nh_dcOutL = dc_L;\nh_dcOutR = dc_R;\n\n// Makeup gain & Dry/Wet mixing (routing dc_L / dc_R, not raw head_L)\nout_gain = dbtoa(gainout);\nwetL = dc_L * out_gain;\nwetR = dc_R * out_gain;\n\nbal = clamp(mix_pct * 0.01, 0.0, 1.0);\nout1 = fixdenorm((in1 * (1.0 - bal)) + (wetL * bal));\nout2 = fixdenorm((in2 * (1.0 - bal)) + (wetR * bal));\n"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-out1",
+                    "maxclass": "newobj",
+                    "text": "out 1",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        40.0,
+                        730.0,
+                        35.0,
+                        22.0
+                    ]
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-out2",
+                    "maxclass": "newobj",
+                    "text": "out 2",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        120.0,
+                        730.0,
+                        35.0,
+                        22.0
+                    ]
+                }
+            }
+        ],
+        "lines": [
+            {
+                "patchline": {
+                    "source": [
+                        "obj-in1",
+                        0
+                    ],
+                    "destination": [
+                        "obj-codebox",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "source": [
+                        "obj-in2",
+                        0
+                    ],
+                    "destination": [
+                        "obj-codebox",
+                        1
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "source": [
+                        "obj-codebox",
+                        0
+                    ],
+                    "destination": [
+                        "obj-out1",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "source": [
+                        "obj-codebox",
+                        1
+                    ],
+                    "destination": [
+                        "obj-out2",
+                        0
+                    ]
+                }
+            }
+        ]
+    }
+}

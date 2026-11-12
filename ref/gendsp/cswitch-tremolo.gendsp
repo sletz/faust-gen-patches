@@ -1,0 +1,220 @@
+{
+    "patcher": {
+        "fileversion": 1,
+        "appversion": {
+            "major": 9,
+            "minor": 1,
+            "revision": 5,
+            "architecture": "x64",
+            "modernui": 1
+        },
+        "classnamespace": "dsp.gen",
+        "rect": [
+            274.0,
+            85.0,
+            983.0,
+            1033.0
+        ],
+        "lefttoolbarpinned": 2,
+        "toptoolbarpinned": 2,
+        "righttoolbarpinned": 2,
+        "bottomtoolbarpinned": 2,
+        "toolbars_unpinned_last_save": 15,
+        "boxes": [
+            {
+                "box": {
+                    "maxclass": "newobj",
+                    "text": "out 4 \"scope out\"",
+                    "patching_rect": [
+                        857.0,
+                        968.0,
+                        99.0,
+                        22.0
+                    ],
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "id": "obj-7"
+                }
+            },
+            {
+                "box": {
+                    "maxclass": "newobj",
+                    "text": "out 3 \"trigger out\"",
+                    "patching_rect": [
+                        587.0,
+                        968.0,
+                        101.0,
+                        22.0
+                    ],
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "id": "obj-8"
+                }
+            },
+            {
+                "box": {
+                    "maxclass": "newobj",
+                    "text": "in 2",
+                    "patching_rect": [
+                        857.0,
+                        13.0,
+                        28.0,
+                        22.0
+                    ],
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "id": "obj-6"
+                }
+            },
+            {
+                "box": {
+                    "maxclass": "newobj",
+                    "text": "out 2 \"audio R\"",
+                    "patching_rect": [
+                        318.0,
+                        968.0,
+                        88.0,
+                        22.0
+                    ],
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "id": "obj-5"
+                }
+            },
+            {
+                "box": {
+                    "maxclass": "newobj",
+                    "text": "in 1",
+                    "patching_rect": [
+                        48.0,
+                        13.0,
+                        28.0,
+                        22.0
+                    ],
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "id": "obj-1"
+                }
+            },
+            {
+                "box": {
+                    "maxclass": "codebox",
+                    "patching_rect": [
+                        48.0,
+                        44.0,
+                        828.0,
+                        904.0
+                    ],
+                    "fontface": 0,
+                    "numinlets": 2,
+                    "numoutlets": 4,
+                    "fontsize": 12.0,
+                    "outlettype": [
+                        "",
+                        "",
+                        "",
+                        ""
+                    ],
+                    "fontname": "<Monospaced>",
+                    "id": "obj-3",
+                    "code": "/**\n * ============================================================================\n * @file cswitch-tremolo.gendsp / cswitch-gen-version.maxpat\n * @title HARSH TREMOLO & GRANULAR CHOPPER (Anti-Lock LFO gen~)\n * @author Max Bruckert (assisted by Gemini)\n *\n * @description\n * High-performance granular chopper and trapezoidal tremolo with anti-lock\n * low-frequency safety logic down to 0.01 Hz. Features asynchronous temporal\n * jitter, sample & hold resonant bandpass filter tracking, and spatial panning.\n *\n * ARCHITECTURE:\n * 1. DYNAMIC LFO : Anti-lock phase accumulator with manual reset & rate recalculation\n * 2. ENVELOPE SHAPER : Trapezoidal attack/decay envelope with PWM duty cycle & slope\n * 3. S&H RESONANT FILTER : Bounded 2-pole bandpass filter tracking random noise per grain\n * 4. SPATIAL PANNING : Sin/Cos equal-power panning modulated per grain\n *\n * @inlets\n *   in1 : Audio Left Input\n *   in2 : Audio Right Input\n *\n * @outlets\n *   out1 : Processed Audio Left\n *   out2 : Processed Audio Right\n *   out3 : Grain Start Impulse Trigger (1.0 sample-accurate sync)\n *   out4 : Trapezoidal Modulation Envelope (0.0 to 1.0 continuous CV)\n *\n * @parameters\n *   rate         (0.01..500 Hz, def: 10)  : Grain rate / base LFO speed\n *   time_rand    (0..1, def: 0)           : Temporal jitter (0 = rigid, 1 = async)\n *   pwm          (0.01..0.99, def: 0.5)   : Duty cycle / gate aperture width\n *   slope        (0..100 ms, def: 2)      : Trapezoid fade-in / fade-out time\n *   depth        (0..1, def: 1)           : Master modulation intensity\n *   rand_pan     (0..1, def: 1)           : S&H random spatial panning depth\n *   filter_depth (0..1, def: 1)           : Resonant filter modulation depth\n *   min_freq     (20..20000 Hz, def: 200) : Minimum filter cutoff\n *   max_freq     (20..20000 Hz, def: 4000): Maximum filter cutoff\n *   q            (0.1..50, def: 10)       : Filter resonance / Q-factor\n *   reset        (0..1, def: 0)           : Immediate phase reset command\n * ============================================================================\n */\n// --- 1. D\u00c9CLARATIONS ---\nParam rate(10., min=0.01, max=500.);\nParam time_rand(0.0, min=0.0, max=1.0);\nParam pwm(0.5, min=0.01, max=0.99);\nParam slope(2.0, min=0.0, max=100.0);\n\nParam depth(1.0, min=0.0, max=1.0);\nParam rand_pan(1.0, min=0.0, max=1.0);\nParam filter_depth(1.0, min=0.0, max=1.0);\n\nParam min_freq(200., min=20., max=20000.);\nParam max_freq(4000., min=20., max=20000.);\nParam q(10.0, min=0.1, max=50.0);\n\nParam reset(0, min=0, max=1); // Commande de reset manuel du LFO\n\nHistory phase(0);\nHistory last_trigger(0);\nHistory noise_time(0);\nHistory noise_pan(0);\nHistory noise_filt(0);\n\n// \u00c9tats du filtre r\u00e9sonant\nHistory y1_l(0), y2_l(0);\nHistory y1_r(0), y2_r(0);\n\n// --- 2. GENERATEUR DE PHASE ET RE\u00c9VALUATION DYNAMIQUE ---\n\n// S\u00e9curit\u00e9 Manuel Reset : force le red\u00e9marrage imm\u00e9diat\nif (reset > 0) {\n    phase = 0;\n    last_trigger = 0;\n}\n\n// Calcul du temps modul\u00e9 verrouill\u00e9 par grain\ntime_mod = mix(1.0, pow(2.0, noise_time), time_rand);\neffective_rate = rate / clamp(time_mod, 0.05, 10.0);\n\n// RECALCUL DYNAMIQUE DU STEP (R\u00e9ponse imm\u00e9diate au changement de 'rate')\ncurrent_step = effective_rate / samplerate;\n\n// Avancement de la phase\nphase = fract(phase + current_step);\n\n// D\u00e9tection du d\u00e9but de grain\ntrig = (phase < last_trigger) || (reset > 0);\nlast_trigger = phase;\n\n// Sample & Hold ex\u00e9cut\u00e9 au d\u00e9but de chaque grain\nif (trig) {\n    noise_time = noise();\n    noise_pan  = noise();\n    noise_filt = noise();\n}\n\n// --- 3. SCULPTURE TRAP\u00c9ZO\u00cfDALE ---\n\ngrain_duration_sec = 1.0 / (current_step * samplerate);\nfade_phase_length = clamp((slope * 0.001) / grain_duration_sec, 0.0001, 0.5);\n\nattack_ramp = clamp(phase / fade_phase_length, 0.0, 1.0);\ndecay_ramp  = clamp((pwm - phase) / fade_phase_length, 0.0, 1.0);\n\nraw_envelope = min(attack_ramp, decay_ramp);\nmod_envelope = clamp(raw_envelope, 0.0, 1.0);\n\n// --- 4. FILTRAGE R\u00c9SONANT S&H BORN\u00c9 ET LISS\u00c9 ---\n\nrandom_01 = noise_filt * 0.5 + 0.5;\ntarget_freq = mix(min_freq, max_freq, random_01);\n\nsmooth_freq_samps = 0.002 * samplerate;\ncf_smoothed = slide(target_freq, smooth_freq_samps, smooth_freq_samps);\ncf = clamp(cf_smoothed, 20.0, samplerate * 0.49);\n\nbw = cf / q;\nr = exp(-pi * bw / samplerate);\nc = 2.0 * r * cos(2.0 * pi * cf / samplerate);\nb0 = 1.0 - r;\n\nfiltered_l = b0 * in1 + c * y1_l - r * r * y2_l;\ny2_l = y1_l;\ny1_l = filtered_l;\n\nfiltered_r = b0 * in2 + c * y1_r - r * r * y2_r;\ny2_r = y1_r;\ny1_r = filtered_r;\n\neffective_filter_depth = filter_depth * depth;\naudio_filtered_l = mix(in1, filtered_l, effective_filter_depth);\naudio_filtered_r = mix(in2, filtered_r, effective_filter_depth);\n\n// --- 5. TR\u00c9MOLO & PANORAMIQUE ---\n\nmod_amp = mix(1.0, mod_envelope, depth);\n\neffective_pan_amount = rand_pan * depth;\npan_pos = mix(0.5, noise_pan * 0.5 + 0.5, effective_pan_amount);\npan_l = cos(pan_pos * halfpi);\npan_r = sin(pan_pos * halfpi);\n\n// --- 6. SORTIES ---\nout1 = audio_filtered_l * mod_amp * pan_l;\nout2 = audio_filtered_r * mod_amp * pan_r;\nout3 = trig;\nout4 = mod_envelope;"
+                }
+            },
+            {
+                "box": {
+                    "maxclass": "newobj",
+                    "text": "out 1 \"audio L\"",
+                    "patching_rect": [
+                        48.0,
+                        968.0,
+                        86.0,
+                        22.0
+                    ],
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "id": "obj-4"
+                }
+            }
+        ],
+        "lines": [
+            {
+                "patchline": {
+                    "source": [
+                        "obj-6",
+                        0
+                    ],
+                    "destination": [
+                        "obj-3",
+                        1
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "source": [
+                        "obj-3",
+                        2
+                    ],
+                    "destination": [
+                        "obj-8",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "source": [
+                        "obj-3",
+                        3
+                    ],
+                    "destination": [
+                        "obj-7",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "source": [
+                        "obj-3",
+                        1
+                    ],
+                    "destination": [
+                        "obj-5",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "source": [
+                        "obj-3",
+                        0
+                    ],
+                    "destination": [
+                        "obj-4",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "source": [
+                        "obj-1",
+                        0
+                    ],
+                    "destination": [
+                        "obj-3",
+                        0
+                    ]
+                }
+            }
+        ]
+    }
+}

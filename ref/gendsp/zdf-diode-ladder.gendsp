@@ -1,0 +1,171 @@
+{
+    "patcher": {
+        "fileversion": 1,
+        "appversion": {
+            "major": 9,
+            "minor": 1,
+            "revision": 5,
+            "architecture": "x64",
+            "modernui": 1
+        },
+        "classnamespace": "dsp.gen",
+        "rect": [
+            84.0,
+            100.0,
+            850.0,
+            800.0
+        ],
+        "bglocked": 0,
+        "openinpresentation": 0,
+        "default_fontsize": 12.0,
+        "default_fontface": 0,
+        "default_fontname": "Arial",
+        "gridonopen": 1,
+        "gridsize": [
+            15.0,
+            15.0
+        ],
+        "gridsnaponopen": 1,
+        "objectsnaponopen": 1,
+        "statusbarvisible": 2,
+        "toolbarvisible": 1,
+        "boxes": [
+            {
+                "box": {
+                    "id": "obj-in1",
+                    "maxclass": "newobj",
+                    "text": "in 1",
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        40.0,
+                        20.0,
+                        30.0,
+                        22.0
+                    ]
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-in2",
+                    "maxclass": "newobj",
+                    "text": "in 2",
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        120.0,
+                        20.0,
+                        30.0,
+                        22.0
+                    ]
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-codebox",
+                    "maxclass": "codebox",
+                    "text": "",
+                    "numinlets": 2,
+                    "numoutlets": 2,
+                    "outlettype": [
+                        "",
+                        ""
+                    ],
+                    "patching_rect": [
+                        40.0,
+                        60.0,
+                        750.0,
+                        650.0
+                    ],
+                    "code": "/**\n * ============================================================================\n * @file zdf-diode-ladder.gendsp / zdf-diode-ladder.maxpat\n * @title STEREO ZERO-DELAY FEEDBACK (ZDF) TB-303 DIODE LADDER FILTER\n * @author Max Bruckert (assisted by Gemini)\n *\n * @description\n * Stereo Topology-Preserving Transform (TPT) Zero-Delay Feedback implementation\n * of the classic Roland TB-303 4-stage diode ladder lowpass filter.\n * Features a snappy bipolar dynamic envelope follower (up to +/-5 octaves)\n * modulating cutoff and accent squelch in response to input transients.\n *\n * @inlets\n *   in1 : Audio Left Input\n *   in2 : Audio Right Input\n *\n * @outlets\n *   out1 : Filtered Audio Left (4-Pole Diode Lowpass)\n *   out2 : Filtered Audio Right (4-Pole Diode Lowpass)\n *\n * @parameters\n *   cutoff    (20..20000 Hz, def: 1200) : Base filter cutoff frequency\n *   resonance (0..1.2, def: 0.75)       : Resonance Q (self-oscillates > 0.95)\n *   drive     (0..100 %, def: 20)       : Input non-linear drive\n *   env_mod   (-100..100 %, def: 0)     : Bipolar dynamic envelope sweep (+/-5 oct)\n *   accent    (0..100 %, def: 0)        : Dynamic transient accent & squelch\n * ============================================================================\n */\n\n// Stereo TPT ZDF 4-pole diode ladder stage (must precede Param/History)\ndiode_ladder_step(in_sig, g0, g1, g2, g3, k, drive_gain, accent_amt, s1, s2, s3, s4, h_in, h_out) {\n    in_sat = tanh(in_sig * drive_gain);\n\n    // ZDF Instantaneous loop solution (unrolled linear predictor)\n    S_total = g3 * (s3 + g2 * (s2 + g1 * (s1 + g0 * in_sat)));\n    denom = 1.0 + k * (g0 * g1 * g2 * g3);\n    u = (in_sat - k * (s4 + S_total)) / denom;\n\n    // Non-linear diode feedback shaper\n    u_sat = tanh(u * (1.0 + accent_amt * 0.02));\n\n    // 4-Stage trapezoidal integrators\n    v0 = (u_sat - s1) * g0;\n    y1 = v0 + s1;\n    ns1 = y1 + v0;\n\n    v1 = (y1 - s2) * g1;\n    y2 = v1 + s2;\n    ns2 = y2 + v1;\n\n    v2 = (y2 - s3) * g2;\n    y3 = v2 + s3;\n    ns3 = y3 + v2;\n\n    v3 = (y3 - s4) * g3;\n    y4 = v3 + s4;\n    ns4 = y4 + v3;\n\n    // Subtle 303 output DC/bass highpass (~40 Hz)\n    out_hpf = y4 - h_in + (0.995 * h_out);\n    return out_hpf, ns1, ns2, ns3, ns4, y4, out_hpf;\n}\n\nParam cutoff(1200, min=20, max=20000);\nParam resonance(0.75, min=0, max=1.2);\nParam drive(20, min=0, max=100);\nParam env_mod(0, min=-100, max=100);\nParam accent(0, min=0, max=100);\n\n// Stereo capacitor, HPF & envelope follower memories\nHistory s1L(0), s2L(0), s3L(0), s4L(0);\nHistory s1R(0), s2R(0), s3R(0), s4R(0);\nHistory h_hpf_inL(0), h_hpf_outL(0);\nHistory h_hpf_inR(0), h_hpf_outR(0);\nHistory h_env(0);\n\n// Snappy Stereo Envelope Follower (1.5 ms attack, 55 ms release)\nenv_in = max(abs(in1), abs(in2));\natk_c = 1.0 - exp(-1.0 / (0.0015 * samplerate));\nrel_c = 1.0 - exp(-1.0 / (0.055 * samplerate));\nenv_c = (env_in > h_env) ? atk_c : rel_c;\nh_env = h_env + env_c * (env_in - h_env);\n\n// Responsive normalized transient curve [0..1]\nenv_norm = clamp(pow(h_env * 2.0, 0.8), 0.0, 1.0);\nacc_dyn = (accent * 0.01) * env_norm;\n\n// Bipolar exponential cutoff modulation (up to +/-5 octaves + accent punch)\nmod_oct = ((env_mod * 0.01) * 5.0 * env_norm) + (acc_dyn * 1.2);\nmod_cutoff = clamp(cutoff * pow(2.0, mod_oct), 20.0, 20000.0);\n\nnorm_f = (mod_cutoff / samplerate) * pi;\ng = tan(clamp(norm_f, 0.0001, 1.5));\nG = g / (1.0 + g);\n\n// Diode ladder inter-stage impedance loading coefficients\ng0 = G;\ng1 = G * 0.9;\ng2 = G * 0.8;\ng3 = G * 0.7;\n\ndrive_gain = 1.0 + (drive * 0.08) + (accent * 0.03);\nk = clamp((resonance + acc_dyn * 0.22) * 4.2, 0.0, 4.9);\n\noutL, s1L, s2L, s3L, s4L, h_hpf_inL, h_hpf_outL = diode_ladder_step(in1, g0, g1, g2, g3, k, drive_gain, accent, s1L, s2L, s3L, s4L, h_hpf_inL, h_hpf_outL);\noutR, s1R, s2R, s3R, s4R, h_hpf_inR, h_hpf_outR = diode_ladder_step(in2, g0, g1, g2, g3, k, drive_gain, accent, s1R, s2R, s3R, s4R, h_hpf_inR, h_hpf_outR);\n\nout1 = fixdenorm(outL);\nout2 = fixdenorm(outR);\n"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-out1",
+                    "maxclass": "newobj",
+                    "text": "out 1",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        40.0,
+                        730.0,
+                        35.0,
+                        22.0
+                    ]
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-out2",
+                    "maxclass": "newobj",
+                    "text": "out 2",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        120.0,
+                        730.0,
+                        35.0,
+                        22.0
+                    ]
+                }
+            }
+        ],
+        "lines": [
+            {
+                "patchline": {
+                    "source": [
+                        "obj-in1",
+                        0
+                    ],
+                    "destination": [
+                        "obj-codebox",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "source": [
+                        "obj-in2",
+                        0
+                    ],
+                    "destination": [
+                        "obj-codebox",
+                        1
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "source": [
+                        "obj-codebox",
+                        0
+                    ],
+                    "destination": [
+                        "obj-out1",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "source": [
+                        "obj-codebox",
+                        1
+                    ],
+                    "destination": [
+                        "obj-out2",
+                        0
+                    ]
+                }
+            }
+        ]
+    }
+}

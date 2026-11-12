@@ -1,0 +1,261 @@
+//##############################################################################
+// genops.lib: the gen~ operators (genlib, Max 9.2.1) in Faust
+//
+// Each function reproduces the arithmetic of its genlib counterpart
+// (ref/export/gen_dsp/genlib_ops.h), operation for operation, so that a port
+// written with them agrees with the gen~ export to the last bits wherever the
+// math library does. Conventions: arguments in genlib's order, signal last
+// (`wrap(lo, hi, v)`, `clamp(lo, hi, x)`) so that they compose as Faust
+// processors (`_ : wrap(0, 1)`).
+//
+// MIT License, as GEN-patches.
+//##############################################################################
+
+declare name "genops";
+declare version "1.0.0";
+declare license "MIT";
+
+ma = library("maths.lib");
+ba = library("basics.lib");
+de = library("delays.lib");
+si = library("signals.lib");
+
+//---------------------------------------------------------------- scalars
+
+// trunc toward zero without going through a 32-bit int: (int64_t)x in genlib
+trunc(x) = select2(x < 0, floor(x), ceil(x));
+
+// genlib minimum/maximum/clamp: clamp(x, lo, hi) = min(max(x, lo), hi)
+clamp(lo, hi, x) = min(max(x, lo), hi);
+
+// mix(x, y, a) = x + a*(y - x)
+mix(x, y, a) = x + a * (y - x);
+
+// safediv(num, den) = den == 0 ? 0 : num/den
+safediv(n, d) = select2(d == 0, n / select2(d == 0, d, 1), 0);
+
+// fixnan: genlib's double test is "exponent all ones", so inf goes to 0 too
+fixnan(v) = select2((v - v) != (v - v), v, 0);
+
+// safepow(b, e) = fixnan(pow(b, e))
+safepow(b, e) = fixnan(pow(b, e));
+
+// fixdenorm: a subnormal double becomes 0
+fixdenorm(v) = select2((abs(v) < 2.2250738585072014e-308) & (v != 0), v, 0);
+
+// wrap(v, lo, hi): genlib_ops.h, numWraps computed by int64 truncation
+wrap(lo1, hi1, v) = select2(lo1 == hi1, w, lo1)
+with {
+    lo = min(lo1, hi1);
+    hi = max(lo1, hi1);
+    range = hi - lo;
+    nw = trunc((v - lo) / range) - (v < lo);
+    r = v - range * nw;
+    r2 = select2(r >= hi, r, r - range);
+    w = select2((v >= lo) & (v < hi), select2(range <= 0.000000001, r2, lo), v);
+};
+
+// fold(v, lo, hi): genlib_ops.h
+fold(lo1, hi1, v) = select2(lo1 == hi1, out, lo1)
+with {
+    lo = min(lo1, hi1);
+    hi = max(lo1, hi1);
+    range = hi - lo;
+    // v >= hi
+    va = v - range;
+    nwa = select2(va >= hi, 0, trunc((va - lo) / range));
+    ra = va - range * nwa;
+    na = nwa + 1;
+    // v < lo
+    vb = v + range;
+    nwb = select2(vb < lo, 0, trunc((vb - lo) / range) - 1);
+    rb = vb - range * nwb;
+    nb = nwb - 1;
+    hiCase = v >= hi;
+    loCase = v < lo;
+    r = select2(hiCase, select2(loCase, v, rb), ra);
+    n = select2(hiCase, select2(loCase, 0, nb), na);
+    odd = (int(n) % 2) != 0;
+    out = select2(odd, r, hi + lo - r);
+};
+
+// triangle(phase, p1): genlib_ops.h
+triangle(ph0, p10) = select2(ph < p1, down, up)
+with {
+    ph = wrap(0, 1, ph0);
+    p1 = clamp(0, 1, p10);
+    up = select2(p1 != 0, 0, ph / select2(p1 != 0, 1, p1));
+    down = select2(p1 == 1, 1 - ((ph - p1) / select2(p1 == 1, 1 - p1, 1)), ph);
+};
+
+// scale(in, inlow, inhigh, outlow, outhigh, power)
+scale(in, il, ih, ol, oh, pw) = v2 * (oh - ol) + ol
+with {
+    v = (in - il) * safediv(1, ih - il);
+    v2 = select2(v > 0, select2(v < 0, v, 0 - pow(0 - v, pw)), pow(v, pw));
+};
+
+sign(v) = select2(v > 0, select2(v < 0, 0, -1), 1);
+fract(x) = x - trunc(x);
+dbtoa(x) = pow(10, x * 0.05);
+atodb(x) = select2(x <= 0, 20 * log10(x), -999);
+mstosamps(ms) = ma.SR * ms * 0.001;
+mtof(m) = 440 * exp(0.057762265 * (m - 69));
+
+// genlib's interpolators (the delay readers below use them)
+linear_interp(a, x, y) = x + a * (y - x);
+cubic_interp(a, w, x, y, z) = w * fw + x * fx + y * fy + z * fz
+with {
+    a1 = 1 + a; aa = a * a1; b = 1 - a; b1 = 2 - a; bb = b * b1;
+    fw = -0.1666667 * bb * a; fx = 0.5 * bb * a1; fy = 0.5 * aa * b1; fz = -0.1666667 * aa * b;
+};
+spline_interp(a, w, x, y, z) = ((c3 * a + c2) * a + c1) * a + c0
+with {
+    c0 = x;
+    c1 = 0.5 * (y - w);
+    c2 = w - 2.5 * x + y + y - 0.5 * z;
+    c3 = 0.5 * (z - w) + 1.5 * (x - y);
+};
+spline6_interp(a, y0, y1, y2, y3, y4, y5) = ((((c5*a+c4)*a+c3)*a+c2)*a+c1)*a+c0
+with {
+    ym2py2 = y0+y4; ym1py1 = y1+y3; y2mym2 = y4-y0; y1mym1 = y3-y1;
+    sixthym1py1 = 1/6.0*ym1py1;
+    c0 = 1/120.0*ym2py2 + 13/60.0*ym1py1 + 11/20.0*y2;
+    c1 = 1/24.0*y2mym2 + 5/12.0*y1mym1;
+    c2 = 1/12.0*ym2py2 + sixthym1py1 - 1/2.0*y2;
+    c3 = 1/12.0*y2mym2 - 1/6.0*y1mym1;
+    c4 = 1/24.0*ym2py2 - sixthym1py1 + 1/4.0*y2;
+    c5 = 1/120.0*(y5-y0) + 1/24.0*(y1-y4) + 1/12.0*(y3-y2);
+};
+
+//---------------------------------------------------------------- stateful operators
+
+// phasor(freq): phase = wrap(phase + freq*(1/sr), 0, 1), the new phase is output
+phasor(f) = (+(f * (1.0 / ma.SR)) : wrap(0, 1)) ~ _;
+
+// History h(init) read before it is written: x[n-1], and `init` at frame 0
+hist(init, x) = select2(1 - 1', x', init);
+// the same for a value fed back by `~` (already delayed): `init(80)` on it
+init(v, x) = select2(1 - 1', x, v);
+
+// delta(x) = x - x[n-1] (history starts at 0)
+delta(x) = x - x';
+
+// dcblock: y = x - x1 + 0.9997*y1
+dcblock(x) = (x - x') : (+ ~ *(0.9997));
+
+// sah(in, trig, thresh): latches `in` when trig crosses thresh upward
+sah(in, trig, thresh) = (\(out).(select2((trig' <= thresh) & (trig > thresh), out, in))) ~ _;
+
+// accum / plusequals: count = reset ? 0 : count + incr (post)
+accum(incr, reset) = (\(c).(select2(reset != 0, c + incr, 0))) ~ _;
+
+//---------------------------------------------------------------- Delay
+
+// genlib's Delay: a ring of `size` = next power of two >= max(maxdelay, 2)
+// samples, a read head `reader` that advances once per sample (frame n:
+// n mod size), and readers that clamp the delay to [mind, maxdelay], mind = 1
+// for a read before the write of the frame, 0 after (linear, step), plus 1 for
+// the 4- and 6-point readers. `rd_*(maxd, mind, x, d)` reads signal x through
+// that arithmetic: r = size + reader - clamp(d), r1 = int(r), a = r - r1, so
+// the interpolation fraction is the very double genlib computes.
+// Signal x is the signal written: x@k is memory[(reader - k) & wrap]. For a
+// read before the write in a feedback loop, pass the feedback delayed by one
+// (x') and subtract 1 from the delay: the readers `rd_*_fb` do that.
+// MAXD is a compile-time bound of maxdelay (Faust sizes its own line by it).
+
+npow2(n) = 2 ^ ceil(log(max(n, 2)) / log(2) - 1e-9);
+_reader(size) = ba.time % int(size);
+_tap(MAXD, x, k) = x @ max(0, min(MAXD + 8, k));
+
+// step: round to nearest with the extra half
+rd_step(MAXD, maxd, mind, x, d) = _tap(MAXD, x, size + rd - int(r))
+with {
+    size = int(npow2(maxd)); rd = _reader(size);
+    r = float(size + rd) - clamp(mind, maxd, d - 0.5);
+};
+
+rd_linear(MAXD, maxd, mind, x, d) = linear_interp(a, xa, xb)
+with {
+    size = int(npow2(maxd)); rd = _reader(size);
+    r = float(size + rd) - clamp(mind, maxd, d);
+    r1 = int(r); a = r - float(r1);
+    k1 = size + rd - r1;
+    xa = _tap(MAXD, x, k1); xb = _tap(MAXD, x, k1 - 1);
+};
+
+_rd4(MAXD, maxd, mind, x, d, interp) = interp(a, w, xx, y, z)
+with {
+    size = int(npow2(maxd)); rd = _reader(size);
+    r = float(size + rd) - clamp(1 + mind, maxd, d);
+    r1 = int(r); a = r - float(r1);
+    k1 = size + rd - r1;
+    w = _tap(MAXD, x, k1); xx = _tap(MAXD, x, k1 - 1);
+    y = _tap(MAXD, x, k1 - 2); z = _tap(MAXD, x, k1 - 3);
+};
+rd_cubic(MAXD, maxd, mind, x, d) = _rd4(MAXD, maxd, mind, x, d, cubic_interp);
+rd_spline(MAXD, maxd, mind, x, d) = _rd4(MAXD, maxd, mind, x, d, spline_interp);
+
+rd_spline6(MAXD, maxd, mind, x, d) = spline6_interp(a, y0, y1, y2, y3, y4, y5)
+with {
+    size = int(npow2(maxd)); rd = _reader(size);
+    r = float(size + rd) - clamp(1 + mind, maxd, d);
+    r0 = int(r); a = r - float(r0);
+    k0 = size + rd - r0;
+    y0 = _tap(MAXD, x, k0); y1 = _tap(MAXD, x, k0 - 1); y2 = _tap(MAXD, x, k0 - 2);
+    y3 = _tap(MAXD, x, k0 - 3); y4 = _tap(MAXD, x, k0 - 4); y5 = _tap(MAXD, x, k0 - 5);
+};
+
+// Readers of a delay read before its write, the written signal being in a
+// feedback loop: `xd` is that signal already delayed by one sample (the `~`
+// of the loop), so x@k = xd@(k-1). Same clamp (mind = 1) and fraction.
+rd_linear_fb(MAXD, maxd, xd, d) = linear_interp(a, xa, xb)
+with {
+    size = int(npow2(maxd)); rd = _reader(size);
+    r = float(size + rd) - clamp(1, maxd, d);
+    r1 = int(r); a = r - float(r1);
+    k1 = size + rd - r1;
+    xa = _tap(MAXD, xd, k1 - 1); xb = _tap(MAXD, xd, k1 - 2);
+};
+rd_step_fb(MAXD, maxd, xd, d) = _tap(MAXD, xd, size + rd - int(r) - 1)
+with {
+    size = int(npow2(maxd)); rd = _reader(size);
+    r = float(size + rd) - clamp(1, maxd, d - 0.5);
+};
+_rd4_fb(MAXD, maxd, xd, d, interp) = interp(a, w, xx, y, z)
+with {
+    size = int(npow2(maxd)); rd = _reader(size);
+    r = float(size + rd) - clamp(2, maxd, d);
+    r1 = int(r); a = r - float(r1);
+    k1 = size + rd - r1;
+    w = _tap(MAXD, xd, k1 - 1); xx = _tap(MAXD, xd, k1 - 2);
+    y = _tap(MAXD, xd, k1 - 3); z = _tap(MAXD, xd, k1 - 4);
+};
+rd_cubic_fb(MAXD, maxd, xd, d) = _rd4_fb(MAXD, maxd, xd, d, cubic_interp);
+rd_spline_fb(MAXD, maxd, xd, d) = _rd4_fb(MAXD, maxd, xd, d, spline_interp);
+
+//---------------------------------------------------------------- cycle
+
+// cycle(freq) with no buffer: genlib's SineCycle, a 32-bit phase stepped by
+// (uint32)(int64)(freq * 2^32/sr), read in a 16384-point cosine table with
+// linear interpolation (the table entry recomputed as genlib fills it). The
+// phase is kept as an exact integer in a double. Output: cos, then the phase
+// before the step is not needed: `cycle_phase` gives phase() after the step.
+_u32(x) = fmod(fmod(trunc(x), 4294967296.0) + 4294967296.0, 4294967296.0);
+_cycle_phasei(f) = (\(p).(fmod(p + _u32(f * (4294967296.0 / ma.SR)), 4294967296.0))) ~ _ : mem;
+_costab(i) = cos(float(i) * ma.PI * 2.0 / 16384.0);
+cycle(f) = linear_interp(frac, _costab(idx), _costab((idx + 1) & 16383))
+with {
+    p = _cycle_phasei(f);
+    idx = int(floor(p / 262144.0));
+    frac = fmod(p, 262144.0) * 3.81471181759574e-6;
+};
+// phase() read after the call: the phase once stepped, in [0, 1)
+cycle_phase(f) = fmod(_cycle_phasei(f) + _u32(f * (4294967296.0 / ma.SR)), 4294967296.0) * 0.232830643653869629e-9;
+
+//---------------------------------------------------------------- noise
+
+// gen~'s noise() is uniform in [-1, 1) (xoshiro256+ seeded by the clock). The
+// ports take their noises as signals; programs use these: K independent
+// streams, stream k of K.
+noises(K, k) = no.noises(K, k) with { no = library("noises.lib"); };

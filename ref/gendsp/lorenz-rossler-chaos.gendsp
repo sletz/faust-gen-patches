@@ -1,0 +1,227 @@
+{
+    "patcher": {
+        "fileversion": 1,
+        "appversion": {
+            "major": 9,
+            "minor": 1,
+            "revision": 5,
+            "architecture": "x64",
+            "modernui": 1
+        },
+        "classnamespace": "dsp.gen",
+        "rect": [
+            84.0,
+            100.0,
+            850.0,
+            800.0
+        ],
+        "bglocked": 0,
+        "openinpresentation": 0,
+        "default_fontsize": 12.0,
+        "default_fontface": 0,
+        "default_fontname": "Arial",
+        "gridonopen": 1,
+        "gridsize": [
+            15.0,
+            15.0
+        ],
+        "gridsnaponopen": 1,
+        "objectsnaponopen": 1,
+        "statusbarvisible": 2,
+        "toolbarvisible": 1,
+        "boxes": [
+            {
+                "box": {
+                    "id": "obj-in1",
+                    "maxclass": "newobj",
+                    "text": "in 1",
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        40.0,
+                        20.0,
+                        30.0,
+                        22.0
+                    ]
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-in2",
+                    "maxclass": "newobj",
+                    "text": "in 2",
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        120.0,
+                        20.0,
+                        30.0,
+                        22.0
+                    ]
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-codebox",
+                    "maxclass": "codebox",
+                    "text": "",
+                    "numinlets": 2,
+                    "numoutlets": 4,
+                    "outlettype": [
+                        "",
+                        "",
+                        "",
+                        ""
+                    ],
+                    "patching_rect": [
+                        40.0,
+                        60.0,
+                        750.0,
+                        650.0
+                    ],
+                    "code": "/**\n * ============================================================================\n * @file lorenz-rossler-chaos.gendsp / lorenz-rossler-chaos.maxpat\n * @title LORENZ & R\u00d6SSLER STRANGE ATTRACTORS (RK4 Chaotic Audio Engine)\n * @author Max Bruckert (assisted by Gemini)\n *\n * @description\n * Non-linear 3D chaotic attractor engine integrated via 4th-Order Runge-Kutta\n * (RK4) numerical integration in sample-accurate GenExpr.\n *\n * @inlets\n *   in1 : External Audio In / Cross-Modulation Injection\n *   in2 : Speed Audio CV (FM Rate)\n *\n * @outlets\n *   out1 : X Axis Signal (-1..1 audio or CV)\n *   out2 : Y Axis Signal (-1..1 audio or CV)\n *   out3 : Z Axis Signal (Unipolar / normalized -1..1 CV)\n *   out4 : Chaotic Trigger Impulse (Poincar\u00e9 section crossing)\n * ============================================================================\n */\n\n// Helper ODE derivative functions (must precede Param / History / statements)\n// Lorenz: dx = sigma*(y-x), dy = x*(rho-z) - y, dz = x*y - beta*z\nlorenz_dx(px, py, pz, sigm) { return sigm * (py - px); }\nlorenz_dy(px, py, pz, r_val) { return px * (r_val - pz) - py; }\nlorenz_dz(px, py, pz, bet) { return (px * py) - (bet * pz); }\n\n// R\u00f6ssler: dx = -y - z, dy = x + a*y, dz = b + z*(x - c)\nrossler_dx(px, py, pz) { return -py - pz; }\nrossler_dy(px, py, pz, a_val) { return px + (a_val * py); }\nrossler_dz(px, py, pz, b_val, c_val) { return b_val + pz * (px - c_val); }\n\nParam system(0, min=0, max=1);\nParam speed(150, min=0.01, max=1000);\nParam drive(1.0, min=0, max=2.0);\nParam param_rho(28, min=10, max=60);\nParam inject(0, min=0, max=1);\n\n// State coordinates\nHistory x(0.1), y(0.1), z(0.1);\nHistory h_last_x(0);\n\n// Time step calculation (audio-rate safe RK4 integration step <= 0.024)\neff_speed = clamp(speed + (in2 * 200), 0.01, 1000);\ndt = min((eff_speed / samplerate) * 1.2, 0.024);\n\n// Audio injection perturbation on X coordinate\nx_in = x + (in1 * inject * 0.2);\n\nif (system < 0.5) {\n    // --- LORENZ RK4 SOLVER ---\n    sig_param = 10.0 * max(drive, 0.05);\n    rho_param = param_rho;\n    beta_param = 8.0 / 3.0;\n\n    // k1\n    k1x = lorenz_dx(x_in, y, z, sig_param);\n    k1y = lorenz_dy(x_in, y, z, rho_param);\n    k1z = lorenz_dz(x_in, y, z, beta_param);\n\n    // k2\n    k2x = lorenz_dx(x_in + 0.5 * dt * k1x, y + 0.5 * dt * k1y, z + 0.5 * dt * k1z, sig_param);\n    k2y = lorenz_dy(x_in + 0.5 * dt * k1x, y + 0.5 * dt * k1y, z + 0.5 * dt * k1z, rho_param);\n    k2z = lorenz_dz(x_in + 0.5 * dt * k1x, y + 0.5 * dt * k1y, z + 0.5 * dt * k1z, beta_param);\n\n    // k3\n    k3x = lorenz_dx(x_in + 0.5 * dt * k2x, y + 0.5 * dt * k2y, z + 0.5 * dt * k2z, sig_param);\n    k3y = lorenz_dy(x_in + 0.5 * dt * k2x, y + 0.5 * dt * k2y, z + 0.5 * dt * k2z, rho_param);\n    k3z = lorenz_dz(x_in + 0.5 * dt * k2x, y + 0.5 * dt * k2y, z + 0.5 * dt * k2z, beta_param);\n\n    // k4\n    k4x = lorenz_dx(x_in + dt * k3x, y + dt * k3y, z + dt * k3z, sig_param);\n    k4y = lorenz_dy(x_in + dt * k3x, y + dt * k3y, z + dt * k3z, rho_param);\n    k4z = lorenz_dz(x_in + dt * k3x, y + dt * k3y, z + dt * k3z, beta_param);\n\n    x = x + (dt / 6.0) * (k1x + 2.0 * k2x + 2.0 * k3x + k4x);\n    y = y + (dt / 6.0) * (k1y + 2.0 * k2y + 2.0 * k3y + k4y);\n    z = z + (dt / 6.0) * (k1z + 2.0 * k2z + 2.0 * k3z + k4z);\n} else {\n    // --- R\u00d6SSLER RK4 SOLVER ---\n    a_param = 0.2;\n    b_param = 0.2;\n    c_param = scale(param_rho, 10, 60, 4.0, 9.0);\n\n    // k1\n    k1x = rossler_dx(x_in, y, z);\n    k1y = rossler_dy(x_in, y, z, a_param);\n    k1z = rossler_dz(x_in, y, z, b_param, c_param);\n\n    // k2\n    k2x = rossler_dx(x_in + 0.5 * dt * k1x, y + 0.5 * dt * k1y, z + 0.5 * dt * k1z);\n    k2y = rossler_dy(x_in + 0.5 * dt * k1x, y + 0.5 * dt * k1y, z + 0.5 * dt * k1z, a_param);\n    k2z = rossler_dz(x_in + 0.5 * dt * k1x, y + 0.5 * dt * k1y, z + 0.5 * dt * k1z, b_param, c_param);\n\n    // k3\n    k3x = rossler_dx(x_in + 0.5 * dt * k2x, y + 0.5 * dt * k2y, z + 0.5 * dt * k2z);\n    k3y = rossler_dy(x_in + 0.5 * dt * k2x, y + 0.5 * dt * k2y, z + 0.5 * dt * k2z, a_param);\n    k3z = rossler_dz(x_in + 0.5 * dt * k2x, y + 0.5 * dt * k2y, z + 0.5 * dt * k2z, b_param, c_param);\n\n    // k4\n    k4x = rossler_dx(x_in + dt * k3x, y + dt * k3y, z + dt * k3z);\n    k4y = rossler_dy(x_in + dt * k3x, y + dt * k3y, z + dt * k3z, a_param);\n    k4z = rossler_dz(x_in + dt * k3x, y + dt * k3y, z + dt * k3z, b_param, c_param);\n\n    x = x + (dt / 6.0) * (k1x + 2.0 * k2x + 2.0 * k3x + k4x);\n    y = y + (dt / 6.0) * (k1y + 2.0 * k2y + 2.0 * k3y + k4y);\n    z = z + (dt / 6.0) * (k1z + 2.0 * k2z + 2.0 * k3z + k4z);\n}\n\n// Anti-explosion / numerical NaN safety\nif (abs(x) > 100 || abs(y) > 100 || abs(z) > 100) {\n    x = 0.1; y = 0.1; z = 0.1;\n}\n\n// Scaling outputs to normalized range [-1, 1]\nnorm_x = clamp((system < 0.5) ? (x * 0.05) : (x * 0.08), -1, 1);\nnorm_y = clamp((system < 0.5) ? (y * 0.04) : (y * 0.08), -1, 1);\nnorm_z = clamp((system < 0.5) ? ((z - 25.0) * 0.04) : ((z - 5.0) * 0.15), -1, 1);\n\n// Zero-crossing trigger detector on X axis\ntrig_pulse = (norm_x > 0) && (h_last_x <= 0);\nh_last_x = norm_x;\n\nout1 = norm_x;\nout2 = norm_y;\nout3 = norm_z;\nout4 = trig_pulse;\n"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-out1",
+                    "maxclass": "newobj",
+                    "text": "out 1",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        40.0,
+                        730.0,
+                        35.0,
+                        22.0
+                    ]
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-out2",
+                    "maxclass": "newobj",
+                    "text": "out 2",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        120.0,
+                        730.0,
+                        35.0,
+                        22.0
+                    ]
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-out3",
+                    "maxclass": "newobj",
+                    "text": "out 3",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        200.0,
+                        730.0,
+                        35.0,
+                        22.0
+                    ]
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-out4",
+                    "maxclass": "newobj",
+                    "text": "out 4",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        280.0,
+                        730.0,
+                        35.0,
+                        22.0
+                    ]
+                }
+            }
+        ],
+        "lines": [
+            {
+                "patchline": {
+                    "source": [
+                        "obj-in1",
+                        0
+                    ],
+                    "destination": [
+                        "obj-codebox",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "source": [
+                        "obj-in2",
+                        0
+                    ],
+                    "destination": [
+                        "obj-codebox",
+                        1
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "source": [
+                        "obj-codebox",
+                        0
+                    ],
+                    "destination": [
+                        "obj-out1",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "source": [
+                        "obj-codebox",
+                        1
+                    ],
+                    "destination": [
+                        "obj-out2",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "source": [
+                        "obj-codebox",
+                        2
+                    ],
+                    "destination": [
+                        "obj-out3",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "source": [
+                        "obj-codebox",
+                        3
+                    ],
+                    "destination": [
+                        "obj-out4",
+                        0
+                    ]
+                }
+            }
+        ]
+    }
+}

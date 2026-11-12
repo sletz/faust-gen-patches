@@ -1,0 +1,764 @@
+{
+    "patcher": {
+        "fileversion": 1,
+        "appversion": {
+            "major": 9,
+            "minor": 1,
+            "revision": 4,
+            "architecture": "x64",
+            "modernui": 1
+        },
+        "classnamespace": "dsp.gen",
+        "rect": [
+            243.0,
+            68.0,
+            1074.0,
+            1052.0
+        ],
+        "lefttoolbarpinned": 2,
+        "toptoolbarpinned": 2,
+        "righttoolbarpinned": 2,
+        "bottomtoolbarpinned": 2,
+        "toolbars_unpinned_last_save": 15,
+        "boxes": [
+            {
+                "box": {
+                    "id": "obj-17",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        963.0,
+                        968.0,
+                        69.0,
+                        22.0
+                    ],
+                    "text": "out 20 amp"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-16",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        913.2105263157895,
+                        992.0,
+                        79.0,
+                        22.0
+                    ],
+                    "text": "out 19 taptrig"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-47",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        863.421052631579,
+                        1018.0,
+                        74.0,
+                        22.0
+                    ],
+                    "text": "out 18 index"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-48",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        813.6315789473684,
+                        1042.0,
+                        99.0,
+                        22.0
+                    ],
+                    "text": "out 17 mastertrig"
+                }
+            },
+            {
+                "box": {
+                    "color": [
+                        0.0,
+                        0.7176470588235294,
+                        0.7019607843137254,
+                        1.0
+                    ],
+                    "id": "obj-28",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        614.4736842105264,
+                        1042.0,
+                        42.0,
+                        22.0
+                    ],
+                    "text": "out 13"
+                }
+            },
+            {
+                "box": {
+                    "color": [
+                        0.0,
+                        0.7176470588235294,
+                        0.7019607843137254,
+                        1.0
+                    ],
+                    "id": "obj-37",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        765.0,
+                        1042.0,
+                        42.0,
+                        22.0
+                    ],
+                    "text": "out 16"
+                }
+            },
+            {
+                "box": {
+                    "color": [
+                        0.0,
+                        0.7176470588235294,
+                        0.7019607843137254,
+                        1.0
+                    ],
+                    "id": "obj-38",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        714.0526315789474,
+                        1042.0,
+                        42.0,
+                        22.0
+                    ],
+                    "text": "out 15"
+                }
+            },
+            {
+                "box": {
+                    "color": [
+                        0.0,
+                        0.7176470588235294,
+                        0.7019607843137254,
+                        1.0
+                    ],
+                    "id": "obj-39",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        664.2631578947369,
+                        1042.0,
+                        42.0,
+                        22.0
+                    ],
+                    "text": "out 14"
+                }
+            },
+            {
+                "box": {
+                    "color": [
+                        0.0,
+                        0.7176470588235294,
+                        0.7019607843137254,
+                        1.0
+                    ],
+                    "id": "obj-10",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        564.6842105263158,
+                        1042.0,
+                        42.0,
+                        22.0
+                    ],
+                    "text": "out 12"
+                }
+            },
+            {
+                "box": {
+                    "color": [
+                        0.0,
+                        0.7176470588235294,
+                        0.7019607843137254,
+                        1.0
+                    ],
+                    "id": "obj-11",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        514.8947368421052,
+                        1042.0,
+                        41.0,
+                        22.0
+                    ],
+                    "text": "out 11"
+                }
+            },
+            {
+                "box": {
+                    "color": [
+                        0.0,
+                        0.7176470588235294,
+                        0.7019607843137254,
+                        1.0
+                    ],
+                    "id": "obj-12",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        465.10526315789474,
+                        1042.0,
+                        42.0,
+                        22.0
+                    ],
+                    "text": "out 10"
+                }
+            },
+            {
+                "box": {
+                    "color": [
+                        0.0,
+                        0.7176470588235294,
+                        0.7019607843137254,
+                        1.0
+                    ],
+                    "id": "obj-13",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        415.3157894736842,
+                        1042.0,
+                        35.0,
+                        22.0
+                    ],
+                    "text": "out 9"
+                }
+            },
+            {
+                "box": {
+                    "color": [
+                        0.0,
+                        0.7176470588235294,
+                        0.7019607843137254,
+                        1.0
+                    ],
+                    "id": "obj-14",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        365.5263157894737,
+                        1042.0,
+                        35.0,
+                        22.0
+                    ],
+                    "text": "out 8"
+                }
+            },
+            {
+                "box": {
+                    "color": [
+                        0.0,
+                        0.7176470588235294,
+                        0.7019607843137254,
+                        1.0
+                    ],
+                    "id": "obj-15",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        315.7368421052632,
+                        1042.0,
+                        35.0,
+                        22.0
+                    ],
+                    "text": "out 7"
+                }
+            },
+            {
+                "box": {
+                    "color": [
+                        0.0,
+                        0.7176470588235294,
+                        0.7019607843137254,
+                        1.0
+                    ],
+                    "id": "obj-9",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        265.9473684210526,
+                        1042.0,
+                        35.0,
+                        22.0
+                    ],
+                    "text": "out 6"
+                }
+            },
+            {
+                "box": {
+                    "color": [
+                        0.0,
+                        0.7176470588235294,
+                        0.7019607843137254,
+                        1.0
+                    ],
+                    "id": "obj-7",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        216.1578947368421,
+                        1042.0,
+                        35.0,
+                        22.0
+                    ],
+                    "text": "out 5"
+                }
+            },
+            {
+                "box": {
+                    "color": [
+                        0.0,
+                        0.7176470588235294,
+                        0.7019607843137254,
+                        1.0
+                    ],
+                    "id": "obj-6",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        166.3684210526316,
+                        1042.0,
+                        35.0,
+                        22.0
+                    ],
+                    "text": "out 4"
+                }
+            },
+            {
+                "box": {
+                    "color": [
+                        0.0,
+                        0.7176470588235294,
+                        0.7019607843137254,
+                        1.0
+                    ],
+                    "id": "obj-5",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        116.57894736842105,
+                        1042.0,
+                        35.0,
+                        22.0
+                    ],
+                    "text": "out 3"
+                }
+            },
+            {
+                "box": {
+                    "color": [
+                        0.0,
+                        0.7176470588235294,
+                        0.7019607843137254,
+                        1.0
+                    ],
+                    "id": "obj-3",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        66.78947368421052,
+                        1042.0,
+                        35.0,
+                        22.0
+                    ],
+                    "text": "out 2"
+                }
+            },
+            {
+                "box": {
+                    "code": "/**\n * @file multi_tap_engine.gen\n * @author Max Bruckert assisted by Gemini\n * \n * DESCRIPTION:\n * Advanced 32-tap sculptural delay engine with 16-channel spatialization.\n * Features 4dB/oct Ladder filtering, \"pumping\" ducking, \n * and sample-accurate synchronization for UI and modular gear.\n * \n * PARAMETERS:\n * - mix [0..1]         : Global Dry/Wet balance (Constant Power).\n * - mc_mode [0..1]     : 0 = Stereo (Out 1-2), 1 = 16-Channel Spatial (Out 1-16).\n * - gain [0..5]        : Global drive/gain for all taps.\n * - spread [-100..100] : Stereo width (Mode 0) or Spatial rotation speed (Mode 1).\n * - offset [0..1]      : Spatial starting point for the first tap.\n * - ducking [0..1]     : Activates input-responsive auto-compression (pumping).\n * - smooth_time [0..1] : Temporal inertia (Glissando). 0 = Instant, 0.99 = Slow.\n * - clear [0..1]       : Panic button. Instant mute and buffer purge.\n * - feedback [0..100]  : Feedback level. Re-scaled internally to 0.0-0.6 range.\n * - f_on [0..1]        : Filter chain master toggle (smoothed).\n * - f_mix [0..100]     : Blend between raw audio and filtered taps.\n * - f_type [0..1]      : Filter shape. 0 = Lowpass, 1 = Highpass.\n * - f_start [Hz]       : Start frequency for spectral mapping.\n * - f_end [Hz]         : End frequency for spectral mapping.\n * - f_direction [0..3] : 0:Desc, 1:Asc, 2:Random, 3:Envelope-Follower.\n * - res [0..100]       : Filter resonance (Q). Internally mapped for stability.\n * \n * OUTPUTS:\n * - Out 1-16           : Audio signals (Spatialized or Stereo mix).\n * - Out 17             : Master Trigger (Stretched pulse for UI Playhead).\n * - Out 18             : Tap Trigger (Sample-accurate pulse for hits/sync).\n * - Out 19             : Held Index (Current tap ID 0-31).\n * - Out 20             : Held Amplitude (Current tap velocity 0.0-1.0).\n */\n/**\n * @file multi_tap_engine.gen\n * @author Max Bruckert assisted by Gemini\n * @description Advanced 32-tap engine with 24dB/oct Ladder Filtering.\n * Optimized for 16-channel spatial output. \n * Features \"Elastic-Step\" Sync for reliable trigger detection during glissando.\n * \n * OUTPUTS: \n * Out 1-16 : Audio Outputs (Spatialized or Stereo)\n * Out 17   : Master UI Trigger (Launch Playhead)\n * Out 18   : Tap Trigger (Pulse for sah~ / External Trigger)\n * Out 19   : Held Index (For JSUI hit animation)\n * Out 20   : Held Amplitude (CV Velocity)\n */\n\n// 1. DECLARATIONS\nBuffer buf_taps; \nDelay dL(1500000), dR(1500000), dS(1500000); \nData filt_mem(256), mc_bus(16), out_table(20);\nData smooth_ms(32), last_sync_state(32);\n\nHistory prev_in(0), env_fol(0), s_mode(0), s_f_mx(0), s_f_type(0);\nHistory s_off(0), s_spr(0), s_gn(0), s_mx(0), s_f_st(16000), s_f_ed(800), s_res(0.5);\nHistory h_idx(-1), h_amp(0), trig_timer(0); \n\nParam mix(0.5), mc_mode(0), gain(1.0), spread(0), offset(0), ducking(0), smooth_time(0.9), clear(0);\nParam f_type(0), f_start(16000), f_end(800), f_direction(0), feedback(0), f_mix(0), res(0); \n\n// 2. PRE-PROCESSING & DUCKING\nin1_c = dcblock(in1); in2_c = dcblock(in2);\nin_abs = (abs(in1_c) + abs(in2_c)) * 0.5;\n\n// Master UI Trigger (100ms lockout)\nif (in_abs > 0.005 && prev_in == 0 && trig_timer == 0) { trig_timer = 4800; }\nui_master_trig = (trig_timer > 0); \ntrig_timer = max(0, trig_timer - 1); \nprev_in = (in_abs > 0.005);\n\nenv_fol = mix(env_fol, in_abs, (in_abs > env_fol) ? 0.2 : 0.0008);\nduck = mix(1.0, 1.0 - (pow(clamp(env_fol * 5, 0, 1), 1.5) * 0.95), ducking);\n\n// 3. PARAMETER SMOOTHING\nfor(k=0; k<16; k+=1) { poke(mc_bus, 0, k); }\ns_f_mx = mix(s_f_mx, clamp(f_mix/100, 0, 1), 0.05); \ns_f_type = mix(s_f_type, clamp(f_type, 0, 2), 0.05); \ns_off = mix(s_off, offset, 0.1); s_spr = mix(s_spr, spread, 0.1);\ns_gn = mix(s_gn, clamp(gain, 0, 5), 0.1); s_mx = mix(s_mx, clamp(mix, 0, 1), 0.1);\ns_mode = mix(s_mode, mc_mode, 0.1);\ns_f_st = mix(s_f_st, clamp(f_start, 20, 16000), 0.05);\ns_f_ed = mix(s_f_ed, clamp(f_end, 20, 16000), 0.05);\ns_res = mix(s_res, 0.6 + (clamp(res/100, 0, 1) * 0.38), 0.05); // Radical Res 0.6-0.98\n\nangle = s_mx * 1.57079632679; dry_v = cos(angle); wet_v = sin(angle);\nfb_amt = pow(clamp(feedback/100, 0, 1), 1.2) * 0.75; // +4dB Boost\nmc_step = (s_spr < 0) ? (15/31)*(1+(s_spr/100)) : (15/31)+(s_spr/100)*2.0;\nf_min = min(s_f_st, s_f_ed); f_max = max(s_f_st, s_f_ed);\nlog_ratio = log(f_max / f_min);\n\nsumL=0; sumR=0; tap_hit_pulse = 0;\n\n// 4. MULTI-TAP LOOP\nfor (i = 0; i < 32; i += 1) {\n    t_target = peek(buf_taps, i, 0); t_amp = peek(buf_taps, i, 1);\n    \n    // Glissando Logic\n    p_ms = peek(smooth_ms, i);\n    if (p_ms <= 0) p_ms = t_target; \n    c_ms = mix(p_ms, t_target, 1.0 - clamp(smooth_time, 0, 0.999));\n    poke(smooth_ms, c_ms, i);\n    t_samp = mstosamps(c_ms);\n    \n    sigL = dL.read(t_samp, interp=\"linear\");\n    sigR = dR.read(t_samp + mstosamps(mix(0, 250, (s_spr+100)/200)*(i/31)), interp=\"linear\");\n\n    // --- 24dB LADDER FILTER ---\n    mod = (f_direction == 0) ? (1-i/31) : (f_direction == 1 ? i/31 : (f_direction == 2 ? fract(sin(i*12.98)*43758) : t_amp));\n    cutoff = f_min * exp(mod * log_ratio);\n    f_coeff = cutoff * 2.0 / samplerate;\n    k_res = 4.0 * s_res;\n\n    l1 = peek(filt_mem, i*8+0); l2 = peek(filt_mem, i*8+1); l3 = peek(filt_mem, i*8+2); l4 = peek(filt_mem, i*8+3);\n    l_in = sigL - k_res * tanh(l4);\n    l1 = l1 + f_coeff * (l_in - l1); l2 = l2 + f_coeff * (l1 - l2); l3 = l3 + f_coeff * (l2 - l3); l4 = l4 + f_coeff * (l3 - l4);\n    poke(filt_mem, l1, i*8+0); poke(filt_mem, l2, i*8+1); poke(filt_mem, l3, i*8+2); poke(filt_mem, l4, i*8+3);\n\n    r1 = peek(filt_mem, i*8+4); r2 = peek(filt_mem, i*8+5); r3 = peek(filt_mem, i*8+6); r4 = peek(filt_mem, i*8+7);\n    r_in = sigR - k_res * tanh(r4);\n    r1 = r1 + f_coeff * (r_in - r1); r2 = r2 + f_coeff * (r1 - r2); r3 = r3 + f_coeff * (r2 - r3); r4 = r4 + f_coeff * (r3 - r4);\n    poke(filt_mem, r1, i*8+4); poke(filt_mem, r2, i*8+5); poke(filt_mem, r3, i*8+6); poke(filt_mem, r4, i*8+7);\n\n    resL = (s_f_type < 1.0) ? mix(l4, (sigL - 4*l1 + 6*l2 - 4*l3 + l4), s_f_type) : mix((sigL - 4*l1 + 6*l2 - 4*l3 + l4), (l2 - l4)*2, clamp(s_f_type-1, 0, 1));\n    resR = (s_f_type < 1.0) ? mix(r4, (sigR - 4*r1 + 6*r2 - 4*r3 + r4), s_f_type) : mix((sigR - 4*r1 + 6*r2 - 4*r3 + r4), (r2 - r4)*2, clamp(s_f_type-1, 0, 1));\n\n    fL = mix(sigL, resL, s_f_mx) * t_amp; fR = mix(sigR, resR, s_f_mx) * t_amp;\n    sumL += fL; sumR += fR;\n    \n    // MC Spatialisation\n    mono = (fL + fR) * 0.5;\n    pos = wrap((s_off * 15) + (i * mc_step), 0, 15);\n    idx = floor(pos); fr = fract(pos); idx2 = wrap(idx + 1, 0, 15);\n    poke(mc_bus, peek(mc_bus, idx) + mono * (1 - fr), idx);\n    poke(mc_bus, peek(mc_bus, idx2) + mono * fr, idx2);\n\n    // --- ELASTIC SYNC DETECTION ---\n    // Read the pulse 5ms ahead with a small window to catch it during glissando\n    sS = dS.read(mstosamps(max(0, c_ms - 5)), interp=\"step\");\n    is_hit = (sS > 0.5);\n    if (is_hit && peek(last_sync_state, i) == 0) { \n        tap_hit_pulse = 1; h_idx = i; h_amp = t_amp; \n    }\n    poke(last_sync_state, is_hit, i);\n}\n\n// 5. FB & WRITING\nmute = (clear > 0) ? 0 : 1;\ndL.write((in1_c + dcblock(tanh(sumL / 20)) * fb_amt * duck) * mute); \ndR.write((in2_c + dcblock(tanh(sumR / 20)) * fb_amt * duck) * mute); \ndS.write(ui_master_trig * mute);\n\n// 6. OUTPUTS PRE-CALC\ngn = s_gn * duck * wet_v * mute; dry = dry_v * mute;\ns_L = (in1 * dry) + dcblock(tanh(sumL/10)) * gn;\ns_R = (in2 * dry) + dcblock(tanh(sumR/10)) * gn;\n\nfor(n=0; n<16; n+=1) {\n    mc = dcblock(tanh(peek(mc_bus, n)/4)) * gn;\n    if(n < 2) mc += (n == 0 ? in1 : in2) * dry;\n    poke(out_table, mix(n==0?s_L:(n==1?s_R:0), mc, s_mode), n);\n}\n\n// 7. ASSIGNMENTS\nout1=peek(out_table,0); out2=peek(out_table,1); out3=peek(out_table,2); out4=peek(out_table,3);\nout5=peek(out_table,4); out6=peek(out_table,5); out7=peek(out_table,6); out8=peek(out_table,7);\nout9=peek(out_table,8); out10=peek(out_table,9); out11=peek(out_table,10); out12=peek(out_table,11);\nout13=peek(out_table,12); out14=peek(out_table,13); out15=peek(out_table,14); out16=peek(out_table,15);\n\nout17=ui_master_trig; \nout18=tap_hit_pulse; // Trigger Pulse\nout19=h_idx;          // Held Index\nout20=h_amp;          // Held Amplitude",
+                    "fontface": 0,
+                    "fontname": "<Monospaced>",
+                    "fontsize": 12.0,
+                    "id": "obj-2",
+                    "maxclass": "codebox",
+                    "numinlets": 2,
+                    "numoutlets": 20,
+                    "outlettype": [
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        "",
+                        ""
+                    ],
+                    "patching_rect": [
+                        17.0,
+                        47.0,
+                        965.0,
+                        906.0
+                    ]
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-8",
+                    "maxclass": "newobj",
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        963.0,
+                        17.0,
+                        76.0,
+                        22.0
+                    ],
+                    "text": "in 2 \"in right\""
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-1",
+                    "maxclass": "newobj",
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        17.0,
+                        17.0,
+                        68.0,
+                        22.0
+                    ],
+                    "text": "in 1 \"in left\""
+                }
+            },
+            {
+                "box": {
+                    "color": [
+                        0.0,
+                        0.7176470588235294,
+                        0.7019607843137254,
+                        1.0
+                    ],
+                    "id": "obj-4",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        17.0,
+                        1042.0,
+                        35.0,
+                        22.0
+                    ],
+                    "text": "out 1"
+                }
+            }
+        ],
+        "lines": [
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-2",
+                        0
+                    ],
+                    "source": [
+                        "obj-1",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-10",
+                        0
+                    ],
+                    "source": [
+                        "obj-2",
+                        11
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-11",
+                        0
+                    ],
+                    "source": [
+                        "obj-2",
+                        10
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-12",
+                        0
+                    ],
+                    "source": [
+                        "obj-2",
+                        9
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-13",
+                        0
+                    ],
+                    "source": [
+                        "obj-2",
+                        8
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-14",
+                        0
+                    ],
+                    "source": [
+                        "obj-2",
+                        7
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-15",
+                        0
+                    ],
+                    "source": [
+                        "obj-2",
+                        6
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-16",
+                        0
+                    ],
+                    "source": [
+                        "obj-2",
+                        18
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-17",
+                        0
+                    ],
+                    "source": [
+                        "obj-2",
+                        19
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-28",
+                        0
+                    ],
+                    "source": [
+                        "obj-2",
+                        12
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-3",
+                        0
+                    ],
+                    "source": [
+                        "obj-2",
+                        1
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-37",
+                        0
+                    ],
+                    "source": [
+                        "obj-2",
+                        15
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-38",
+                        0
+                    ],
+                    "source": [
+                        "obj-2",
+                        14
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-39",
+                        0
+                    ],
+                    "source": [
+                        "obj-2",
+                        13
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-4",
+                        0
+                    ],
+                    "source": [
+                        "obj-2",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-47",
+                        0
+                    ],
+                    "source": [
+                        "obj-2",
+                        17
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-48",
+                        0
+                    ],
+                    "source": [
+                        "obj-2",
+                        16
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-5",
+                        0
+                    ],
+                    "source": [
+                        "obj-2",
+                        2
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-6",
+                        0
+                    ],
+                    "source": [
+                        "obj-2",
+                        3
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-7",
+                        0
+                    ],
+                    "source": [
+                        "obj-2",
+                        4
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-9",
+                        0
+                    ],
+                    "source": [
+                        "obj-2",
+                        5
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-2",
+                        1
+                    ],
+                    "source": [
+                        "obj-8",
+                        0
+                    ]
+                }
+            }
+        ]
+    }
+}
