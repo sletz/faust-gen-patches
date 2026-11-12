@@ -1,0 +1,43 @@
+# Publishes the web page on GitHub Pages (https://sletz.github.io/faust-gen-patches/)
+# as it is on main. Nothing is compiled here: the wasm modules of web/dsp are
+# built locally by faust-rs (make web) and committed. The site keeps the
+# repository's layout for what the page links to (dsp/, max/, ref/gendsp/,
+# results/), and its root redirects to web/.
+name: Pages
+
+on:
+  push:
+    branches: [main]
+    paths: ['web/**', 'dsp/**', 'max/**', 'ref/gendsp/**', 'results/**', '.github/workflows/pages.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Assemble the site
+        run: |
+          mkdir -p _site/ref
+          cp -R web dsp max results _site/
+          cp -R ref/gendsp _site/ref/
+          printf '<!doctype html><meta charset="utf-8"><title>faust-gen-patches</title><meta http-equiv="refresh" content="0; url=web/"><a href="web/">web/</a>\n' > _site/index.html
+          touch _site/.nojekyll
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v4

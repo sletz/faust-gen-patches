@@ -2,7 +2,7 @@
 
 **Les 21 modèles gen~ et les 4 utilitaires de [GEN-patches](../GEN-patches) (Max Bruckert) en Faust, chacun vérifié échantillon par échantillon contre le C++ que Max exporte lui-même du patch original : 129 réglages, dont 61 identiques au bit près, les autres entre −191 et −319 dB du pic.**
 
-*English version: [README.md](README.md).*
+*English version: [README.md](README.md).* · **Jouer chaque modèle dans le navigateur : https://sletz.github.io/faust-gen-patches/web/**
 
 GEN-patches est une bibliothèque de patchs `gen~` (GenExpr) pour Max/MSP : réverbérations et réseaux de lignes à retard bouclées, filtres à rétroaction sans délai (ZDF), corde en guide d'ondes, hystérésis magnétique, attracteurs étranges, synthèse granulaire et pulsar, générateurs stochastiques, LFO. Ce dépôt est la même bibliothèque en Faust, un programme par patch ([dsp/](dsp/)), avec de quoi montrer qu'il calcule ce que calcule gen~.
 
@@ -107,6 +107,7 @@ Mesuré par `make cost` ([scripts/bench_cpu.py](scripts/bench_cpu.py), tableau d
 - Deux sorties vont aux haut-parleurs, choisies parmi toutes (delays-delays en a 20) ; les signaux de contrôle (les LFO UFO, l'attracteur, les marches aléatoires, les impulsions de Bernoulli) s'entendent comme la hauteur ou l'amplitude d'un son de test, ou comme des clics, et s'affichent sur un oscilloscope avec des vumètres et la charge CPU du worklet. Un gain général et un écrêtage doux gardent la sortie sous 0 dBFS. Un seul modèle joue à la fois ; `?play=<modèle>` ouvre le tiroir d'une carte, `?mute` coupe les haut-parleurs.
 - `make web-check` fait tourner chaque programme wasm sous node avec les générateurs de la page pendant une seconde : les 25 rendent une sortie finie et audible (aussi à 44,1, 96 et 192 kHz). Dans le navigateur, chaque modèle a été lancé dans un AudioContext neuf et sa sortie lue sur un AnalyserNode : finie et non silencieuse pour les 25. Les sources fichier audio et micro n'ont pas été testées (elles demandent un sélecteur de fichier ou une autorisation).
 - web/models-data.js est généré par [scripts/web_models.py](scripts/web_models.py) depuis la documentation de GEN-patches et results/results.json. Les plus grosses mémoires wasm : delays-delays 100 Mo, aether-particle 68 Mo (lignes à retard dimensionnées pour 192 kHz). delays-delays, le modèle le plus coûteux, prend environ la moitié du temps du worklet à 48 kHz.
+- La version publiée, https://sletz.github.io/faust-gen-patches/web/, est la branche main du dépôt déployée par [.github/workflows/pages.yml](.github/workflows/pages.yml) : web/ avec les fichiers vers lesquels pointent ses cartes (dsp/, max/, ref/gendsp/, results/). Rien n'y est compilé : après la modification d'un port, lancez `make web` et commitez web/dsp.
 
 <p align="center"><img src="results/web_page.png" alt="La page catalogue" width="49%"> <img src="results/web_play.png" alt="Le tiroir Play de lorenz-rossler-chaos" width="40%"></p>
 
