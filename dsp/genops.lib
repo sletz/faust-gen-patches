@@ -28,6 +28,10 @@ trunc(x) = select2(x < 0, floor(x), ceil(x));
 // genlib minimum/maximum/clamp: clamp(x, lo, hi) = min(max(x, lo), hi)
 clamp(lo, hi, x) = min(max(x, lo), hi);
 
+// the clamp the exports inline for `clip` and Param ranges:
+// x <= lo ? lo : (x >= hi ? hi : x); differs from clamp when hi < lo or x is NaN
+clip(lo, hi, x) = select2(x <= lo, select2(x >= hi, x, hi), lo);
+
 // mix(x, y, a) = x + a*(y - x)
 mix(x, y, a) = x + a * (y - x);
 
@@ -99,7 +103,7 @@ sign(v) = select2(v > 0, select2(v < 0, 0, -1), 1);
 fract(x) = x - trunc(x);
 dbtoa(x) = pow(10, x * 0.05);
 atodb(x) = select2(x <= 0, 20 * log10(x), -999);
-mstosamps(ms) = ma.SR * ms * 0.001;
+mstosamps(ms) = ms * (ma.SR * 0.001);  // as the exports inline it
 mtof(m) = 440 * exp(0.057762265 * (m - 69));
 
 // genlib's interpolators (the delay readers below use them)
@@ -128,6 +132,18 @@ with {
     c5 = 1/120.0*(y5-y0) + 1/24.0*(y1-y4) + 1/12.0*(y3-y2);
 };
 
+//---------------------------------------------------------------- evaluation order
+
+// The Faust normalizer rewrites arithmetic: x / ma.SR becomes x * (1/SR)
+// (1 ulp off genlib's division for about a quarter of the values), a*x + b*x
+// becomes (a+b)*x, constants are folded across products. Where the port must
+// follow the export's order (a chaotic system, a filter near self-oscillation
+// that amplifies the last bit), these keep it:
+//   divsr(x): a true division by the sample rate (x finite, |x| < 1e300)
+//   keep(x):  an identity the normalizer does not see through (x finite)
+divsr(x) = x / max(ma.SR, abs(x) * 1e-300);
+keep(x) = max(x, -1e308);
+
 //---------------------------------------------------------------- stateful operators
 
 // phasor(freq): phase = wrap(phase + freq*(1/sr), 0, 1), the new phase is output
@@ -147,6 +163,11 @@ dcblock(x) = (x - x') : (+ ~ *(0.9997));
 // sah(in, trig, thresh): latches `in` when trig crosses thresh upward
 sah(in, trig, thresh) = (\(out).(select2((trig' <= thresh) & (trig > thresh), out, in))) ~ _;
 
+// slide(x, up, down): y += (x - y) / (x > y ? max(1, |up|) : max(1, |down|)),
+// the state passed through fixdenorm, starting at 0
+slide(up, down, x) = (\(s).(fixdenorm(s + select2(x > s, idown, iup) * (x - s)))) ~ _
+with { iup = 1 / max(1, abs(up)); idown = 1 / max(1, abs(down)); };
+
 // accum / plusequals: count = reset ? 0 : count + incr (post)
 accum(incr, reset) = (\(c).(select2(reset != 0, c + incr, 0))) ~ _;
 
@@ -156,80 +177,85 @@ accum(incr, reset) = (\(c).(select2(reset != 0, c + incr, 0))) ~ _;
 // samples, a read head `reader` that advances once per sample (frame n:
 // n mod size), and readers that clamp the delay to [mind, maxdelay], mind = 1
 // for a read before the write of the frame, 0 after (linear, step), plus 1 for
-// the 4- and 6-point readers. `rd_*(maxd, mind, x, d)` reads signal x through
-// that arithmetic: r = size + reader - clamp(d), r1 = int(r), a = r - r1, so
-// the interpolation fraction is the very double genlib computes.
-// Signal x is the signal written: x@k is memory[(reader - k) & wrap]. For a
-// read before the write in a feedback loop, pass the feedback delayed by one
-// (x') and subtract 1 from the delay: the readers `rd_*_fb` do that.
+// the 4- and 6-point readers. `rd_*(MAXD, maxd, mind, x, d)` reads signal x
+// through that arithmetic: r = size + reader - clamp(d), r1 = int(r),
+// a = r - r1, so the interpolation fraction is the very double genlib computes.
+// Signal x is the signal written: x@k is memory[(reader - k) & wrap].
 // MAXD is a compile-time bound of maxdelay (Faust sizes its own line by it).
+//
+// The ring is reproduced too: the 4- and 6-point readers at a delay below 3
+// or 5 samples reach the write head, and genlib reads there slots written
+// `size` samples earlier (memory[reader] before this frame's write holds
+// x@size, memory[reader+1] x@(size-1)), not the latest samples. A slot k
+// samples back (k in mind-size..size) holds x@(((k - mind) mod size) + mind).
+//
+// For a read before the write in a feedback loop, pass the feedback delayed by
+// one (xd = x', the `~` of the loop): the readers `rd_*_fb` read x@k as
+// xd@(k-1), with mind = 1.
 
 npow2(n) = 2 ^ ceil(log(max(n, 2)) / log(2) - 1e-9);
 _reader(size) = ba.time % int(size);
-_tap(MAXD, x, k) = x @ max(0, min(MAXD + 8, k));
+_ring(MAXD, size, mind, x, k) = x @ max(0, min(2 * MAXD + 2, ((k - mind + size) % size) + mind));
 
 // step: round to nearest with the extra half
-rd_step(MAXD, maxd, mind, x, d) = _tap(MAXD, x, size + rd - int(r))
+rd_step(MAXD, maxd, mind, x, d) = _ring(MAXD, size, mind, x, size + rd - int(r))
 with {
     size = int(npow2(maxd)); rd = _reader(size);
     r = float(size + rd) - clamp(mind, maxd, d - 0.5);
 };
 
-rd_linear(MAXD, maxd, mind, x, d) = linear_interp(a, xa, xb)
+rd_linear(MAXD, maxd, mind, x, d) = linear_interp(a, tp(k1), tp(k1 - 1))
 with {
     size = int(npow2(maxd)); rd = _reader(size);
     r = float(size + rd) - clamp(mind, maxd, d);
     r1 = int(r); a = r - float(r1);
     k1 = size + rd - r1;
-    xa = _tap(MAXD, x, k1); xb = _tap(MAXD, x, k1 - 1);
+    tp(k) = _ring(MAXD, size, mind, x, k);
 };
 
-_rd4(MAXD, maxd, mind, x, d, interp) = interp(a, w, xx, y, z)
+_rd4(MAXD, maxd, mind, x, d, interp) = interp(a, tp(k1), tp(k1 - 1), tp(k1 - 2), tp(k1 - 3))
 with {
     size = int(npow2(maxd)); rd = _reader(size);
     r = float(size + rd) - clamp(1 + mind, maxd, d);
     r1 = int(r); a = r - float(r1);
     k1 = size + rd - r1;
-    w = _tap(MAXD, x, k1); xx = _tap(MAXD, x, k1 - 1);
-    y = _tap(MAXD, x, k1 - 2); z = _tap(MAXD, x, k1 - 3);
+    tp(k) = _ring(MAXD, size, mind, x, k);
 };
 rd_cubic(MAXD, maxd, mind, x, d) = _rd4(MAXD, maxd, mind, x, d, cubic_interp);
 rd_spline(MAXD, maxd, mind, x, d) = _rd4(MAXD, maxd, mind, x, d, spline_interp);
 
-rd_spline6(MAXD, maxd, mind, x, d) = spline6_interp(a, y0, y1, y2, y3, y4, y5)
+rd_spline6(MAXD, maxd, mind, x, d) = spline6_interp(a, tp(k0), tp(k0 - 1), tp(k0 - 2), tp(k0 - 3), tp(k0 - 4), tp(k0 - 5))
 with {
     size = int(npow2(maxd)); rd = _reader(size);
     r = float(size + rd) - clamp(1 + mind, maxd, d);
     r0 = int(r); a = r - float(r0);
     k0 = size + rd - r0;
-    y0 = _tap(MAXD, x, k0); y1 = _tap(MAXD, x, k0 - 1); y2 = _tap(MAXD, x, k0 - 2);
-    y3 = _tap(MAXD, x, k0 - 3); y4 = _tap(MAXD, x, k0 - 4); y5 = _tap(MAXD, x, k0 - 5);
+    tp(k) = _ring(MAXD, size, mind, x, k);
 };
 
-// Readers of a delay read before its write, the written signal being in a
-// feedback loop: `xd` is that signal already delayed by one sample (the `~`
-// of the loop), so x@k = xd@(k-1). Same clamp (mind = 1) and fraction.
-rd_linear_fb(MAXD, maxd, xd, d) = linear_interp(a, xa, xb)
+// x@k = xd@(k-1), the slot k back being x@(((k-1) mod size) + 1)
+_ringfb(MAXD, size, xd, k) = xd @ max(0, min(2 * MAXD + 2, (k - 1 + size) % size));
+
+rd_step_fb(MAXD, maxd, xd, d) = _ringfb(MAXD, size, xd, size + rd - int(r))
+with {
+    size = int(npow2(maxd)); rd = _reader(size);
+    r = float(size + rd) - clamp(1, maxd, d - 0.5);
+};
+rd_linear_fb(MAXD, maxd, xd, d) = linear_interp(a, tp(k1), tp(k1 - 1))
 with {
     size = int(npow2(maxd)); rd = _reader(size);
     r = float(size + rd) - clamp(1, maxd, d);
     r1 = int(r); a = r - float(r1);
     k1 = size + rd - r1;
-    xa = _tap(MAXD, xd, k1 - 1); xb = _tap(MAXD, xd, k1 - 2);
+    tp(k) = _ringfb(MAXD, size, xd, k);
 };
-rd_step_fb(MAXD, maxd, xd, d) = _tap(MAXD, xd, size + rd - int(r) - 1)
-with {
-    size = int(npow2(maxd)); rd = _reader(size);
-    r = float(size + rd) - clamp(1, maxd, d - 0.5);
-};
-_rd4_fb(MAXD, maxd, xd, d, interp) = interp(a, w, xx, y, z)
+_rd4_fb(MAXD, maxd, xd, d, interp) = interp(a, tp(k1), tp(k1 - 1), tp(k1 - 2), tp(k1 - 3))
 with {
     size = int(npow2(maxd)); rd = _reader(size);
     r = float(size + rd) - clamp(2, maxd, d);
     r1 = int(r); a = r - float(r1);
     k1 = size + rd - r1;
-    w = _tap(MAXD, xd, k1 - 1); xx = _tap(MAXD, xd, k1 - 2);
-    y = _tap(MAXD, xd, k1 - 3); z = _tap(MAXD, xd, k1 - 4);
+    tp(k) = _ringfb(MAXD, size, xd, k);
 };
 rd_cubic_fb(MAXD, maxd, xd, d) = _rd4_fb(MAXD, maxd, xd, d, cubic_interp);
 rd_spline_fb(MAXD, maxd, xd, d) = _rd4_fb(MAXD, maxd, xd, d, spline_interp);

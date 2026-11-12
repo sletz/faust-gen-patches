@@ -18,7 +18,7 @@ them): the settings leave them at their defaults, which are not clamped.
 
 import glob, importlib.util, os
 
-DEFAULT_TOL_DB = -120
+DEFAULT_TOL_DB = -180
 
 def _load():
     out = []

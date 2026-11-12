@@ -7,7 +7,7 @@
 //
 //   gen_ref [--sr 48000] [--vs 64] [-n FRAMES] [--in FILE.f64] [--noise FILE.f64]
 //           [--sites C0,C1,...] [--set NAME=VALUE]... [--at FRAME NAME=VALUE]...
-//           [--out FILE.f64] [--list]
+//           [--buffer NAME=FILE.txt]... [--out FILE.f64] [--list]
 //
 // --in     raw float64, interleaved, one channel per gen~ input (missing: zeros)
 // --noise  raw float64, interleaved; noise site k reads, on its c-th call
@@ -16,6 +16,11 @@
 //          called more often than its count is an error (exit 2).
 // --at     a parameter change at an exact frame (the block is split there),
 //          as faustprobe --at.
+// --buffer the content of a Buffer the export reads without declaring it
+//          (scripts/patch_export.py declares it as a GenRefBuffer): a text
+//          file, one frame per line, its channels separated by spaces, `#`
+//          lines ignored; stored as float32, as a Max buffer~. Without it the
+//          buffer is genlib's unbound Buffer: dim 1, channels 1, a single 0.
 // --out    raw float64, interleaved, one channel per gen~ output.
 // --list   the parameters: name, default, min, max.
 #include "genlib.h"
@@ -55,6 +60,43 @@ static inline t_sample __gen_noise(int k) {
     return g_noise[__gen_frame * g_noise_ch + ch];
 }
 
+// A Buffer read by the export but not declared in it (scripts/patch_export.py
+// declares it at namespace scope): genlib's Buffer read semantics (float32
+// data, dim, channels, read(i, ch)), the content given by --buffer.
+struct GenRefBuffer;
+static std::map<std::string, GenRefBuffer*>& gen_ref_buffers() {
+    static std::map<std::string, GenRefBuffer*> m;
+    return m;
+}
+struct GenRefBuffer : public DataInterface<float> {
+    std::vector<float> store;
+    explicit GenRefBuffer(const char* name) : store(1, 0.f) {
+        dim = 1; channels = 1; mData = store.data();
+        gen_ref_buffers()[name] = this;
+    }
+    void load(const char* path) {
+        FILE* f = fopen(path, "r");
+        if (!f) { perror(path); exit(1); }
+        std::vector<float> v; long nch = -1, frames = 0;
+        char line[65536];
+        while (fgets(line, sizeof line, f)) {
+            if (line[0] == '#') continue;
+            long c = 0; char* p = line; char* e;
+            for (;;) {
+                double x = strtod(p, &e);
+                if (e == p) break;
+                v.push_back((float)x); c++; p = e;
+            }
+            if (c == 0) continue;
+            if (nch >= 0 && c != nch) { fprintf(stderr, "gen_ref: %s: frame %ld has %ld channels, not %ld\n", path, frames, c, nch); exit(1); }
+            nch = c; frames++;
+        }
+        fclose(f);
+        if (frames == 0) { fprintf(stderr, "gen_ref: %s: no frame\n", path); exit(1); }
+        store = v; dim = frames; channels = nch; mData = store.data();
+    }
+};
+
 #include GEN_SRC
 
 namespace M = GEN_MODEL;
@@ -75,6 +117,7 @@ int main(int argc, char** argv) {
     std::string sites;
     std::vector<std::pair<std::string, double>> sets;
     std::vector<std::pair<long, std::pair<std::string, double>>> ats;
+    std::vector<std::pair<std::string, std::string>> buffers;
     auto parse_set = [](const char* s) {
         const char* eq = strchr(s, '=');
         if (!eq) { fprintf(stderr, "gen_ref: NAME=VALUE expected, got %s\n", s); exit(1); }
@@ -90,9 +133,19 @@ int main(int argc, char** argv) {
         else if (a == "--sites") sites = argv[++i];
         else if (a == "--set") sets.push_back(parse_set(argv[++i]));
         else if (a == "--at") { long fr = atol(argv[++i]); ats.push_back({fr, parse_set(argv[++i])}); }
+        else if (a == "--buffer") {
+            const char* s = argv[++i]; const char* eq = strchr(s, '=');
+            if (!eq) { fprintf(stderr, "gen_ref: --buffer NAME=FILE expected, got %s\n", s); return 1; }
+            buffers.push_back({std::string(s, eq - s), std::string(eq + 1)});
+        }
         else if (a == "--out") out = argv[++i];
         else if (a == "--list") list = true;
         else { fprintf(stderr, "gen_ref: unknown option %s\n", a.c_str()); return 1; }
+    }
+    for (auto& b : buffers) {
+        auto it = gen_ref_buffers().find(b.first);
+        if (it == gen_ref_buffers().end()) { fprintf(stderr, "gen_ref: the export reads no undeclared buffer %s\n", b.first.c_str()); return 1; }
+        it->second->load(b.second.c_str());
     }
     CommonState* st = (CommonState*)M::create(sr, vs);
     int nin = M::num_inputs(), nout = M::num_outputs(), np = M::num_params();

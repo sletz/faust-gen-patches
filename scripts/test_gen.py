@@ -12,7 +12,7 @@ and the same noise streams go to
 
 and the outputs are compared: the largest difference on each output, in dB of
 that output's peak in the reference. A check passes when every output is
-within the model's tolerance (-120 dB unless the model says why not).
+within the model's tolerance (-180 dB unless the model says why not).
 
     scripts/test_gen.py                    every model, results/results.md
     scripts/test_gen.py bernoulli-gate     some models (no results file)
@@ -92,6 +92,7 @@ def render_ref(m, setting, n, inp, noise):
     tag = f"{m['name']}-{setting['name']}"
     out = os.path.join(BUILD, tag + ".ref.f64")
     cmd = [exe, "--sr", str(SR), "--vs", "64", "-n", str(n), "--out", out]
+    cmd += m.get("ref_args", [])  # extra gen_ref options of a model (e.g. --buffer NAME=FILE)
     if inp is not None:
         p = os.path.join(BUILD, tag + ".in.f64")
         np.ascontiguousarray(inp, dtype="<f8").tofile(p)
