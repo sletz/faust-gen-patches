@@ -156,11 +156,33 @@ def compare(ref, fau, skip=0, window=None):
     return rows
 
 
+def process_io(m):
+    """inputs and outputs of the `process` of dsp/<model>.dsp, by the C++ Faust
+    compiler (`det` is what is compared; `process` is what a host runs)."""
+    import tempfile
+    dsp = os.path.join(ROOT, "dsp", m["name"] + ".dsp")
+    with tempfile.TemporaryDirectory() as tmp:
+        src = os.path.join(tmp, "p.dsp")
+        with open(src, "w") as f:
+            f.write(f'm = library("{dsp}");\nprocess = m.process;\n')
+        r = subprocess.run([os.environ.get("FAUST", "faust"), "-I", os.path.join(ROOT, "dsp"), "-json",
+                            "-o", os.path.join(tmp, "p.cpp"), src], capture_output=True, text=True)
+        if r.returncode:
+            raise RuntimeError(f"faust failed on {dsp}:\n{r.stderr}")
+        j = json.load(open(src + ".json"))
+    return j["inputs"], j["outputs"]
+
+
 def run_model(m, quick):
     n = m.get("frames_quick" if quick else "frames", 24000 if quick else 96000)
     if quick:
         n = min(n, 24000)
     results = []
+    nin, nout = process_io(m)
+    exp_out = int(subprocess.run([os.path.join(ROOT, "build", "ref", m["export"]), "--list"],
+                                 capture_output=True, text=True).stdout.split("outputs=")[1].split()[0])
+    if nin != m["inputs"] or nout != exp_out:
+        raise RuntimeError(f"{m['name']}: process has {nin} inputs / {nout} outputs, gen~ {m['inputs']} / {exp_out}")
     rng = np.random.default_rng(12345)
     nnoise = sum(m.get("sites", []))
     for setting in m["settings"]:

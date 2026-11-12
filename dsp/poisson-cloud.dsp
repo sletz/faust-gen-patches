@@ -73,6 +73,6 @@ with {
     outsel(running, count, phase, current_dur, pulse) = pulse, count, running;
 };
 
-process = cloud(_, _, g.noises(3, 0), g.noises(3, 1), g.noises(3, 2));
+process(in1, in2) = cloud(in1, in2, g.noises(3, 0), g.noises(3, 1), g.noises(3, 2));
 // the port with its noises as inputs: in1, in2, then the noise sites start, loop, next
 det = cloud;
