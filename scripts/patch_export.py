@@ -13,10 +13,15 @@ ref/gen_ref.cpp fills from `--buffer buf_taps=FILE` (empty: genlib's unbound
 Buffer, dim 1, channels 1, one 0). Nothing else of the exported code is touched.
 
     scripts/patch_export.py ref/export/bernoulli_gate.cpp build/ref/bernoulli_gate.cpp
+
+With --buffers-only, only the buffer declarations are added (noise() and the
+sample loop untouched): the export as Max runs it, for tools/gen_bench.cpp.
 """
 import re, sys
 
-src, dst = sys.argv[1], sys.argv[2]
+args = [a for a in sys.argv[1:] if not a.startswith("--")]
+buffers_only = "--buffers-only" in sys.argv
+src, dst = args[0], args[1]
 code = open(src).read()
 k = 0
 def site(m):
@@ -24,10 +29,11 @@ def site(m):
     s = f"__gen_noise({k})"
     k += 1
     return s
-code = re.sub(r"(?<![A-Za-z0-9_])noise\(\)", site, code)
-loop = "while ((__n--)) {"
-assert code.count(loop) == 1, f"{src}: {code.count(loop)} sample loops"
-code = code.replace(loop, loop + " __gen_tick();")
+if not buffers_only:
+    code = re.sub(r"(?<![A-Za-z0-9_])noise\(\)", site, code)
+    loop = "while ((__n--)) {"
+    assert code.count(loop) == 1, f"{src}: {code.count(loop)} sample loops"
+    code = code.replace(loop, loop + " __gen_tick();")
 # Buffers read but not declared by the export
 bufs = sorted({a for a, b in re.findall(r"int (\w+)_dim = (\w+)\.dim;", code)
                if a == b and not re.search(r"\b(Data|Buffer|DataLocal)\s+" + re.escape(a) + r"\s*;", code)})
