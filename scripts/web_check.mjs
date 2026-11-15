@@ -10,7 +10,13 @@
 // (after the listening and the output stage, master gain 0 dB), the speed against
 // real time. Fails (exit 1) on a non-finite output, a silent speaker pair
 // (peak below 1e-3), or a peak above 0 dBFS at the speakers.
+//
+// Then the block diagrams of the page (web/svg/<name>.json.gz, scripts/web_svg.py), as
+// its viewer (web/diagram.js) reads them: every pack inflates to a JSON object with
+// process.svg, every file is an <svg> with a viewBox, every link names a file of the
+// pack. Fails on any of these.
 import { readFileSync } from "node:fs";
+import { gunzipSync } from "node:zlib";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { FaustWasmDsp } from "../web/faust-wasm-dsp.js";
@@ -87,4 +93,26 @@ for (const [id, spec] of Object.entries(MODELS)) {
   console.log(line);
 }
 console.log(`${failures ? `${failures} failure(s)` : "every model renders finite, non-silent output"} (${seconds} s at ${sr} Hz, node ${process.version})`);
-process.exit(failures ? 1 : 0);
+
+let diagrams = 0, links = 0, packs = 0, svgFailures = 0;
+for (const [id, spec] of Object.entries(MODELS)) {
+  if (only.length && !only.includes(id) && !only.includes(spec.dsp)) continue;
+  try {
+    const files = JSON.parse(gunzipSync(readFileSync(join(root, "web", "svg", spec.dsp + ".json.gz"))).toString("utf8"));
+    if (!("process.svg" in files)) throw new Error("no process.svg");
+    for (const [name, text] of Object.entries(files)) {
+      if (!/^<svg [^>]*viewBox="[-\d. ]+"/.test(text)) throw new Error(`${name} does not start with an <svg> that has a viewBox`);
+      for (const [, target] of text.matchAll(/xlink:href="([^"]+)"/g)) {
+        if (!(target in files)) throw new Error(`${name} links to ${target}, which is not in the pack`);
+        links += 1;
+      }
+      diagrams += 1;
+    }
+    packs += 1;
+  } catch (e) {
+    svgFailures += 1;
+    console.log(`${id.padEnd(22)}FAIL diagrams: ${e.message}`);
+  }
+}
+console.log(`${svgFailures ? `${svgFailures} diagram pack(s) fail` : "every diagram pack is complete"} (${packs} packs, ${diagrams} diagrams, ${links} links)`);
+process.exit(failures || svgFailures ? 1 : 0);

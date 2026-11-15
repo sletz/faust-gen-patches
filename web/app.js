@@ -2,6 +2,7 @@
 // filters, the Params and Signal Flow drawers, and a Play drawer per card that runs the
 // model's Faust port (web/dsp/<name>.wasm) in an AudioWorklet (gen-processor.js), fed
 // and heard as web/drive.js says. One model plays at a time; starting another stops it.
+// The Diagram button of a card opens the block diagram of its port (web/diagram.js).
 //
 // The Play drawer is built from the program's JSON: its controls (sliders, menus,
 // toggles; double-click resets to the default), its inputs and outputs. Debug handle
@@ -10,6 +11,7 @@
 import { MODELS_DATA, SUITE } from "./models-data.js";
 import { MODELS, SOURCES, LISTEN_MODES, genDefaults } from "./drive.js";
 import { uiItems, controlKey } from "./faust-wasm-dsp.js";
+import { openDiagram } from "./diagram.js";
 
 const DSP_DIR = "dsp/";
 const ORIGINAL = "https://github.com/mxbrckrt/GEN-patches";
@@ -138,6 +140,7 @@ function buildCard(m) {
       <div class="nav-drawers">
         ${m.parameters.length ? `<button class="btn-drawer" data-drawer="params"><span>Params (${m.parameters.length})</span><span class="btn-drawer-icon">&darr;</span></button>` : ""}
         ${m.block_diagram ? `<button class="btn-drawer" data-drawer="diagram"><span>Signal Flow</span><span class="btn-drawer-icon">&darr;</span></button>` : ""}
+        <button class="btn-drawer svg-btn" data-diagram title="The block diagram of the Faust port (faust-rs --svg)"><span>Diagram</span><span class="btn-drawer-icon">&#8599;</span></button>
         <button class="btn-drawer play-drawer-btn" data-drawer="play"><span>Play</span><span class="btn-drawer-icon">&#9654;</span></button>
       </div>
       ${m.parameters.length ? `
@@ -159,7 +162,8 @@ function buildCard(m) {
       <a href="${ORIGINAL}/blob/main/gendsp/${m.dsp}.gendsp" class="ref-link" title="The original in GEN-patches">original &#8599;</a>
     </div>`;
   const entry = { m, spec, el: card, state: null, play: null };
-  card.querySelectorAll(".btn-drawer").forEach((b) => b.addEventListener("click", () => toggleDrawer(entry, b.dataset.drawer)));
+  card.querySelectorAll(".btn-drawer[data-drawer]").forEach((b) => b.addEventListener("click", () => toggleDrawer(entry, b.dataset.drawer)));
+  card.querySelector("[data-diagram]").addEventListener("click", () => openDiagram(m.dsp, m.name));
   cards.set(m.id, entry);
   return card;
 }
@@ -169,7 +173,7 @@ function toggleDrawer(entry, target) {
   const panel = card.querySelector(`[data-panel="${target}"]`);
   const open = panel.classList.contains("open");
   card.querySelectorAll(".drawer-panel").forEach((p) => p.classList.remove("open"));
-  card.querySelectorAll(".btn-drawer").forEach((b) => {
+  card.querySelectorAll(".btn-drawer[data-drawer]").forEach((b) => {
     b.classList.remove("active");
     b.querySelector(".btn-drawer-icon").innerHTML = b.dataset.drawer === "play" ? "&#9654;" : "&darr;";
   });
@@ -671,6 +675,12 @@ function main() {
   master.addEventListener("input", setMaster);
   master.addEventListener("dblclick", () => { master.value = "-6"; setMaster(); });
   setMaster();
+  // ?diagram=<id>: open that card's block diagram
+  const shown = cards.get(new URLSearchParams(location.search).get("diagram"));
+  if (shown) {
+    shown.el.scrollIntoView({ block: "start" });
+    openDiagram(shown.m.dsp, shown.m.name);
+  }
   // ?play=<id>: open that card's Play drawer and start it, if the browser lets audio
   // start without a click (otherwise the Start button is there)
   const deep = new URLSearchParams(location.search).get("play");

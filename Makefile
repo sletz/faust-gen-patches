@@ -12,9 +12,12 @@
 #   make cost        CPU cost of every model, gen~ export against Faust: results/cpu.md (a few minutes,
 #                    on an idle machine)
 #   make web         the web page: every program of dsp/ compiled to wasm by faust-rs (-double)
-#                    into web/dsp, and web/models-data.js (the catalogue of GEN-patches' docs,
-#                    GEN_PATCHES); make -B web after a faust-rs change
-#   make web-check   every wasm program under node with the page's default inputs: finite, not silent
+#                    into web/dsp, its block diagrams (faust-rs --svg, one packed file per
+#                    program: scripts/web_svg.py) into web/svg, and web/models-data.js (the
+#                    catalogue of GEN-patches' docs, GEN_PATCHES); make -B web after a faust-rs
+#                    change
+#   make web-check   every wasm program under node with the page's default inputs: finite, not
+#                    silent; every packed diagram: process.svg there, every link resolved
 #   make web-serve [WEB_PORT=8766]
 #                    serve the repository; open http://127.0.0.1:WEB_PORT/web/
 #   make export      ask Max to export the C++ of every gendsp again (opens Max)
@@ -31,12 +34,13 @@ WEB_PORT ?= 8766
 FAUST ?= faust
 CXX ?= c++
 CXXFLAGS = -std=c++17 -O2 -ffp-contract=off
-export FAUST_RS FAUSTPROBE
+export FAUST_RS FAUSTPROBE FAUSTRS
 
 EXPORTS = $(basename $(notdir $(wildcard ref/export/*.cpp)))
 REFS = $(addprefix build/ref/,$(EXPORTS))
 GENLIB_OBJ = build/ref/genlib.o build/ref/json.o build/ref/json_builder.o
 WEB_WASM = $(patsubst dsp/%.dsp,web/dsp/%.wasm,$(wildcard dsp/*.dsp))
+WEB_SVG = $(patsubst dsp/%.dsp,web/svg/%.json.gz,$(wildcard dsp/*.dsp))
 
 .PHONY: help ref test quick check max max-check cost web web-check web-serve export clean
 .DEFAULT_GOAL := help
@@ -82,12 +86,16 @@ max-check:
 cost: ref
 	python3 scripts/bench_cpu.py
 
-web: $(WEB_WASM) web/models-data.js
+web: $(WEB_WASM) $(WEB_SVG) web/models-data.js
 
 # the JSON (inputs, outputs, controls) is written next to the module
 web/dsp/%.wasm: dsp/%.dsp $(wildcard dsp/*.lib)
 	@mkdir -p web/dsp
 	$(FAUSTRS) -lang wasm -double -I dsp $< -o $@
+
+# the block diagrams: the SVG files of faust-rs --svg, packed into one file per program
+web/svg/%.json.gz: dsp/%.dsp $(wildcard dsp/*.lib) scripts/web_svg.py
+	python3 scripts/web_svg.py $< $@
 
 web/models-data.js: scripts/web_models.py results/results.json
 	python3 scripts/web_models.py

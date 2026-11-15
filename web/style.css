@@ -644,3 +644,122 @@ a:hover { text-decoration: underline; }
     .master-row .now-playing { margin-left: 0; }
 }
 .card-bottom .fidelity { flex-basis: 100%; margin-bottom: 2px; }
+
+/* ------------------------------------------------------------------ the block-diagram viewer (diagram.js) */
+
+.nav-drawers { flex-wrap: wrap; }
+.btn-drawer { white-space: nowrap; }
+
+html.dgm-open { overflow: hidden; }
+
+dialog.dgm {
+    width: min(1500px, 96vw);
+    height: 92vh;
+    max-width: none;
+    max-height: none;
+    margin: auto;
+    padding: 0;
+    background: var(--bg-surface);
+    color: var(--text-main);
+    border: 1px solid var(--border-strong);
+    border-radius: 8px;
+    overflow: hidden;
+}
+dialog.dgm[open] { display: flex; flex-direction: column; }
+dialog.dgm::backdrop { background: rgba(5, 7, 10, 0.72); }
+
+.dgm-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border-subtle);
+}
+.dgm-title { font-weight: 600; font-size: 0.95rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dgm-tools { display: flex; align-items: center; gap: 6px; flex-shrink: 0; }
+.dgm-btn {
+    min-width: 30px;
+    background: var(--bg-elevated);
+    color: var(--text-muted);
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+    padding: 4px 8px;
+    font: 500 0.78rem 'JetBrains Mono', monospace;
+    cursor: pointer;
+}
+.dgm-btn:hover:not(:disabled) { color: #ffffff; border-color: var(--border-strong); }
+.dgm-btn:disabled { opacity: 0.35; cursor: default; }
+.dgm-btn.dgm-close { margin-left: 8px; }
+.dgm-zoom {
+    min-width: 52px;
+    text-align: center;
+    font: 0.72rem 'JetBrains Mono', monospace;
+    color: var(--text-dim);
+    font-variant-numeric: tabular-nums;
+}
+
+.dgm-trail {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-height: 34px;
+    padding: 6px 14px;
+    background: var(--code-bg);
+    border-bottom: 1px solid var(--border-subtle);
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: thin;
+}
+.dgm-step {
+    background: none;
+    border: 0;
+    padding: 2px 4px;
+    border-radius: 3px;
+    font: 0.75rem 'JetBrains Mono', monospace;
+    color: var(--accent-primary);
+    cursor: pointer;
+}
+.dgm-step:hover:not(:disabled) { background: rgba(56, 189, 248, 0.12); }
+.dgm-step.current { color: var(--text-main); cursor: default; }
+.dgm-sep { color: var(--text-dim); font-size: 0.75rem; }
+
+/* the diagrams are drawn for a white page: the stage is light whatever the page's theme */
+.dgm-stage {
+    flex: 1;
+    min-height: 0;
+    overflow: auto;
+    display: flex;
+    padding: 16px;
+    background: #e9edf2;
+    cursor: grab;
+    outline: none;
+}
+.dgm-stage.dragging { cursor: grabbing; user-select: none; }
+.dgm-stage svg { display: block; flex-shrink: 0; margin: auto; box-shadow: 0 1px 6px rgba(15, 18, 24, 0.25); }
+.dgm-stage svg a { cursor: zoom-in; }
+.dgm-stage svg a:hover rect { filter: brightness(1.35); }
+.dgm-stage svg a.dgm-up { cursor: zoom-out; }
+.dgm-stage svg a.dgm-up:hover rect { filter: none; }
+.dgm-stage.dragging svg a { cursor: grabbing; }
+.dgm-msg { margin: auto; font: 0.85rem 'JetBrains Mono', monospace; color: #475569; }
+.dgm-msg.err { color: #b91c1c; }
+
+.dgm-foot {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 8px 14px;
+    border-top: 1px solid var(--border-subtle);
+    font-size: 0.72rem;
+    color: var(--text-dim);
+}
+.dgm-foot > span:first-child { flex: 1; }
+.dgm-status { font-family: 'JetBrains Mono', monospace; white-space: nowrap; }
+
+@media (max-width: 640px) {
+    dialog.dgm { width: 100vw; height: 100dvh; border-radius: 0; border: 0; }
+    .dgm-head { flex-wrap: wrap; }
+    .dgm-foot > span:first-child { display: none; }
+    .dgm-foot { justify-content: space-between; }
+}
