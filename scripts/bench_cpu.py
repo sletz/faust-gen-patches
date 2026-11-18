@@ -4,7 +4,8 @@
 For each model of scripts/models/:
 
   - gen~:        ref/export/<model>.cpp as Max exported it (genlib's own noise),
-                 in tools/gen_bench.cpp;
+                 in tools/gen_bench.cpp; for an mc.gen~ patch (`mc`: N), its N
+                 instances (mc_channel 1..N), as the Faust port computes them;
   - faust:       dsp/<model>.dsp's `process` compiled by the C++ Faust compiler
                  (-double), in tools/bench_arch.cpp;
   - faust-rs:    the same by faust-rs -lang cpp -double;
@@ -77,7 +78,8 @@ def bench(m, seconds, rounds):
     best = {k: 0.0 for k in exes}
     for _ in range(rounds):
         for k, exe in exes.items():
-            best[k] = max(best[k], rt(run([exe, str(seconds), "48000", "64"] + (bufs if k == "gen~" else []))))
+            extra = (bufs + ([f"--mc={m['mc']}"] if m.get("mc") else [])) if k == "gen~" else []
+            best[k] = max(best[k], rt(run([exe, str(seconds), "48000", "64"] + extra)))
     n = int(seconds * 48000)
     jit = 0.0
     for _ in range(rounds):
@@ -124,7 +126,9 @@ def write(rows, a, load0):
          f"Real-time factors (seconds of audio per second of compute; higher is cheaper), {a.seconds:g} s of audio at 48 kHz "
          f"in blocks of 64, every input fed uniform noise, controls at their defaults, the compute call alone timed, "
          f"best of {a.rounds} runs taken in turn. The last column is the speed of the Faust C++ over the gen~ export's "
-         f"(above 1: the Faust program is cheaper).", "",
+         f"(above 1: the Faust program is cheaper). For the mc.gen~ patches (adm_panner, fdn_multireverb, "
+         f"spatial-dbap) the gen~ column is the cost of the N instances that mc.gen~ @chans N runs, which "
+         f"the Faust program computes in one.", "",
          "| model | gen~ export | Faust (faust C++) | Faust (faust-rs C++) | Faust (faustprobe JIT) | faust / gen~ |",
          "|---|---|---|---|---|---|"]
     for r in rows:

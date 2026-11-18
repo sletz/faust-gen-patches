@@ -1,177 +1,247 @@
 [
  {
+  "model": "adm_panner",
+  "gen~": 163.94,
+  "faust": 582.39,
+  "faust-rs": 583.2,
+  "faustprobe": 179.0
+ },
+ {
   "model": "aether-drift",
-  "gen~": 427.55,
-  "faust": 376.77,
-  "faust-rs": 376.9,
-  "faustprobe": 201.0
+  "gen~": 412.01,
+  "faust": 340.55,
+  "faust-rs": 344.4,
+  "faustprobe": 183.0
  },
  {
   "model": "aether-particle",
-  "gen~": 388.42,
-  "faust": 237.02,
-  "faust-rs": 219.56,
-  "faustprobe": 98.5
+  "gen~": 367.39,
+  "faust": 221.23,
+  "faust-rs": 202.13,
+  "faustprobe": 88.5
  },
  {
   "model": "bernoulli-gate",
-  "gen~": 2433.84,
-  "faust": 13268.3,
-  "faust-rs": 13155.13,
-  "faustprobe": 2280.0
+  "gen~": 2311.81,
+  "faust": 13252.69,
+  "faust-rs": 13127.77,
+  "faustprobe": 2272.0
  },
  {
   "model": "cswitch-tremolo",
-  "gen~": 1048.27,
-  "faust": 1119.7,
-  "faust-rs": 1195.92,
-  "faustprobe": 548.0
+  "gen~": 966.35,
+  "faust": 1091.05,
+  "faust-rs": 1223.0,
+  "faustprobe": 516.0
  },
  {
   "model": "curvature-shaper",
-  "gen~": 1980.98,
-  "faust": 2006.8,
-  "faust-rs": 2339.16,
-  "faustprobe": 1096.0
+  "gen~": 1885.76,
+  "faust": 1941.13,
+  "faust-rs": 2218.01,
+  "faustprobe": 1058.0
  },
  {
   "model": "delays-delays",
-  "gen~": 24.46,
-  "faust": 24.18,
-  "faust-rs": 23.84,
-  "faustprobe": 11.7
+  "gen~": 24.33,
+  "faust": 22.77,
+  "faust-rs": 23.7,
+  "faustprobe": 11.2
+ },
+ {
+  "model": "driller",
+  "gen~": 457.74,
+  "faust": 279.69,
+  "faust-rs": 340.29,
+  "faustprobe": 124.0
  },
  {
   "model": "erbeverb-clone",
-  "gen~": 390.62,
-  "faust": 353.41,
-  "faust-rs": 370.36,
-  "faustprobe": 197.0
+  "gen~": 331.48,
+  "faust": 338.61,
+  "faust-rs": 350.85,
+  "faustprobe": 175.0
+ },
+ {
+  "model": "fdn_multireverb",
+  "gen~": 42.69,
+  "faust": 35.49,
+  "faust-rs": 36.7,
+  "faustprobe": 26.0
+ },
+ {
+  "model": "fhickup",
+  "gen~": 316.22,
+  "faust": 322.74,
+  "faust-rs": 324.18,
+  "faustprobe": 185.0
+ },
+ {
+  "model": "filterbank-8",
+  "gen~": 176.8,
+  "faust": 148.22,
+  "faust-rs": 172.04,
+  "faustprobe": 121.0
+ },
+ {
+  "model": "fm-supermod",
+  "gen~": 308.72,
+  "faust": 272.85,
+  "faust-rs": 341.36,
+  "faustprobe": 104.0
  },
  {
   "model": "frost-machine",
-  "gen~": 720.9,
-  "faust": 899.88,
-  "faust-rs": 916.95,
-  "faustprobe": 363.0
+  "gen~": 721.06,
+  "faust": 863.86,
+  "faust-rs": 838.01,
+  "faustprobe": 359.0
+ },
+ {
+  "model": "grainer",
+  "gen~": 1465.65,
+  "faust": 2152.02,
+  "faust-rs": 2253.06,
+  "faustprobe": 864.0
  },
  {
   "model": "householder-fdn-16",
-  "gen~": 201.37,
-  "faust": 212.38,
-  "faust-rs": 203.72,
-  "faustprobe": 107.0
+  "gen~": 169.09,
+  "faust": 136.75,
+  "faust-rs": 135.73,
+  "faustprobe": 68.4
  },
  {
   "model": "hp_butterworth",
-  "gen~": 1870.47,
-  "faust": 3102.16,
-  "faust-rs": 3021.7,
-  "faustprobe": 2088.0
+  "gen~": 1691.0,
+  "faust": 3180.36,
+  "faust-rs": 3227.88,
+  "faustprobe": 2027.0
  },
  {
   "model": "lorenz-rossler-chaos",
-  "gen~": 1069.68,
-  "faust": 649.52,
-  "faust-rs": 739.67,
-  "faustprobe": 282.0
+  "gen~": 1143.97,
+  "faust": 642.97,
+  "faust-rs": 781.67,
+  "faustprobe": 256.0
  },
  {
   "model": "lp_butterworth",
-  "gen~": 1799.83,
-  "faust": 2958.22,
-  "faust-rs": 3009.59,
-  "faustprobe": 2062.0
+  "gen~": 1907.97,
+  "faust": 3157.36,
+  "faust-rs": 3047.11,
+  "faustprobe": 2056.0
+ },
+ {
+  "model": "modeldrive",
+  "gen~": 384.01,
+  "faust": 362.88,
+  "faust-rs": 372.48,
+  "faustprobe": 280.0
+ },
+ {
+  "model": "multiband-drive",
+  "gen~": 127.94,
+  "faust": 152.96,
+  "faust-rs": 177.16,
+  "faustprobe": 111.0
  },
  {
   "model": "offset-spline-random",
-  "gen~": 1022.63,
-  "faust": 1833.59,
-  "faust-rs": 2169.96,
-  "faustprobe": 598.0
+  "gen~": 1064.62,
+  "faust": 1298.5,
+  "faust-rs": 1773.39,
+  "faustprobe": 328.0
  },
  {
   "model": "poisson-cloud",
-  "gen~": 1947.92,
-  "faust": 1846.78,
-  "faust-rs": 1965.38,
-  "faustprobe": 941.0
+  "gen~": 2050.06,
+  "faust": 1837.33,
+  "faust-rs": 2005.37,
+  "faustprobe": 904.0
  },
  {
   "model": "precision-svf-48db",
-  "gen~": 370.84,
-  "faust": 398.35,
-  "faust-rs": 399.55,
-  "faustprobe": 205.0
+  "gen~": 363.14,
+  "faust": 383.86,
+  "faust-rs": 390.38,
+  "faustprobe": 199.0
  },
  {
   "model": "pulsar-synth",
-  "gen~": 2550.51,
-  "faust": 1685.52,
-  "faust-rs": 1822.15,
-  "faustprobe": 385.0
+  "gen~": 2423.11,
+  "faust": 1760.19,
+  "faust-rs": 1784.6,
+  "faustprobe": 603.0
+ },
+ {
+  "model": "rings",
+  "gen~": 96.31,
+  "faust": 283.25,
+  "faust-rs": 311.56,
+  "faustprobe": 105.0
  },
  {
   "model": "sature-delay",
-  "gen~": 446.45,
-  "faust": 467.89,
-  "faust-rs": 444.57,
-  "faustprobe": 172.0
+  "gen~": 455.81,
+  "faust": 391.68,
+  "faust-rs": 411.69,
+  "faustprobe": 149.0
+ },
+ {
+  "model": "skipper",
+  "gen~": 1077.69,
+  "faust": 749.29,
+  "faust-rs": 818.28,
+  "faustprobe": 309.0
+ },
+ {
+  "model": "spatial-dbap",
+  "gen~": 2.22,
+  "faust": 113.61,
+  "faust-rs": 117.45,
+  "faustprobe": 49.3
  },
  {
   "model": "tape-hysteresis",
-  "gen~": 620.41,
-  "faust": 662.75,
-  "faust-rs": 717.36,
+  "gen~": 636.07,
+  "faust": 673.23,
+  "faust-rs": 716.97,
   "faustprobe": 597.0
  },
  {
-  "model": "ufo-core-simple",
-  "gen~": 1451.55,
-  "faust": 1555.78,
-  "faust-rs": 1717.58,
-  "faustprobe": 1150.0
- },
- {
-  "model": "ufo-core",
-  "gen~": 510.78,
-  "faust": 762.73,
-  "faust-rs": 889.27,
-  "faustprobe": 388.0
- },
- {
   "model": "ufo",
-  "gen~": 660.04,
-  "faust": 766.22,
-  "faust-rs": 774.49,
-  "faustprobe": 467.0
+  "gen~": 690.05,
+  "faust": 771.84,
+  "faust-rs": 838.07,
+  "faustprobe": 487.0
  },
  {
   "model": "volt-drama",
-  "gen~": 409.54,
-  "faust": 333.05,
-  "faust-rs": 335.14,
-  "faustprobe": 193.0
+  "gen~": 398.29,
+  "faust": 302.53,
+  "faust-rs": 314.18,
+  "faustprobe": 170.0
  },
  {
   "model": "volt-syphon",
-  "gen~": 468.0,
-  "faust": 461.55,
-  "faust-rs": 464.47,
-  "faustprobe": 356.0
+  "gen~": 459.0,
+  "faust": 439.64,
+  "faust-rs": 444.93,
+  "faustprobe": 349.0
  },
  {
   "model": "waveguide-string",
-  "gen~": 291.4,
-  "faust": 256.56,
-  "faust-rs": 263.25,
-  "faustprobe": 174.0
+  "gen~": 282.62,
+  "faust": 226.41,
+  "faust-rs": 253.22,
+  "faustprobe": 154.0
  },
  {
   "model": "zdf-diode-ladder",
-  "gen~": 410.67,
-  "faust": 388.45,
-  "faust-rs": 394.74,
-  "faustprobe": 270.0
+  "gen~": 402.09,
+  "faust": 380.31,
+  "faust-rs": 385.64,
+  "faustprobe": 259.0
  }
 ]
