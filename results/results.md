@@ -15,7 +15,7 @@ Error: the largest |gen - faust| over the window, in dB of the peak of that outp
 | aether-drift | time-sweep | 144000 | -216.9 | -180 | -217 -218 | ok |
 | aether-drift | hot | 144000 | -275.6 | -180 | -277 -276 | ok |
 | aether-particle | default | 192000 | -244.3 | -180 | -248 -244 | ok |
-| aether-particle | dense-near | 192000 | -257.1 | -180 | -259 -257 | ok |
+| aether-particle | dense-near | 192000 | -257.2 | -180 | -259 -257 | ok |
 | aether-particle | regen-bright | 192000 | -227.0 | -180 | -227 -228 | ok |
 | aether-particle | freeze-clear | 192000 | -245.3 | -180 | -251 -245 | ok |
 | bernoulli-gate | default | 96000 | −∞ | -180 | −∞ −∞ −∞ | ok |
@@ -25,21 +25,21 @@ Error: the largest |gen - faust| over the window, in dB of the peak of that outp
 | cswitch-tremolo | jitter-fast | 96000 | -268.4 | -180 | -268 -270 −∞ −∞ | ok |
 | cswitch-tremolo | slow-wide | 96000 | -297.9 | -180 | -298 -300 −∞ −∞ | ok |
 | cswitch-tremolo | reset | 96000 | -270.3 | -180 | -270 -271 −∞ −∞ | ok |
-| curvature-shaper | default | 96000 | -319.1 | -180 | -319 -319 | ok |
-| curvature-shaper | s-curve | 96000 | -319.1 | -180 | -319 -319 | ok |
-| curvature-shaper | inverse | 96000 | -319.1 | -180 | -319 -319 | ok |
-| curvature-shaper | unclamped | 96000 | -319.1 | -180 | -319 -319 | ok |
-| curvature-shaper | wide-ab | 96000 | -318.9 | -180 | -319 -319 | ok |
+| curvature-shaper | default | 96000 | −∞ | -180 | −∞ −∞ | ok |
+| curvature-shaper | s-curve | 96000 | −∞ | -180 | −∞ −∞ | ok |
+| curvature-shaper | inverse | 96000 | −∞ | -180 | −∞ −∞ | ok |
+| curvature-shaper | unclamped | 96000 | −∞ | -180 | −∞ −∞ | ok |
+| curvature-shaper | wide-ab | 96000 | −∞ | -180 | −∞ −∞ | ok |
 | delays-delays | default | 264000 | -214.1 | -180 | -304 -214 −∞ −∞ −∞ −∞ −∞ −∞ −∞ −∞ −∞ −∞ −∞ −∞ −∞ −∞ −∞ −∞ −∞ −∞ | ok |
 | delays-delays | filters-fb | 264000 | -216.4 | -180 | -298 -216 −∞ −∞ −∞ −∞ −∞ −∞ −∞ −∞ −∞ −∞ −∞ −∞ −∞ −∞ −∞ −∞ −∞ −∞ | ok |
 | delays-delays | mc-spread | 264000 | -209.1 | -180 | -270 -224 -238 -237 -235 -236 -209 -221 -256 -269 -277 -275 -290 -278 -277 -268 −∞ −∞ −∞ −∞ | ok |
 | delays-delays | clear | 264000 | -191.5 | -180 | -231 -235 -231 -215 -228 -228 -226 -229 -226 -225 -227 -204 -192 -192 -207 -220 −∞ −∞ −∞ −∞ | ok |
-| driller | default | 192000 | -332.9 | -180 | −∞ -333 −∞ | ok |
-| driller | fast-drill | 192000 | -308.2 | -180 | −∞ -308 −∞ | ok |
-| driller | degrade | 192000 | -321.5 | -180 | −∞ -321 −∞ | ok |
+| driller | default | 192000 | −∞ | -180 | −∞ −∞ −∞ | ok |
+| driller | fast-drill | 192000 | −∞ | -180 | −∞ −∞ −∞ | ok |
+| driller | degrade | 192000 | −∞ | -180 | −∞ −∞ −∞ | ok |
 | driller | locked-insert | 192000 | −∞ | -180 | −∞ −∞ −∞ | ok |
-| driller | cv | 192000 | -314.9 | -180 | −∞ -315 −∞ | ok |
-| driller | modes | 192000 | -327.7 | -180 | −∞ -328 −∞ | ok |
+| driller | cv | 192000 | −∞ | -180 | −∞ −∞ −∞ | ok |
+| driller | modes | 192000 | −∞ | -180 | −∞ −∞ −∞ | ok |
 | erbeverb-clone | default | 144000 | -244.1 | -180 | -244 -244 | ok |
 | erbeverb-clone | big-infinite | 144000 | -239.2 | -180 | -239 -242 | ok |
 | erbeverb-clone | small-dark | 144000 | -281.8 | -180 | -282 -288 | ok |
@@ -48,10 +48,10 @@ Error: the largest |gen - faust| over the window, in dB of the peak of that outp
 | fdn_multireverb | small-dark | 144000 | -235.5 | -180 | -241 -236 -240 -235 -243 -237 -241 -236 | ok |
 | fdn_multireverb | sweeps | 144000 | -234.7 | -180 | -236 -236 -235 -237 -236 -238 -238 -239 | ok |
 | fhickup | default | 96000 | −∞ | -180 | −∞ −∞ | ok |
-| fhickup | hard-ring | 96000 | -291.3 | -180 | -301 -291 | ok |
-| fhickup | telephone-wah | 96000 | -318.9 | -180 | -319 -319 | ok |
-| fhickup | hp-env-down | 96000 | -310.6 | -180 | -311 -317 | ok |
-| fhickup | sweep | 96000 | -366.9 | -180 | -370 -367 | ok |
+| fhickup | hard-ring | 96000 | −∞ | -180 | −∞ −∞ | ok |
+| fhickup | telephone-wah | 96000 | −∞ | -180 | −∞ −∞ | ok |
+| fhickup | hp-env-down | 96000 | −∞ | -180 | −∞ −∞ | ok |
+| fhickup | sweep | 96000 | −∞ | -180 | −∞ −∞ | ok |
 | filterbank-8 | default | 96000 | −∞ | -180 | −∞ −∞ −∞ −∞ | ok |
 | filterbank-8 | ring-shift | 96000 | −∞ | -180 | −∞ −∞ −∞ −∞ | ok |
 | filterbank-8 | band-levels | 96000 | −∞ | -180 | −∞ −∞ −∞ −∞ | ok |
@@ -174,9 +174,9 @@ Error: the largest |gen - faust| over the window, in dB of the peak of that outp
 | waveguide-string | low-long-trig | 96000 | -328.5 | -180 | -328 -328 | ok |
 | waveguide-string | high-noise | 96000 | -299.3 | -180 | -299 -304 | ok |
 | zdf-diode-ladder | default | 96000 | −∞ | -180 | −∞ −∞ | ok |
-| zdf-diode-ladder | envmod-accent | 96000 | -246.5 | -180 | -259 -247 | ok |
-| zdf-diode-ladder | neg-env-sweep | 96000 | -306.9 | -180 | -307 -313 | ok |
-| zdf-diode-ladder | self-osc | 96000 | -256.8 | -180 | -257 -260 | ok |
+| zdf-diode-ladder | envmod-accent | 96000 | −∞ | -180 | −∞ −∞ | ok |
+| zdf-diode-ladder | neg-env-sweep | 96000 | −∞ | -180 | −∞ −∞ | ok |
+| zdf-diode-ladder | self-osc | 96000 | −∞ | -180 | −∞ −∞ | ok |
 
 ## Notes
 

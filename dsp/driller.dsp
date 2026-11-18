@@ -208,9 +208,6 @@ with {
     theta_pan = k(pan_cur + 1.0) * (PI * 0.25);
     pan_drill_L = k(drill_clean_L * k(cos(theta_pan) * 1.41421356));
     pan_drill_R = k(drill_clean_R * k(sin(theta_pan) * 1.41421356));
-    // (the reference build computes cos and sin of theta_pan with one
-    // __sincos call, whose sine is 1 ulp off libm's sin for about 1 % of the
-    // angles: out2 differs from it by about -310 dB where the pan moves)
 
     // adaptive one-pole high-pass
     f_hp = g.clip(20.0, 2500.0, 20.0 + k(k(k(ratio(tap) - 1.0) * 45.0) * (roll_filter * 0.01)));

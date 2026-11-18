@@ -1,6 +1,6 @@
 # faust-gen-patches
 
-**The 35 gen~ patches of Max Bruckert's [GEN-patches](../GEN-patches) in Faust, each checked sample by sample against the C++ that Max itself exports from the original patch: 171 settings, 79 of them bit-exact, the others within −191 to −367 dB of the peak.**
+**The 35 gen~ patches of Max Bruckert's [GEN-patches](../GEN-patches) in Faust, each checked sample by sample against the C++ that Max itself exports from the original patch: 171 settings, 96 of them bit-exact, the others within −191 to −328 dB of the peak.**
 
 *Version française : [README.fr.md](README.fr.md).* · **Play every model in the browser: https://sletz.github.io/faust-gen-patches/web/**
 
@@ -11,7 +11,7 @@ GEN-patches is a library of `gen~` (GenExpr) patches for Max/MSP: reverbs and fe
 - **genlib's operators in Faust**, [dsp/genops.lib](dsp/genops.lib): `wrap`, `fold`, `phasor`, `cycle` (the 16384-point cosine table and the 32-bit phase), `dcblock`, `sah`, `accum`, `slide`, `safediv`, `fixnan`… and genlib's `Delay`, whose readers reproduce its ring arithmetic, so that the interpolation fraction is the very double genlib computes, and the slots it reads beyond the write head.
 - **As cheap as gen~**: the Faust C++ runs on average 1.04 times as fast as the C++ Max exports (32 single-instance models), and computes the mc.gen~ panners several times more cheaply (§4).
 - **Usable where gen~ was**: the demo patchers of GEN-patches with the Faust ports in `faustgen~` ([max/](max/), §5), and the catalogue page with every model compiled to WebAssembly and playable in the browser ([web/](web/), §6).
-- **Every port agrees with its export** to −191 dB of the peak or better, at every setting of the suite; 79 of the 171 settings are bit-exact. Every program also compiles with the C++ Faust compiler, stays finite in single precision, and gives the same samples at any block size.
+- **Every port agrees with its export** to −191 dB of the peak or better, at every setting of the suite; 96 of the 171 settings are bit-exact. Every program also compiles with the C++ Faust compiler, stays finite in single precision, and gives the same samples at any block size.
 
 ## Contents
 
@@ -33,37 +33,37 @@ GEN-patches is a library of `gen~` (GenExpr) patches for Max/MSP: reverbs and fe
 |---|---|---|---|
 | [adm_panner](dsp/adm_panner.dsp) | 3/8 | mc.gen~: circular or linear cosine-beam panner, air damping | −305 |
 | [aether-drift](dsp/aether-drift.dsp) | 2/2 | parallel delays and 8 modulated allpasses | −214 |
-| [aether-particle](dsp/aether-particle.dsp) | 2/2 | 4-voice asynchronous granular sampler on a 20 s buffer, 4×4 Hadamard FDN | −227 |
+| [aether-particle](dsp/aether-particle.dsp) | 2/2 | 4-voice asynchronous granular sampler on a 20 s buffer, 4×4 Hadamard FDN | −226 |
 | [bernoulli-gate](dsp/bernoulli-gate.dsp) | 1/3 | Bernoulli trial gate router | bit-exact |
 | [cswitch-tremolo](dsp/cswitch-tremolo.dsp) | 2/4 | granular chopper, trapezoidal envelope, sample-and-hold band-pass | −268 |
-| [curvature-shaper](dsp/curvature-shaper.dsp) | 2/2 | symmetric S-curve and its exact inverse | −319 |
+| [curvature-shaper](dsp/curvature-shaper.dsp) | 2/2 | symmetric S-curve and its exact inverse | bit-exact |
 | [delays-delays](dsp/delays-delays.dsp) | 2/20 | 32-tap delay, 16 spatial outputs, ladder filter, ducking | −191 |
-| [driller](dsp/driller.dsp) | 4/3 | stochastic beat-repeat delay: six taps, rests, degradation, capture | −308 |
+| [driller](dsp/driller.dsp) | 4/3 | stochastic beat-repeat delay: six taps, rests, degradation, capture | bit-exact |
 | [erbeverb-clone](dsp/erbeverb-clone.dsp) | 2/2 | 4×4 Hadamard FDN reverb | −239 |
-| [fdn_multireverb](dsp/fdn_multireverb.dsp) | 8/8 | mc.gen~: a 4×4 Hadamard FDN per channel, decorrelated by the channel | −235 |
-| [fhickup](dsp/fhickup.dsp) | 4/2 | overdrive, random amplitude chopper, morphing telephone filter | −291 |
+| [fdn_multireverb](dsp/fdn_multireverb.dsp) | 8/8 | mc.gen~: a 4×4 Hadamard FDN per channel, decorrelated by the channel | −234 |
+| [fhickup](dsp/fhickup.dsp) | 4/2 | overdrive, random amplitude chopper, morphing telephone filter | bit-exact |
 | [filterbank-8](dsp/filterbank-8.dsp) | 2/4 | 8 octave-spaced resonant band-passes with soft clipping | bit-exact |
 | [fm-supermod](dsp/fm-supermod.dsp) | 4/2 | stereo bell phase modulation with self-feedback, Risset ratios | bit-exact |
-| [frost-machine](dsp/frost-machine.dsp) | 2/2 | pre-diffusers, chorus tank, fuzz, ducking | −217 |
+| [frost-machine](dsp/frost-machine.dsp) | 2/2 | pre-diffusers, chorus tank, fuzz, ducking | −216 |
 | [grainer](dsp/grainer.dsp) | 4/4 | envelope-triggered grain bursts | bit-exact |
 | [householder-fdn-16](dsp/householder-fdn-16.dsp) | 2/2 | 16-line Householder FDN | −246 |
 | [lorenz-rossler-chaos](dsp/lorenz-rossler-chaos.dsp) | 2/4 | Lorenz and Rössler attractors, RK4 | bit-exact |
 | [modeldrive](dsp/modeldrive.dsp) | 3/2 | four distortion models morphed (overdrive, fold, quantizer, wrap) | bit-exact |
 | [multiband-drive](dsp/multiband-drive.dsp) | 2/5 | 3-band crossover, the morphing distortion on each band | bit-exact |
-| [offset-spline-random](dsp/offset-spline-random.dsp) | 2/4 | bounded random walk, 6-point spline | −288 |
+| [offset-spline-random](dsp/offset-spline-random.dsp) | 2/4 | bounded random walk, 6-point spline | −287 |
 | [poisson-cloud](dsp/poisson-cloud.dsp) | 2/3 | Poisson pulse bursts | bit-exact |
 | [precision-svf-48db](dsp/precision-svf-48db.dsp) | 2/2 | 4 cascaded TPT SVF stages per channel | −280 |
 | [pulsar-synth](dsp/pulsar-synth.dsp) | 2/2 | Curtis Roads pulsar synthesis | −239 |
 | [rings](dsp/rings.dsp) | 3/4 | 24-mode modal resonator after Mutable Instruments Rings | bit-exact |
-| [sature-delay](dsp/sature-delay.dsp) | 2/2 | lo-fi delay: bitcrush or tape sag, tilt EQ, diffusion | −210 |
+| [sature-delay](dsp/sature-delay.dsp) | 2/2 | lo-fi delay: bitcrush or tape sag, tilt EQ, diffusion | −209 |
 | [skipper](dsp/skipper.dsp) | 2/4 | stochastic CD-skip looper and stutter | bit-exact |
-| [spatial-dbap](dsp/spatial-dbap.dsp) | 4/32 | mc.gen~: 3D distance-based amplitude panning | −281 |
-| [tape-hysteresis](dsp/tape-hysteresis.dsp) | 2/2 | Jiles-Atherton hysteresis | −277 |
+| [spatial-dbap](dsp/spatial-dbap.dsp) | 4/32 | mc.gen~: 3D distance-based amplitude panning | −280 |
+| [tape-hysteresis](dsp/tape-hysteresis.dsp) | 2/2 | Jiles-Atherton hysteresis | −276 |
 | [ufo](dsp/ufo.dsp) | 2/1 | multi-waveform LFO with curvature and rampsmooth (after Dric and Maurizio Giri) | bit-exact |
 | [volt-drama](dsp/volt-drama.dsp) | 2/2 | dual waveshaper, 4-pole lowpass, 4-voice unison, delay | −239 |
-| [volt-syphon](dsp/volt-syphon.dsp) | 2/2 | voltage-starved ring modulator | −262 |
+| [volt-syphon](dsp/volt-syphon.dsp) | 2/2 | voltage-starved ring modulator | −261 |
 | [waveguide-string](dsp/waveguide-string.dsp) | 2/2 | 4-voice waveguide string, dispersion, bridge saturation | −298 |
-| [zdf-diode-ladder](dsp/zdf-diode-ladder.dsp) | 2/2 | TB-303 style diode ladder | −247 |
+| [zdf-diode-ladder](dsp/zdf-diode-ladder.dsp) | 2/2 | TB-303 style diode ladder | bit-exact |
 | [lp_butterworth](dsp/lp_butterworth.dsp), [hp_butterworth](dsp/hp_butterworth.dsp) | 1/1 | 24 dB/oct Butterworth filters ([dsp/butterworth.lib](dsp/butterworth.lib)) | −247 |
 
 Every program keeps the gen~ parameter names as slider labels, the gen~ ranges and defaults, the inputs and outputs in gen~'s order, and opens with a comment that says what it computes and what it inherits from the patch (§8). The three mc.gen~ patches (one gen~ instance per channel, which reads its channel with `mc_channel` and the number of channels with `mc_channelcount`) are ported as their N instances in one program, one output per channel: N = 8 for adm_panner and fdn_multireverb (no demo patch), 32 for spatial-dbap as in its demo patch; N is a constant at the top of the program, as `@chans` is on mc.gen~.
@@ -83,9 +83,9 @@ The check rejects what it should: removing the ring wrap from the 4-point delay 
 
 All in [results/results.md](results/results.md) (written by `make test` with the versions and the machine): 171 settings, 171 pass.
 
-- **Bit-exact (79 settings)**: bernoulli-gate, lorenz-rossler-chaos (192000 frames of a chaotic system, seven settings), poisson-cloud, ufo (24 settings: every waveform, curvature, one-shot, the rampsmooth), filterbank-8, fm-supermod (chaotic self-FM included), grainer, modeldrive, multiband-drive, rings (24 modes ringing for seconds), skipper, and settings of driller, fhickup, offset-spline-random, spatial-dbap and zdf-diode-ladder. Most of the new ports needed `keep()` and true divisions to follow the export's order of operations (§7).
-- **−239 to −367 dB**: most of the others. These differences are the last bit of a few samples: a libm `pow` that differs from Apple's by one ulp (curvature-shaper, −319 dB), a sum the Faust normalizer reassociates (§7), and two library calls of the reference itself: clang compiles the export's `pow(2, x)` as `exp2(x)` and fuses its `sin`/`cos` of one angle into `__sincos_stret`, each one ulp off at some arguments, which faustprobe does not reproduce (fhickup −291 dB with its envelope-to-filter on, driller −308 dB when its pan moves).
-- **−191 to −235 dB**: the long reverbs and delays, where an ulp of difference recirculates. In delays-delays (−191 dB, 1e-11) genlib's ring holds 2^21 samples, so its interpolation fraction is exact to 2^-31 only, and an ulp of difference in a tap's delay time moves the fraction to the neighbouring value.
+- **Bit-exact (96 settings)**: 15 of the 35 ports at every setting, bernoulli-gate, curvature-shaper, driller, fhickup, filterbank-8, fm-supermod (chaotic self-FM included), grainer, lorenz-rossler-chaos (192000 frames of a chaotic system, seven settings), modeldrive, multiband-drive, poisson-cloud, rings (24 modes ringing for seconds), skipper, ufo (24 settings: every waveform, curvature, one-shot, the rampsmooth), zdf-diode-ladder (self-oscillation included), and settings of offset-spline-random and volt-syphon. Most of them needed `keep()` and true divisions to follow the export's order of operations (§7), and a reference that computes the libm calls the export writes: built with clang's builtins, the export's `pow(2, x)` became `exp2(x)` and a `sin` and a `cos` of one angle a single `__sincos_stret`, each one ulp off at some arguments (the Makefile builds the reference with `-fno-builtin`: 79 settings were bit-exact without it, 96 with it, none worse).
+- **−234 to −328 dB**: most of the others, the last bit of a few samples: a sum or a product the Faust normalizer reassociates where no `keep()` holds it (§7).
+- **−191 to −227 dB**: the long reverbs and delays, where an ulp of difference recirculates. In delays-delays (−191 dB, 1e-11) genlib's ring holds 2^21 samples, so its interpolation fraction is exact to 2^-31 only, and an ulp of difference in a tap's delay time moves the fraction to the neighbouring value.
 - Every program compiles with the C++ Faust compiler (`make check`), renders finite samples in single precision, and passes faustprobe's `--check block=1,7 --check reset`.
 
 ## 4. CPU cost
@@ -119,7 +119,7 @@ Measured by `make cost` ([scripts/bench_cpu.py](scripts/bench_cpu.py), table in 
 
 - The Play drawer is built from the program's JSON: sliders, menus and toggles with their units (double-click resets). Each input gets a generator chosen from the program's header and the demo patch ([web/drive.js](web/drive.js)): for the effects a test loop (a saw chord, noise bursts and clicks, then silence for the tails), noise, a sine, an audio file or the microphone; for the others ramps, clocks with a button (Pluck, Start, Stop, Trigger, Sync) and CVs with an LFO.
 - Two outputs go to the speakers, chosen among all of them (delays-delays has 20); control signals (the UFO LFOs, the attractor, the random walks, the Bernoulli pulses) are heard as the pitch or the amplitude of a test tone, or as clicks, and shown on a scope with level meters and the worklet's CPU load. A master gain and a soft clip keep the output below 0 dBFS. One model plays at a time; `?play=<model>` opens a card's drawer, `?mute` silences the speakers.
-- The Diagram button opens a viewer ([web/diagram.js](web/diagram.js)) on the block diagram faust-rs draws of the program (`--svg`): `process`, then, by a click on a dark blue box, the diagram folded behind it, down to the primitives; a click on the background goes back, the path from `process` is shown as a trail, the diagram zooms (buttons, Ctrl + wheel, pinch) and pans (drag). `?diagram=<model>` opens it. faust-rs writes one SVG file per folded diagram: 13623 files and 120 MB for the 35 programs (delays-delays alone 3978; unfolded, a single program is a file of more than 1 GB), so [scripts/web_svg.py](scripts/web_svg.py) packs the files of a program into one gzipped JSON, web/svg/<model>.json.gz (4.4 MB for the 35), which the viewer loads when the diagram is opened and inflates in the browser. The pack is refused if a link names a missing file or a file cannot be reached from `process`.
+- The Diagram button opens a viewer ([web/diagram.js](web/diagram.js)) on the block diagram faust-rs draws of the program (`--svg`): `process`, then, by a click on a dark blue box, the diagram folded behind it, down to the primitives; a click on the background goes back, the path from `process` is shown as a trail, the diagram zooms (buttons, Ctrl + wheel, pinch) and pans (drag). `?diagram=<model>` opens it. faust-rs writes one SVG file per folded diagram: 13623 files and 120 MB for the 35 programs (delays-delays alone 3978; unfolded, a single program is a file of more than 1 GB), so [scripts/web_svg.py](scripts/web_svg.py) packs the files of a program into one gzipped JSON, web/svg/<model>.json.gz (4.0 MB for the 35), which the viewer loads when the diagram is opened and inflates in the browser. The pack is refused if a link names a missing file or a file cannot be reached from `process`.
 - `make web-check` runs every wasm program under node with the page's own drive for one second: all 35 render finite output with sound at the speakers. In the browser, each of the first 25 programs was started in a fresh AudioContext and its output read from an AnalyserNode: finite and not silent; the ports added with GEN-patches `5d0a432` have been checked under node only. The audio-file and microphone sources were not tested (they need a file picker or a permission). It also reads every diagram pack as the viewer does: 35 packs, 13623 diagrams, each an SVG with a viewBox, 71934 links that all name a file of their pack; in the browser the diagrams of the first 25 programs parse, and the viewer was walked by clicks (open, back, trail, zoom, pan) at desktop and phone widths.
 - web/models-data.js is generated by [scripts/web_models.py](scripts/web_models.py) from GEN-patches' docs and results/results.json. The largest wasm memories: delays-delays 100 MB, aether-particle 63 MB (lines and buffers sized for 192 kHz). delays-delays, the costliest model, takes about half of the worklet's time at 48 kHz.
 - The published version, https://sletz.github.io/faust-gen-patches/web/, is the repository's main branch deployed by [.github/workflows/pages.yml](.github/workflows/pages.yml): web/ with the files its cards link to (dsp/, max/, ref/gendsp/, results/). Nothing is compiled there: after a change of a port, run `make web` and commit web/dsp and web/svg.
@@ -168,7 +168,7 @@ The ports reproduce what gen~ computes, quirks included; these are documented in
 ```sh
 make test       # every port against its export: results/results.md (about 40 s)
 make quick      # the same on shorter renders
-make check      # every program compiles (faustprobe and the C++ Faust compiler)
+make check      # every program compiles (faustprobe, faust C++), block sizes 1/7, reset, single precision
 make iface-check  # every port's sliders, inputs and outputs against its export
 make max        # max/<model>.maxpat: the demo patchers with faustgen~ (py2max)
 make max-check  # the sources embedded in them against dsp/, sample for sample
@@ -177,7 +177,13 @@ make web        # web/dsp/*.wasm, web/svg/*.json.gz: every program and its block
 make web-check  # every wasm program under node with the page's inputs, every diagram pack
 make web-serve  # http://127.0.0.1:8766/web/
 make ref        # build/ref/<model>: the exports, deterministic, in the reference renderer
+make readme-check  # the figures of both READMEs against the results (scripts/readme_numbers.py --write)
+make verify     # test, check, iface-check, max, max-check, web, web-check, readme-check
 make export     # ask Max to export the C++ of every gendsp again (opens Max)
+python3 scripts/sync_gen_patches.py            # what changed in GEN-patches since ref/gendsp; --apply
+python3 scripts/new_port.py MODEL              # the skeleton of a new port
+python3 scripts/first_divergence.py MODEL SETTING   # where a port departs, the export's values there
+python3 scripts/dropped_statements.py          # GenExpr assignments the export may have dropped
 python3 scripts/test_gen.py sature-delay ufo   # some models
 ```
 
@@ -203,6 +209,9 @@ g = library("genops.lib");                    // genlib's operators
 | [scripts/test_gen.py](scripts/test_gen.py), [scripts/models/](scripts/models/) | the comparison and the settings of every model (and what moved against the committed results) |
 | [scripts/iface_check.py](scripts/iface_check.py) | every port's interface against its export |
 | [scripts/new_port.py](scripts/new_port.py) | the skeleton of a new port from its export: sliders, inputs, outputs, noise sites, model file |
+| [scripts/sync_gen_patches.py](scripts/sync_gen_patches.py), [ref/GEN-patches.commit](ref/GEN-patches.commit) | what changed in GEN-patches since ref/gendsp was taken, and the update |
+| [scripts/first_divergence.py](scripts/first_divergence.py), [scripts/dropped_statements.py](scripts/dropped_statements.py) | the first frame where a port departs from its export and the export's values there; GenExpr statements the export may have dropped |
+| [scripts/readme_numbers.py](scripts/readme_numbers.py) | the figures of both READMEs from results/, web/svg and max/ |
 | [scripts/export_gen.py](scripts/export_gen.py) | drives Max to export the gendsp |
 | [scripts/delays_delays_buffer.py](scripts/delays_delays_buffer.py) | the tap table of delays-delays, from its demo patch's script |
 | [web/](web/), [scripts/web_check.mjs](scripts/web_check.mjs), [scripts/web_models.py](scripts/web_models.py), [scripts/web_svg.py](scripts/web_svg.py) | the web page, its check under node, its model data, its block diagrams |

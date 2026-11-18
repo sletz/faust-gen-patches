@@ -5,7 +5,9 @@
 #                    its noise() made deterministic (scripts/patch_export.py), in ref/gen_ref.cpp
 #   make test        every port against its export, sample by sample: results/results.md
 #   make quick       the same on shorter renders
-#   make check       every program of dsp/ compiles (faustprobe, and the C++ Faust compiler)
+#   make check       every program of dsp/ compiles (faustprobe, the C++ Faust compiler), gives the
+#                    same samples at block sizes 1 and 7 and after a reset, stays finite in single
+#                    precision
 #   make iface-check every port's controls (name, default, range), inputs and outputs against its
 #                    export, and the Params no setting of the suite moves (scripts/iface_check.py)
 #   make max         max/<model>.maxpat: the demo patchers of GEN-patches with the Faust ports in
@@ -22,6 +24,10 @@
 #                    silent; every packed diagram: process.svg there, every link resolved
 #   make web-serve [WEB_PORT=8766]
 #                    serve the repository; open http://127.0.0.1:WEB_PORT/web/
+#   make readme-check  the figures of README.md and README.fr.md against results/, web/svg, max/
+#                    (scripts/readme_numbers.py; --write rewrites them)
+#   make verify      after a change of a port or a .lib: test, check, iface-check, max, max-check,
+#                    web, web-check, readme-check, in that order, stopping at the first failure
 #   make export      ask Max to export the C++ of every gendsp again (opens Max)
 #   make clean       remove build/
 #
@@ -35,7 +41,10 @@ FAUSTRS ?= $(FAUST_RS)/target/release/faust-rs
 WEB_PORT ?= 8766
 FAUST ?= faust
 CXX ?= c++
-CXXFLAGS = -std=c++17 -O2 -ffp-contract=off
+# -fno-builtin: clang would otherwise compile the exports' pow(2, x) as exp2(x) and fuse a sin and a
+# cos of one angle into __sincos_stret, each one ulp off at some arguments: the reference computes
+# the libm calls the export writes (make test: 79 -> 96 settings bit-exact, none worse)
+CXXFLAGS = -std=c++17 -O2 -ffp-contract=off -fno-builtin
 export FAUST_RS FAUSTPROBE FAUSTRS
 
 EXPORTS = $(basename $(notdir $(wildcard ref/export/*.cpp)))
@@ -44,7 +53,7 @@ GENLIB_OBJ = build/ref/genlib.o build/ref/json.o build/ref/json_builder.o
 WEB_WASM = $(patsubst dsp/%.dsp,web/dsp/%.wasm,$(wildcard dsp/*.dsp))
 WEB_SVG = $(patsubst dsp/%.dsp,web/svg/%.json.gz,$(wildcard dsp/*.dsp))
 
-.PHONY: help ref test quick check iface-check max max-check cost web web-check web-serve export clean
+.PHONY: help ref test quick check iface-check readme-check verify max max-check cost web web-check web-serve export clean
 .DEFAULT_GOAL := help
 
 help:
@@ -78,9 +87,34 @@ quick: ref
 iface-check: ref
 	python3 scripts/iface_check.py
 
+readme-check:
+	python3 scripts/readme_numbers.py
+
+# every check of AGENTS.md after a change, stopping at the first failure; then commit the
+# regenerated max/, web/dsp, web/svg, results/ with the change
+verify:
+	$(MAKE) test
+	$(MAKE) check
+	$(MAKE) iface-check
+	$(MAKE) max
+	$(MAKE) max-check
+	$(MAKE) web
+	$(MAKE) web-check
+	$(MAKE) readme-check
+
+# compiles (faustprobe, faust C++); the same samples at block sizes 1 and 7 and after a reset;
+# finite in single precision (white noise, 2 s); exits 1 on a failure
 check:
-	@for f in dsp/*.dsp; do printf "%-36s faustprobe " $$f; $(FAUSTPROBE) --double -I dsp -n 1 --in zero --quiet $$f >/dev/null && echo ok || echo FAIL; done
-	@for f in dsp/*.dsp; do printf "%-36s faust      " $$f; $(FAUST) -double -I dsp $$f -o /dev/null && echo ok || echo FAIL; done
+	@fail=0; for f in dsp/*.dsp; do \
+	  printf "%-36s " $$f; \
+	  $(FAUSTPROBE) --double -I dsp -n 1 --in zero --quiet $$f >/dev/null 2>&1 || { echo "FAIL faustprobe"; fail=1; continue; }; \
+	  $(FAUST) -double -I dsp $$f -o /dev/null 2>/dev/null || { echo "FAIL faust C++"; fail=1; continue; }; \
+	  $(FAUSTPROBE) --double -I dsp -n 20000 --in white --quiet --check block=1,7 --check reset $$f >/dev/null 2>&1 \
+	    || { echo "FAIL block size / reset"; fail=1; continue; }; \
+	  $(FAUSTPROBE) -I dsp -n 96000 --in white --quiet $$f 2>&1 | grep -q 'finite=no' \
+	    && { echo "FAIL single precision: not finite"; fail=1; continue; }; \
+	  echo "ok (faustprobe, faust C++, block 1/7, reset, single precision)"; \
+	done; exit $$fail
 
 max:
 	python3 max/convert_patches.py

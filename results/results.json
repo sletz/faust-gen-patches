@@ -372,21 +372,21 @@
   "setting": "default",
   "frames": 192000,
   "tol_db": -180,
-  "worst_db": -244.28993096074305,
+  "worst_db": -244.28883892828722,
   "ok": true,
   "outputs": [
    {
     "out": 0,
     "peak": 0.33829536861850557,
-    "err": 1.3834766665610232e-13,
-    "rel_db": -247.7664842674088,
+    "err": 1.3838930001952576e-13,
+    "rel_db": -247.76387079074158,
     "at": 172138
    },
    {
     "out": 1,
     "peak": 0.3617414260748477,
-    "err": 2.207505012119526e-13,
-    "rel_db": -244.28993096074305,
+    "err": 2.2077825678756824e-13,
+    "rel_db": -244.28883892828722,
     "at": 125994
    }
   ],
@@ -397,12 +397,12 @@
   "setting": "dense-near",
   "frames": 192000,
   "tol_db": -180,
-  "worst_db": -257.14990601425876,
+  "worst_db": -257.151786585771,
   "ok": true,
   "outputs": [
    {
     "out": 0,
-    "peak": 0.2672120277674355,
+    "peak": 0.2672120277674356,
     "err": 2.933937814919574e-14,
     "rel_db": -259.1881019609018,
     "at": 124331
@@ -410,8 +410,8 @@
    {
     "out": 1,
     "peak": 0.23086442488439535,
-    "err": 3.2052485665623465e-14,
-    "rel_db": -257.14990601425876,
+    "err": 3.204554677171956e-14,
+    "rel_db": -257.151786585771,
     "at": 63968
    }
   ],
@@ -422,21 +422,21 @@
   "setting": "regen-bright",
   "frames": 192000,
   "tol_db": -180,
-  "worst_db": -226.97166500160847,
+  "worst_db": -226.97169265396826,
   "ok": true,
   "outputs": [
    {
     "out": 0,
-    "peak": 0.48635826106398,
-    "err": 2.1795811683267274e-12,
-    "rel_db": -226.97166500160847,
+    "peak": 0.4863582610639804,
+    "err": 2.1795742294328235e-12,
+    "rel_db": -226.97169265396826,
     "at": 171657
    },
    {
     "out": 1,
-    "peak": 0.5449782973749745,
-    "err": 2.0843812786885962e-12,
-    "rel_db": -228.34804087887593,
+    "peak": 0.5449782973749742,
+    "err": 2.0857829352571855e-12,
+    "rel_db": -228.3422019554671,
     "at": 169380
    }
   ],
@@ -447,21 +447,21 @@
   "setting": "freeze-clear",
   "frames": 192000,
   "tol_db": -180,
-  "worst_db": -245.25349542159572,
+  "worst_db": -245.2510553079053,
   "ok": true,
   "outputs": [
    {
     "out": 0,
-    "peak": 0.4791772283797869,
-    "err": 1.2864362353148806e-13,
-    "rel_db": -251.42215813490682,
+    "peak": 0.479177228379787,
+    "err": 1.2869913468271932e-13,
+    "rel_db": -251.41841088556436,
     "at": 74057
    },
    {
     "out": 1,
     "peak": 0.3617414260748477,
-    "err": 1.9757112612595051e-13,
-    "rel_db": -245.25349542159572,
+    "err": 1.9762663727718177e-13,
+    "rel_db": -245.2510553079053,
     "at": 75679
    }
   ],
@@ -724,22 +724,22 @@
   "setting": "default",
   "frames": 96000,
   "tol_db": -180,
-  "worst_db": -319.0917954038201,
+  "worst_db": -Infinity,
   "ok": true,
   "outputs": [
    {
     "out": 0,
     "peak": 1.0,
-    "err": 1.1102230246251565e-16,
-    "rel_db": -319.0917954038201,
-    "at": 13774
+    "err": 0.0,
+    "rel_db": -Infinity,
+    "at": 0
    },
    {
     "out": 1,
     "peak": 1.0,
-    "err": 1.1102230246251565e-16,
-    "rel_db": -319.0917954038201,
-    "at": 13774
+    "err": 0.0,
+    "rel_db": -Infinity,
+    "at": 0
    }
   ],
   "ref_cmd": "build/ref/curvature_shaper --sr 48000 --vs 64 -n 96000 --out build/test/curvature-shaper-default.ref.f64 --in build/test/curvature-shaper-default.in.f64"
@@ -749,22 +749,22 @@
   "setting": "s-curve",
   "frames": 96000,
   "tol_db": -180,
-  "worst_db": -319.0917954038201,
+  "worst_db": -Infinity,
   "ok": true,
   "outputs": [
    {
     "out": 0,
     "peak": 1.0,
-    "err": 1.1102230246251565e-16,
-    "rel_db": -319.0917954038201,
-    "at": 36267
+    "err": 0.0,
+    "rel_db": -Infinity,
+    "at": 0
    },
    {
     "out": 1,
     "peak": 1.0,
-    "err": 1.1102230246251565e-16,
-    "rel_db": -319.0917954038201,
-    "at": 36267
+    "err": 0.0,
+    "rel_db": -Infinity,
+    "at": 0
    }
   ],
   "ref_cmd": "build/ref/curvature_shaper --sr 48000 --vs 64 -n 96000 --out build/test/curvature-shaper-s-curve.ref.f64 --in build/test/curvature-shaper-s-curve.in.f64 --set shape=0.7 --set steepness=6"
@@ -774,22 +774,22 @@
   "setting": "inverse",
   "frames": 96000,
   "tol_db": -180,
-  "worst_db": -319.0917954038201,
+  "worst_db": -Infinity,
   "ok": true,
   "outputs": [
    {
     "out": 0,
     "peak": 1.0,
-    "err": 1.1102230246251565e-16,
-    "rel_db": -319.0917954038201,
-    "at": 16935
+    "err": 0.0,
+    "rel_db": -Infinity,
+    "at": 0
    },
    {
     "out": 1,
     "peak": 1.0,
-    "err": 1.1102230246251565e-16,
-    "rel_db": -319.0917954038201,
-    "at": 16935
+    "err": 0.0,
+    "rel_db": -Infinity,
+    "at": 0
    }
   ],
   "ref_cmd": "build/ref/curvature_shaper --sr 48000 --vs 64 -n 96000 --out build/test/curvature-shaper-inverse.ref.f64 --in build/test/curvature-shaper-inverse.in.f64 --set shape=-0.6 --set steepness=2.5"
@@ -799,22 +799,22 @@
   "setting": "unclamped",
   "frames": 96000,
   "tol_db": -180,
-  "worst_db": -319.0917954038201,
+  "worst_db": -Infinity,
   "ok": true,
   "outputs": [
    {
     "out": 0,
     "peak": 1.0,
-    "err": 1.1102230246251565e-16,
-    "rel_db": -319.0917954038201,
-    "at": 38786
+    "err": 0.0,
+    "rel_db": -Infinity,
+    "at": 0
    },
    {
     "out": 1,
     "peak": 1.0,
-    "err": 1.1102230246251565e-16,
-    "rel_db": -319.0917954038201,
-    "at": 38786
+    "err": 0.0,
+    "rel_db": -Infinity,
+    "at": 0
    }
   ],
   "ref_cmd": "build/ref/curvature_shaper --sr 48000 --vs 64 -n 96000 --out build/test/curvature-shaper-unclamped.ref.f64 --in build/test/curvature-shaper-unclamped.in.f64 --set clamp_in=0 --set shape=0.3 --set steepness=10 --at 48000 shape=-1 --at 72000 steepness=0.5"
@@ -824,22 +824,22 @@
   "setting": "wide-ab",
   "frames": 96000,
   "tol_db": -180,
-  "worst_db": -318.8857962710238,
+  "worst_db": -Infinity,
   "ok": true,
   "outputs": [
    {
     "out": 0,
     "peak": 1000.0,
-    "err": 1.1368683772161603e-13,
-    "rel_db": -318.8857962710238,
-    "at": 37091
+    "err": 0.0,
+    "rel_db": -Infinity,
+    "at": 0
    },
    {
     "out": 1,
     "peak": 1.0,
-    "err": 1.1102230246251565e-16,
-    "rel_db": -319.0917954038201,
-    "at": 37091
+    "err": 0.0,
+    "rel_db": -Infinity,
+    "at": 0
    }
   ],
   "ref_cmd": "build/ref/curvature_shaper --sr 48000 --vs 64 -n 96000 --out build/test/curvature-shaper-wide-ab.ref.f64 --in build/test/curvature-shaper-wide-ab.in.f64 --set a=-250 --set b=730 --set shape=0.4 --at 60000 a=900 --at 90000 b=-1000"
@@ -1453,7 +1453,7 @@
   "setting": "default",
   "frames": 192000,
   "tol_db": -180,
-  "worst_db": -332.8635394953323,
+  "worst_db": -Infinity,
   "ok": true,
   "outputs": [
    {
@@ -1466,9 +1466,9 @@
    {
     "out": 1,
     "peak": 1.2204702940157697,
-    "err": 2.7755575615628914e-17,
-    "rel_db": -332.8635394953323,
-    "at": 24390
+    "err": 0.0,
+    "rel_db": -Infinity,
+    "at": 0
    },
    {
     "out": 2,
@@ -1485,7 +1485,7 @@
   "setting": "fast-drill",
   "frames": 192000,
   "tol_db": -180,
-  "worst_db": -308.1942441440555,
+  "worst_db": -Infinity,
   "ok": true,
   "outputs": [
    {
@@ -1498,9 +1498,9 @@
    {
     "out": 1,
     "peak": 1.4259110722770403,
-    "err": 5.551115123125783e-16,
-    "rel_db": -308.1942441440555,
-    "at": 121253
+    "err": 0.0,
+    "rel_db": -Infinity,
+    "at": 0
    },
    {
     "out": 2,
@@ -1517,7 +1517,7 @@
   "setting": "degrade",
   "frames": 192000,
   "tol_db": -180,
-  "worst_db": -321.4964470656457,
+  "worst_db": -Infinity,
   "ok": true,
   "outputs": [
    {
@@ -1530,9 +1530,9 @@
    {
     "out": 1,
     "peak": 1.318962909955245,
-    "err": 1.1102230246251565e-16,
-    "rel_db": -321.4964470656457,
-    "at": 36344
+    "err": 0.0,
+    "rel_db": -Infinity,
+    "at": 0
    },
    {
     "out": 2,
@@ -1581,7 +1581,7 @@
   "setting": "cv",
   "frames": 192000,
   "tol_db": -180,
-  "worst_db": -314.8549546916771,
+  "worst_db": -Infinity,
   "ok": true,
   "outputs": [
    {
@@ -1594,9 +1594,9 @@
    {
     "out": 1,
     "peak": 1.5349632181205604,
-    "err": 2.7755575615628914e-16,
-    "rel_db": -314.8549546916771,
-    "at": 29347
+    "err": 0.0,
+    "rel_db": -Infinity,
+    "at": 0
    },
    {
     "out": 2,
@@ -1613,7 +1613,7 @@
   "setting": "modes",
   "frames": 192000,
   "tol_db": -180,
-  "worst_db": -327.70708250711846,
+  "worst_db": -Infinity,
   "ok": true,
   "outputs": [
    {
@@ -1626,9 +1626,9 @@
    {
     "out": 1,
     "peak": 1.3481380284436724,
-    "err": 5.551115123125783e-17,
-    "rel_db": -327.70708250711846,
-    "at": 30540
+    "err": 0.0,
+    "rel_db": -Infinity,
+    "at": 0
    },
    {
     "out": 2,
@@ -2013,22 +2013,22 @@
   "setting": "hard-ring",
   "frames": 96000,
   "tol_db": -180,
-  "worst_db": -291.30753841631554,
+  "worst_db": -Infinity,
   "ok": true,
   "outputs": [
    {
     "out": 0,
     "peak": 0.1291086204335721,
-    "err": 1.1102230246251565e-16,
-    "rel_db": -301.3109002153366,
-    "at": 12759
+    "err": 0.0,
+    "rel_db": -Infinity,
+    "at": 0
    },
    {
     "out": 1,
     "peak": 0.12243579494459128,
-    "err": 3.3306690738754696e-16,
-    "rel_db": -291.30753841631554,
-    "at": 24620
+    "err": 0.0,
+    "rel_db": -Infinity,
+    "at": 0
    }
   ],
   "ref_cmd": "build/ref/fhickup --sr 48000 --vs 64 -n 96000 --out build/test/fhickup-hard-ring.ref.f64 --in build/test/fhickup-hard-ring.in.f64 --noise build/test/fhickup-hard-ring.noise.f64 --sites 1,1 --set drive=100 --set ringmod=100 --set hickfreq=1000 --set hickclick=0.5 --set hickmix=100 --set filter_morph=0 --set freq=8000 --set env_to_filt=100"
@@ -2038,22 +2038,22 @@
   "setting": "telephone-wah",
   "frames": 96000,
   "tol_db": -180,
-  "worst_db": -318.8727430454544,
+  "worst_db": -Infinity,
   "ok": true,
   "outputs": [
    {
     "out": 0,
     "peak": 0.48754800806645837,
-    "err": 5.551115123125783e-17,
-    "rel_db": -318.8727430454544,
-    "at": 28880
+    "err": 0.0,
+    "rel_db": -Infinity,
+    "at": 0
    },
    {
     "out": 1,
     "peak": 0.4935167698006394,
-    "err": 5.551115123125783e-17,
-    "rel_db": -318.9784336105315,
-    "at": 56214
+    "err": 0.0,
+    "rel_db": -Infinity,
+    "at": 0
    }
   ],
   "ref_cmd": "build/ref/fhickup --sr 48000 --vs 64 -n 96000 --out build/test/fhickup-telephone-wah.ref.f64 --in build/test/fhickup-telephone-wah.in.f64 --noise build/test/fhickup-telephone-wah.noise.f64 --sites 1,1 --set drive=40 --set freq=50 --set env_to_filt=100 --set hickfreq=0.1 --set hickclick=100 --set mix=60"
@@ -2063,22 +2063,22 @@
   "setting": "hp-env-down",
   "frames": 96000,
   "tol_db": -180,
-  "worst_db": -310.600994023916,
+  "worst_db": -Infinity,
   "ok": true,
   "outputs": [
    {
     "out": 0,
     "peak": 0.7524712766239127,
-    "err": 2.220446049250313e-16,
-    "rel_db": -310.600994023916,
-    "at": 48362
+    "err": 0.0,
+    "rel_db": -Infinity,
+    "at": 0
    },
    {
     "out": 1,
     "peak": 0.6562258387923425,
-    "err": 9.71445146547012e-17,
-    "rel_db": -316.5927008766879,
-    "at": 50907
+    "err": 0.0,
+    "rel_db": -Infinity,
+    "at": 0
    }
   ],
   "ref_cmd": "build/ref/fhickup --sr 48000 --vs 64 -n 96000 --out build/test/fhickup-hp-env-down.ref.f64 --in build/test/fhickup-hp-env-down.in.f64 --noise build/test/fhickup-hp-env-down.noise.f64 --sites 1,1 --set filter_morph=100 --set freq=3000 --set env_to_filt=-100 --set hickfreq=37 --set hickclick=3 --set ringmod=50 --set stereo_spread=0 --set drive=0 --set hickmix=0"
@@ -2088,22 +2088,22 @@
   "setting": "sweep",
   "frames": 96000,
   "tol_db": -180,
-  "worst_db": -366.90201937084845,
+  "worst_db": -Infinity,
   "ok": true,
   "outputs": [
    {
     "out": 0,
     "peak": 0.9,
-    "err": 2.710505431213761e-19,
-    "rel_db": -370.4238445519621,
-    "at": 81656
+    "err": 0.0,
+    "rel_db": -Infinity,
+    "at": 0
    },
    {
     "out": 1,
     "peak": 0.9,
-    "err": 4.0657581468206416e-19,
-    "rel_db": -366.90201937084845,
-    "at": 81664
+    "err": 0.0,
+    "rel_db": -Infinity,
+    "at": 0
    }
   ],
   "ref_cmd": "build/ref/fhickup --sr 48000 --vs 64 -n 96000 --out build/test/fhickup-sweep.ref.f64 --in build/test/fhickup-sweep.in.f64 --noise build/test/fhickup-sweep.noise.f64 --sites 1,1 --set hickfreq=13 --set hickclick=1.2 --set filter_morph=10 --at 15000 freq=400 --at 30000 filter_morph=75 --at 45000 hickfreq=300 --at 60000 drive=85 --at 70000 ringmod=30 --at 80000 env_to_filt=-40 --at 88000 mix=0"
@@ -2433,21 +2433,21 @@
   "setting": "default",
   "frames": 144000,
   "tol_db": -180,
-  "worst_db": -261.61212133626856,
+  "worst_db": -261.6097896067679,
   "ok": true,
   "outputs": [
    {
     "out": 0,
     "peak": 1.2623841008985077,
-    "err": 5.248015563785735e-14,
-    "rel_db": -267.62392803681206,
+    "err": 5.248189036133333e-14,
+    "rel_db": -267.62364093081055,
     "at": 124823
    },
    {
     "out": 1,
     "peak": 1.2640595468418772,
-    "err": 1.0499327102175826e-13,
-    "rel_db": -261.61212133626856,
+    "err": 1.0502146027824288e-13,
+    "rel_db": -261.6097896067679,
     "at": 141330
    }
   ],
@@ -2458,21 +2458,21 @@
   "setting": "huge-fuzz",
   "frames": 144000,
   "tol_db": -180,
-  "worst_db": -228.68789505876828,
+  "worst_db": -228.72271535392525,
   "ok": true,
   "outputs": [
    {
     "out": 0,
     "peak": 0.5526095231994984,
-    "err": 1.2520842652616326e-12,
-    "rel_db": -232.8956961406198,
+    "err": 1.252685563786493e-12,
+    "rel_db": -232.8915258470733,
     "at": 134351
    },
    {
     "out": 1,
     "peak": 0.5526095231994984,
-    "err": 2.0324675102656453e-12,
-    "rel_db": -228.68789505876828,
+    "err": 2.024335993972004e-12,
+    "rel_db": -228.72271535392525,
     "at": 140286
    }
   ],
@@ -2508,21 +2508,21 @@
   "setting": "sweeps",
   "frames": 144000,
   "tol_db": -180,
-  "worst_db": -216.78350391922612,
+  "worst_db": -216.78959739753702,
   "ok": true,
   "outputs": [
    {
     "out": 0,
     "peak": 2.1999999951538287,
-    "err": 2.8559599130062452e-11,
-    "rel_db": -217.73341145177125,
+    "err": 2.857447611859243e-11,
+    "rel_db": -217.72888806068192,
     "at": 56806
    },
    {
     "out": 1,
     "peak": 2.1999999967709876,
-    "err": 3.186012564881935e-11,
-    "rel_db": -216.78350391922612,
+    "err": 3.183778241044877e-11,
+    "rel_db": -216.78959739753702,
     "at": 123265
    }
   ],
@@ -2753,21 +2753,21 @@
   "setting": "big-long",
   "frames": 144000,
   "tol_db": -180,
-  "worst_db": -246.03595708062716,
+  "worst_db": -246.03876668428683,
   "ok": true,
   "outputs": [
    {
     "out": 0,
     "peak": 0.4868686890948204,
-    "err": 2.342431804081002e-13,
-    "rel_db": -246.3548977925713,
+    "err": 2.343125693471393e-13,
+    "rel_db": -246.35232518655243,
     "at": 44313
    },
    {
     "out": 1,
     "peak": 0.47284660108516335,
-    "err": 2.3600565945969265e-13,
-    "rel_db": -246.03595708062716,
+    "err": 2.3592933162674967e-13,
+    "rel_db": -246.03876668428683,
     "at": 93110
    }
   ],
@@ -6062,8 +6062,8 @@
    {
     "out": 0,
     "peak": 0.587088001298768,
-    "err": 4.567474870542654e-13,
-    "rel_db": -242.18054075780387,
+    "err": 4.568238148872084e-13,
+    "rel_db": -242.1790893655953,
     "at": 55542
    },
    {
@@ -6081,21 +6081,21 @@
   "setting": "drone",
   "frames": 144000,
   "tol_db": -180,
-  "worst_db": -249.59507681522933,
+  "worst_db": -249.604982212618,
   "ok": true,
   "outputs": [
    {
     "out": 0,
     "peak": 0.942930721495061,
-    "err": 3.067962550673542e-13,
-    "rel_db": -249.75259463193055,
+    "err": 3.078509669407481e-13,
+    "rel_db": -249.7227852726885,
     "at": 47327
    },
    {
     "out": 1,
-    "peak": 0.9555148621477986,
-    "err": 3.165800954718634e-13,
-    "rel_db": -249.59507681522933,
+    "peak": 0.9555148621477982,
+    "err": 3.162192729888602e-13,
+    "rel_db": -249.604982212618,
     "at": 51215
    }
   ],
@@ -6381,22 +6381,22 @@
   "setting": "envmod-accent",
   "frames": 96000,
   "tol_db": -180,
-  "worst_db": -246.53413523696997,
+  "worst_db": -Infinity,
   "ok": true,
   "outputs": [
    {
     "out": 0,
     "peak": 0.4910911810619549,
-    "err": 5.512257317263902e-14,
-    "rel_db": -258.9966530513872,
-    "at": 3940
+    "err": 0.0,
+    "rel_db": -Infinity,
+    "at": 0
    },
    {
     "out": 1,
-    "peak": 0.48244403817992193,
-    "err": 2.2737367544323206e-13,
-    "rel_db": -246.53413523696997,
-    "at": 36634
+    "peak": 0.4824440381799215,
+    "err": 0.0,
+    "rel_db": -Infinity,
+    "at": 0
    }
   ],
   "ref_cmd": "build/ref/zdf_diode_ladder --sr 48000 --vs 64 -n 96000 --out build/test/zdf-diode-ladder-envmod-accent.ref.f64 --in build/test/zdf-diode-ladder-envmod-accent.in.f64 --set cutoff=400 --set resonance=1.1 --set env_mod=80 --set accent=70 --set drive=50"
@@ -6406,22 +6406,22 @@
   "setting": "neg-env-sweep",
   "frames": 96000,
   "tol_db": -180,
-  "worst_db": -306.904927212229,
+  "worst_db": -Infinity,
   "ok": true,
   "outputs": [
    {
     "out": 0,
     "peak": 0.27657257480895187,
-    "err": 1.249000902703301e-16,
-    "rel_db": -306.904927212229,
-    "at": 4920
+    "err": 0.0,
+    "rel_db": -Infinity,
+    "at": 0
    },
    {
     "out": 1,
     "peak": 0.23999014813109568,
-    "err": 5.551115123125783e-17,
-    "rel_db": -312.71626359298835,
-    "at": 4648
+    "err": 0.0,
+    "rel_db": -Infinity,
+    "at": 0
    }
   ],
   "ref_cmd": "build/ref/zdf_diode_ladder --sr 48000 --vs 64 -n 96000 --out build/test/zdf-diode-ladder-neg-env-sweep.ref.f64 --in build/test/zdf-diode-ladder-neg-env-sweep.in.f64 --set cutoff=8000 --set resonance=0.3 --set env_mod=-100 --set drive=0 --at 30000 cutoff=150 --at 60000 cutoff=19000"
@@ -6431,22 +6431,22 @@
   "setting": "self-osc",
   "frames": 96000,
   "tol_db": -180,
-  "worst_db": -256.8337254863278,
+  "worst_db": -Infinity,
   "ok": true,
   "outputs": [
    {
     "out": 0,
     "peak": 0.4930059437007239,
-    "err": 7.098488463697095e-14,
-    "rel_db": -256.8337254863278,
-    "at": 22995
+    "err": 0.0,
+    "rel_db": -Infinity,
+    "at": 0
    },
    {
     "out": 1,
     "peak": 0.4904294582993667,
-    "err": 4.835021272242557e-14,
-    "rel_db": -260.12356319236653,
-    "at": 3465
+    "err": 0.0,
+    "rel_db": -Infinity,
+    "at": 0
    }
   ],
   "ref_cmd": "build/ref/zdf_diode_ladder --sr 48000 --vs 64 -n 96000 --out build/test/zdf-diode-ladder-self-osc.ref.f64 --in build/test/zdf-diode-ladder-self-osc.in.f64 --set cutoff=900 --set resonance=1.2 --set accent=100 --set drive=100 --set env_mod=40"

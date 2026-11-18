@@ -32,21 +32,26 @@ The 35 `gen~` patches of Max Bruckert's GEN-patches (Max/MSP, commit `5d0a432`) 
 make test       # every port against its export: results/results.md (~40 s)
 make quick      # same, shorter renders: the inner loop while porting
 python3 scripts/test_gen.py sature-delay ufo   # some models only
-make check      # every program compiles: faustprobe and the C++ Faust compiler
+make check      # every program compiles (faustprobe, faust C++), block sizes 1/7, reset, single precision
 make iface-check  # every port's sliders, inputs, outputs against its export; Params no setting moves
 make max-check  # the sources embedded in max/*.maxpat against dsp/, sample for sample
 make web        # web/dsp, web/svg, web/models-data.js (make -B web after a faust-rs change)
 make web-check  # every wasm program under node with the page's inputs; every diagram pack
+make readme-check  # the figures of both READMEs against results/, web/svg, max/ (--write rewrites them)
+make verify     # all of the above but cost, in order, stopping at the first failure
 make cost       # CPU cost (minutes, idle machine): results/cpu.md
+python3 scripts/sync_gen_patches.py            # what changed in GEN-patches; --diff MODEL; --apply
+python3 scripts/first_divergence.py MODEL SETTING   # the first differing frame, the export's values there
+python3 scripts/dropped_statements.py          # GenExpr assignments the export may have dropped
 ```
 
-After touching a port or a `.lib` in `dsp/`: `make test` (or the model's own run: it lists the settings that moved against the committed results), `make check`, `make iface-check`, then `make max` + `make max-check` and `make web` + `make web-check`, and commit the regenerated `max/`, `web/dsp/`, `web/svg/` with the port, or the patchers and the published page fall out of step with `dsp/`. `make test` rewrites `results/`; commit it when the numbers change, and update the README tables (both languages) if a worst error or the bit-exact count moves.
+After touching a port or a `.lib` in `dsp/`: `make verify` (test, check, iface-check, max, max-check, web, web-check, readme-check; `make test` lists the settings that moved against the committed results), and commit the regenerated `max/`, `web/dsp/`, `web/svg/`, `results/` with the port, or the patchers and the published page fall out of step with `dsp/`. When `readme-check` reports stale figures, `python3 scripts/readme_numbers.py --write` rewrites them in both READMEs; the prose around them (§3's buckets, §4's examples) is updated by hand.
 
 ## Porting a new or changed patch
 
-1. `ref/gendsp/` follows GEN-patches (copy the gendsp, remove the deleted ones), then `make export` (Max, only on request) and `make ref`; remove the exports of deleted gendsp.
+1. `python3 scripts/sync_gen_patches.py`: what changed upstream (new, removed, code changed, comments only; demo patchers without a port; orphan ports and exports), `--diff MODEL` for the code diff; `--apply` updates `ref/gendsp/` and `ref/GEN-patches.commit`. Then `make export` (Max, only on request) and `make ref`; remove the orphans.
 2. `python3 scripts/new_port.py <model>`: dsp/<model>.dsp and scripts/models/<model>.py with gen~'s sliders, inputs, outputs, the noise sites of the export with their C++ lines, `det` and `process`; an mc.gen~ patch as its N instances. It refuses to overwrite (`--force`, `--stdout`).
-3. Write the body from the GenExpr, then read the export: the noise sites' order and calls per frame, the constants gen folded (`x/4` as `x*0.25`), `safediv`/`safepow`, inlined clamps (`g.clip`), and statements the export drops (rings lost one). Add `g.keep`, `g.divsr`, `g.tdiv` only where the test shows a divergence; use genops' Delay readers, not a copy.
+3. Write the body from the GenExpr, then read the export: the noise sites' order and calls per frame, the constants gen folded (`x/4` as `x*0.25`), `safediv`/`safepow`, inlined clamps (`g.clip`), and statements the export drops (`scripts/dropped_statements.py`; rings lost one). Add `g.keep`, `g.divsr`, `g.tdiv` only where the test shows a divergence: `scripts/first_divergence.py <model> <setting>` gives the first differing frame and the values the export computed there, in its order; use genops' Delay readers, not a copy.
 4. The settings: 4 to 6 that move every Param over its gen~ range (`make iface-check` lists the ones no setting moves), with scheduled changes.
 5. `python3 scripts/test_gen.py <model>` until every setting is within −180 dB; then the checks of the previous section, the header comment (quirks), the README tables, `web/drive.js`'s entry for the model.
 
@@ -58,7 +63,8 @@ After touching a port or a `.lib` in `dsp/`: `make test` (or the model's own run
 - **Each program opens with a header comment**: what it computes, its inputs/outputs and parameters, and the quirks kept from gen~. Keep it in step with the code.
 - **Order of operations matters to the last bit.** The Faust normalizer rewrites `x / ma.SR` as a product, factors `a*x + b*x`, folds constants. Where that breaks agreement, use `g.divsr(x)` (a true division by the sample rate), `g.tdiv(n, d)` (a true division by a positive `d` that changes with the controls only) and `g.keep(x)` (an identity the normalizer does not see through), as lorenz-rossler-chaos, zdf-diode-ladder and most of the newer ports do. The `Delay` readers and interpolators of genops.lib already hold their intermediates with `keep`: use them rather than a local copy.
 - **Faust traps seen while porting**: `-(x)` is the partial application `_ - x`, not a negation; a call with one argument too few is silently a partial application; `no.noise` used twice is the same noise (take independent streams with `g.noises(K, k)`); gen~'s `if` becomes `select2` on every value it updates; a `History` read after its write in the frame gives the new value; a C `&&` short-circuits.
-- **Every program must also** compile with the C++ Faust compiler, stay finite in single precision, and give the same samples at any block size (faustprobe `--check block=1,7 --check reset`).
+- **Every program must also** compile with the C++ Faust compiler, stay finite in single precision, and give the same samples at any block size and after a reset: `make check` checks all four.
+- **The reference is built with `-fno-builtin`** (Makefile): otherwise clang turns the export's `pow(2, x)` into `exp2` and fuses `sin`/`cos` into `__sincos_stret`, one ulp off at some arguments, and no port can match it.
 - **Do not edit `ref/gendsp/` or `ref/export/`**: they are the originals. Determinism is added by `scripts/patch_export.py` into `build/ref/`, never by hand in the exports. Re-exporting (`make export`) needs Max and changes the reference itself: only on request.
 - The exported C++ in `ref/export/` is Cycling '74's (their export license or GPLv3); the Faust programs and scripts are MIT. Do not copy exported code into `dsp/`.
 

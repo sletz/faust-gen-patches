@@ -120,8 +120,6 @@ with {
     dc_R = dcb(k(g.mix(sat_R, k(sat_R * eff_gate_R), eff_hickmix)));
 
     oct_shift = g.keep(g.keep(env_to_filt * 0.01) * env) * 3.0;
-    // (the reference build turns safepow(2, x) into exp2(x), 1 ulp off pow
-    // for some x: with env_to_filt != 0 the outputs differ by about -290 dB)
     f_clamped = g.clip(50, ma.SR * 0.45, freq * g.safepow(2.0, oct_shift));
     gc = tan(g.divsr(g.keep(PI * f_clamped)));
 

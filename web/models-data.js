@@ -481,7 +481,7 @@ export const MODELS_DATA = [
    }
   ],
   "dsp": "curvature-shaper",
-  "worst_db": -318.9
+  "worst_db": "bit-exact"
  },
  {
   "id": "delays-delays",
@@ -717,7 +717,7 @@ export const MODELS_DATA = [
    }
   ],
   "dsp": "driller",
-  "worst_db": -308.2
+  "worst_db": "bit-exact"
  },
  {
   "id": "erbeverb-clone",
@@ -948,7 +948,7 @@ export const MODELS_DATA = [
    }
   ],
   "dsp": "fhickup",
-  "worst_db": -291.3
+  "worst_db": "bit-exact"
  },
  {
   "id": "filterbank-8",
@@ -2516,7 +2516,7 @@ export const MODELS_DATA = [
    }
   ],
   "dsp": "zdf-diode-ladder",
-  "worst_db": -246.5
+  "worst_db": "bit-exact"
  }
 ];
-export const SUITE = {"settings": 171, "passed": 171, "bitexact": 79, "worst": -191.5};
+export const SUITE = {"settings": 171, "passed": 171, "bitexact": 96, "worst": -191.5};
