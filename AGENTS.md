@@ -33,13 +33,22 @@ make test       # every port against its export: results/results.md (~40 s)
 make quick      # same, shorter renders: the inner loop while porting
 python3 scripts/test_gen.py sature-delay ufo   # some models only
 make check      # every program compiles: faustprobe and the C++ Faust compiler
+make iface-check  # every port's sliders, inputs, outputs against its export; Params no setting moves
 make max-check  # the sources embedded in max/*.maxpat against dsp/, sample for sample
 make web        # web/dsp, web/svg, web/models-data.js (make -B web after a faust-rs change)
 make web-check  # every wasm program under node with the page's inputs; every diagram pack
 make cost       # CPU cost (minutes, idle machine): results/cpu.md
 ```
 
-After touching a port or a `.lib` in `dsp/`: `make test` (or the model's own run), `make check`, then `make max` + `make max-check` and `make web` + `make web-check`, and commit the regenerated `max/`, `web/dsp/`, `web/svg/` with the port, or the patchers and the published page fall out of step with `dsp/`. `make test` rewrites `results/`; commit it when the numbers change, and update the README tables (both languages) if a worst error or the bit-exact count moves.
+After touching a port or a `.lib` in `dsp/`: `make test` (or the model's own run: it lists the settings that moved against the committed results), `make check`, `make iface-check`, then `make max` + `make max-check` and `make web` + `make web-check`, and commit the regenerated `max/`, `web/dsp/`, `web/svg/` with the port, or the patchers and the published page fall out of step with `dsp/`. `make test` rewrites `results/`; commit it when the numbers change, and update the README tables (both languages) if a worst error or the bit-exact count moves.
+
+## Porting a new or changed patch
+
+1. `ref/gendsp/` follows GEN-patches (copy the gendsp, remove the deleted ones), then `make export` (Max, only on request) and `make ref`; remove the exports of deleted gendsp.
+2. `python3 scripts/new_port.py <model>`: dsp/<model>.dsp and scripts/models/<model>.py with gen~'s sliders, inputs, outputs, the noise sites of the export with their C++ lines, `det` and `process`; an mc.gen~ patch as its N instances. It refuses to overwrite (`--force`, `--stdout`).
+3. Write the body from the GenExpr, then read the export: the noise sites' order and calls per frame, the constants gen folded (`x/4` as `x*0.25`), `safediv`/`safepow`, inlined clamps (`g.clip`), and statements the export drops (rings lost one). Add `g.keep`, `g.divsr`, `g.tdiv` only where the test shows a divergence; use genops' Delay readers, not a copy.
+4. The settings: 4 to 6 that move every Param over its gen~ range (`make iface-check` lists the ones no setting moves), with scheduled changes.
+5. `python3 scripts/test_gen.py <model>` until every setting is within −180 dB; then the checks of the previous section, the header comment (quirks), the README tables, `web/drive.js`'s entry for the model.
 
 ## Invariants
 

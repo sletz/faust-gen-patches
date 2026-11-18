@@ -1517,12 +1517,12 @@
   "setting": "degrade",
   "frames": 192000,
   "tol_db": -180,
-  "worst_db": -317.97462188453216,
+  "worst_db": -321.4964470656457,
   "ok": true,
   "outputs": [
    {
     "out": 0,
-    "peak": 1.256169154923195,
+    "peak": 1.3780540872517042,
     "err": 0.0,
     "rel_db": -Infinity,
     "at": 0
@@ -1530,8 +1530,8 @@
    {
     "out": 1,
     "peak": 1.318962909955245,
-    "err": 1.6653345369377348e-16,
-    "rel_db": -317.97462188453216,
+    "err": 1.1102230246251565e-16,
+    "rel_db": -321.4964470656457,
     "at": 36344
    },
    {
@@ -1542,7 +1542,7 @@
     "at": 0
    }
   ],
-  "ref_cmd": "build/ref/driller --sr 48000 --vs 64 -n 192000 --out build/test/driller-degrade.ref.f64 --in build/test/driller-degrade.in.f64 --noise build/test/driller-degrade.noise.f64 --sites 1,1,1,1,1 --set maindelay=250 --set degrade=100 --set degrade_prob=70 --set probability=90 --set mix=70 --set roll_filter=0 --set feedback=0 --set vol1=0.4 --set div2=1"
+  "ref_cmd": "build/ref/driller --sr 48000 --vs 64 -n 192000 --out build/test/driller-degrade.ref.f64 --in build/test/driller-degrade.in.f64 --noise build/test/driller-degrade.noise.f64 --sites 1,1,1,1,1 --set maindelay=250 --set degrade=100 --set degrade_prob=70 --set probability=90 --set mix=70 --set roll_filter=0 --set feedback=0 --set vol1=0.4 --set div2=1 --set vol3=2.6 --set vol4=0 --set vol5=3"
  },
  {
   "model": "driller",

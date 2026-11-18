@@ -169,6 +169,7 @@ Les ports reproduisent ce que calcule gen~, particularités comprises ; elles so
 make test       # chaque port contre son export : results/results.md (environ 40 s)
 make quick      # la même chose sur des rendus plus courts
 make check      # chaque programme compile (faustprobe et le compilateur Faust C++)
+make iface-check  # les curseurs, entrées et sorties de chaque port contre son export
 make max        # max/<modèle>.maxpat : les patchers de démonstration avec faustgen~ (py2max)
 make max-check  # les sources qui y sont embarquées contre dsp/, échantillon par échantillon
 make cost       # coût CPU, export gen~ contre Faust : results/cpu.md (machine au repos)
@@ -199,7 +200,9 @@ g = library("genops.lib");                    // les opérateurs de genlib
 | [ref/gen_ref.cpp](ref/gen_ref.cpp) | le moteur de rendu d'un export : paramètres, changements programmés, flux de bruit, tampons externes |
 | [ref/buffers/](ref/buffers/) | le contenu du `buf_taps` de delays-delays |
 | [scripts/patch_export.py](scripts/patch_export.py) | rend un export déterministe (sites de bruit, compteur d'échantillons, tampons non déclarés) |
-| [scripts/test_gen.py](scripts/test_gen.py), [scripts/models/](scripts/models/) | la comparaison et les réglages de chaque modèle |
+| [scripts/test_gen.py](scripts/test_gen.py), [scripts/models/](scripts/models/) | la comparaison et les réglages de chaque modèle (et ce qui a bougé par rapport aux résultats commités) |
+| [scripts/iface_check.py](scripts/iface_check.py) | l'interface de chaque port contre son export |
+| [scripts/new_port.py](scripts/new_port.py) | le squelette d'un nouveau port tiré de son export : curseurs, entrées, sorties, sites de bruit, fichier de modèle |
 | [scripts/export_gen.py](scripts/export_gen.py) | pilote Max pour exporter les gendsp |
 | [scripts/delays_delays_buffer.py](scripts/delays_delays_buffer.py) | la table des prises de delays-delays, d'après le script de son patch de démonstration |
 | [web/](web/), [scripts/web_check.mjs](scripts/web_check.mjs), [scripts/web_models.py](scripts/web_models.py), [scripts/web_svg.py](scripts/web_svg.py) | la page web, sa vérification sous node, ses données de modèles, ses diagrammes de blocs |

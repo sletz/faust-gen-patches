@@ -15,9 +15,10 @@ def _move(n, sr):
 
 
 # No spk_pos buffer: gen_ref's unbound Buffer (one frame), the fallback ring.
-# smooth is declared with min=1 and no max: the export bounds it to [1, 1],
-# so it stays at its default 240.
-MODEL = dict(name="spatial-dbap", export="spatial_dbap", inputs=4, sites=[], input=_move, mc=32,
+MODEL = dict(name="spatial-dbap", export="spatial_dbap", inputs=4, sites=[], input=_move,
+    slider_ranges=dict(smooth="declared with min=1 and no max: the export bounds it to [1, 1] (default 240 kept), "
+                              "gen~ in Max does not; the slider goes to 4800, the suite leaves it at 240"),
+    mc=32,
     frames=48000,
     note="mc.gen~: the export rendered once per channel (mc_channel 1..32, mc_channelcount 32); "
          "no spk_pos buffer, so the fallback ring.",

@@ -22,7 +22,8 @@
 //          lines ignored; stored as float32, as a Max buffer~. Without it the
 //          buffer is genlib's unbound Buffer: dim 1, channels 1, a single 0.
 // --out    raw float64, interleaved, one channel per gen~ output.
-// --list   the parameters: name, default, min, max.
+// --list   the parameters: name, default, min, max ("- -" without min/max);
+//          the Buffer/Data names as "# buffer NAME" lines.
 #include "genlib.h"
 #include "genlib_exportfunctions.h"
 #include "genlib_ops.h"
@@ -120,7 +121,9 @@ int main(int argc, char** argv) {
         printf("# inputs=%d outputs=%d noise_sites=%d\n", nin, nout, GEN_NOISE_SITES);
         for (int p = 0; p < np; p++) {
             t_param v; M::getparameter(st, p, &v);
-            if (M::getparameterhasminmax(st, p))
+            if (st->params[p].paramtype == GENLIB_PARAMTYPE_SYM)   // a Buffer/Data name, not a Param
+                printf("# buffer %s\n", M::getparametername(st, p));
+            else if (M::getparameterhasminmax(st, p))
                 printf("%s %.17g %.17g %.17g\n", M::getparametername(st, p), (double)v,
                        (double)M::getparametermin(st, p), (double)M::getparametermax(st, p));
             else

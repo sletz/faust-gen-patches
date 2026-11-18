@@ -169,6 +169,7 @@ The ports reproduce what gen~ computes, quirks included; these are documented in
 make test       # every port against its export: results/results.md (about 40 s)
 make quick      # the same on shorter renders
 make check      # every program compiles (faustprobe and the C++ Faust compiler)
+make iface-check  # every port's sliders, inputs and outputs against its export
 make max        # max/<model>.maxpat: the demo patchers with faustgen~ (py2max)
 make max-check  # the sources embedded in them against dsp/, sample for sample
 make cost       # CPU cost, gen~ export against Faust: results/cpu.md (idle machine)
@@ -199,7 +200,9 @@ g = library("genops.lib");                    // genlib's operators
 | [ref/gen_ref.cpp](ref/gen_ref.cpp) | the renderer of an export: parameters, scheduled changes, noise streams, external buffers |
 | [ref/buffers/](ref/buffers/) | the content of delays-delays' `buf_taps` |
 | [scripts/patch_export.py](scripts/patch_export.py) | makes an export deterministic (noise sites, frame counter, undeclared buffers) |
-| [scripts/test_gen.py](scripts/test_gen.py), [scripts/models/](scripts/models/) | the comparison and the settings of every model |
+| [scripts/test_gen.py](scripts/test_gen.py), [scripts/models/](scripts/models/) | the comparison and the settings of every model (and what moved against the committed results) |
+| [scripts/iface_check.py](scripts/iface_check.py) | every port's interface against its export |
+| [scripts/new_port.py](scripts/new_port.py) | the skeleton of a new port from its export: sliders, inputs, outputs, noise sites, model file |
 | [scripts/export_gen.py](scripts/export_gen.py) | drives Max to export the gendsp |
 | [scripts/delays_delays_buffer.py](scripts/delays_delays_buffer.py) | the tap table of delays-delays, from its demo patch's script |
 | [web/](web/), [scripts/web_check.mjs](scripts/web_check.mjs), [scripts/web_models.py](scripts/web_models.py), [scripts/web_svg.py](scripts/web_svg.py) | the web page, its check under node, its model data, its block diagrams |

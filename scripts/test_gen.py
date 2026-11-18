@@ -17,6 +17,12 @@ within the model's tolerance (-180 dB unless the model says why not).
     scripts/test_gen.py                    every model, results/results.md
     scripts/test_gen.py bernoulli-gate     some models (no results file)
     scripts/test_gen.py --quick            shorter renders
+
+After the renders, the worst error of every setting is compared with the
+committed results (git HEAD:results/results.json): the settings that became
+bit-exact or stopped being so, moved by more than --delta-db (1 dB), appeared
+or disappeared are listed, so that a change of a port or of genops.lib shows
+what it did to the others (not with --quick, whose renders are shorter).
 """
 import argparse, json, os, platform, struct, subprocess, sys, time
 import numpy as np
@@ -227,6 +233,8 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("models", nargs="*")
     ap.add_argument("--quick", action="store_true")
+    ap.add_argument("--delta-db", type=float, default=1.0,
+                    help="report the settings whose worst error moved by more than this (dB)")
     a = ap.parse_args()
     os.makedirs(BUILD, exist_ok=True)
     names = a.models or [m["name"] for m in MODELS]
@@ -244,10 +252,49 @@ def main():
             continue
         fails += sum(not r["ok"] for r in res)
         allres += res
+    if not a.quick:
+        deltas(allres, a.delta_db)
     if not a.models:
         write_results(allres, a.quick)
     print(f"{len(allres) - fails} passed, {fails} failed")
     sys.exit(1 if fails else 0)
+
+
+def committed_results():
+    """results/results.json as committed (git HEAD), else as on disk, else []"""
+    r = subprocess.run(["git", "-C", ROOT, "show", "HEAD:results/results.json"], capture_output=True, text=True)
+    if r.returncode == 0:
+        return json.loads(r.stdout), "HEAD"
+    p = os.path.join(ROOT, "results", "results.json")
+    return (json.load(open(p)), "results/results.json") if os.path.exists(p) else ([], None)
+
+
+def deltas(res, threshold):
+    """What changed against the committed results, for the models just run."""
+    prev, src = committed_results()
+    if src is None:
+        return
+    fmt = lambda v: "-inf" if v == -np.inf else f"{v:.1f}"
+    old = {(r["model"], r["setting"]): r.get("worst_db") for r in prev if "error" not in r}
+    new = {(r["model"], r["setting"]): r.get("worst_db") for r in res if "error" not in r}
+    run_models = {r["model"] for r in res}
+    lines = []
+    for k in sorted(new):
+        o, n = old.get(k), new[k]
+        if k not in old:
+            lines.append(f"  new      {k[0]:22s} {k[1]:18s} {fmt(n)}")
+        elif (o == -np.inf) != (n == -np.inf):
+            lines.append(f"  {'exact' if n == -np.inf else 'inexact':8s} {k[0]:22s} {k[1]:18s} {fmt(o)} -> {fmt(n)}")
+        elif o != -np.inf and abs(n - o) > threshold:
+            lines.append(f"  {'better' if n < o else 'WORSE':8s} {k[0]:22s} {k[1]:18s} {fmt(o)} -> {fmt(n)}")
+    for k in sorted(k for k in old if k[0] in run_models and k not in new):
+        lines.append(f"  gone     {k[0]:22s} {k[1]:18s} (was {fmt(old[k])})")
+    be = lambda d, ks: sum(1 for k in ks if d.get(k) == -np.inf)
+    keys = [k for k in old if k[0] in run_models]
+    print(f"against the committed results ({src}): bit-exact {be(old, keys)} -> {be(new, new)}"
+          + ("" if lines else f", no setting moved by more than {threshold:g} dB"))
+    for ln in lines:
+        print(ln)
 
 
 def write_results(res, quick):

@@ -6,6 +6,8 @@
 #   make test        every port against its export, sample by sample: results/results.md
 #   make quick       the same on shorter renders
 #   make check       every program of dsp/ compiles (faustprobe, and the C++ Faust compiler)
+#   make iface-check every port's controls (name, default, range), inputs and outputs against its
+#                    export, and the Params no setting of the suite moves (scripts/iface_check.py)
 #   make max         max/<model>.maxpat: the demo patchers of GEN-patches with the Faust ports in
 #                    faustgen~ instead of gen~ (max/convert_patches.py, py2max; PY2MAX, GEN_PATCHES)
 #   make max-check   the sources embedded in those patchers against dsp/, sample for sample
@@ -42,7 +44,7 @@ GENLIB_OBJ = build/ref/genlib.o build/ref/json.o build/ref/json_builder.o
 WEB_WASM = $(patsubst dsp/%.dsp,web/dsp/%.wasm,$(wildcard dsp/*.dsp))
 WEB_SVG = $(patsubst dsp/%.dsp,web/svg/%.json.gz,$(wildcard dsp/*.dsp))
 
-.PHONY: help ref test quick check max max-check cost web web-check web-serve export clean
+.PHONY: help ref test quick check iface-check max max-check cost web web-check web-serve export clean
 .DEFAULT_GOAL := help
 
 help:
@@ -72,6 +74,9 @@ test: ref
 
 quick: ref
 	python3 scripts/test_gen.py --quick
+
+iface-check: ref
+	python3 scripts/iface_check.py
 
 check:
 	@for f in dsp/*.dsp; do printf "%-36s faustprobe " $$f; $(FAUSTPROBE) --double -I dsp -n 1 --in zero --quiet $$f >/dev/null && echo ok || echo FAIL; done

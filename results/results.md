@@ -36,7 +36,7 @@ Error: the largest |gen - faust| over the window, in dB of the peak of that outp
 | delays-delays | clear | 264000 | -191.5 | -180 | -231 -235 -231 -215 -228 -228 -226 -229 -226 -225 -227 -204 -192 -192 -207 -220 −∞ −∞ −∞ −∞ | ok |
 | driller | default | 192000 | -332.9 | -180 | −∞ -333 −∞ | ok |
 | driller | fast-drill | 192000 | -308.2 | -180 | −∞ -308 −∞ | ok |
-| driller | degrade | 192000 | -318.0 | -180 | −∞ -318 −∞ | ok |
+| driller | degrade | 192000 | -321.5 | -180 | −∞ -321 −∞ | ok |
 | driller | locked-insert | 192000 | −∞ | -180 | −∞ −∞ −∞ | ok |
 | driller | cv | 192000 | -314.9 | -180 | −∞ -315 −∞ | ok |
 | driller | modes | 192000 | -327.7 | -180 | −∞ -328 −∞ | ok |

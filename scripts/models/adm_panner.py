@@ -15,9 +15,10 @@ def _move(n, sr):
     return x
 
 
-# smooth is declared with min=1 and no max: the export bounds it to [1, 1],
-# so it stays at its default 240.
-MODEL = dict(name="adm_panner", export="adm_panner", inputs=3, sites=[], input=_move, mc=8,
+MODEL = dict(name="adm_panner", export="adm_panner", inputs=3, sites=[], input=_move,
+    slider_ranges=dict(smooth="declared with min=1 and no max: the export bounds it to [1, 1] (default 240 kept), "
+                              "gen~ in Max does not; the slider goes to 4800, the suite leaves it at 240"),
+    mc=8,
     note="mc.gen~: the export rendered once per channel (mc_channel 1..8, mc_channelcount 8).",
     settings=[
         dict(name="default"),
