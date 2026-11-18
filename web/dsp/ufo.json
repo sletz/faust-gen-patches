@@ -3,7 +3,7 @@
 	"filename": "ufo.dsp",
 	"version": "0.9.6",
 	"compile_options": "-lang wasm -double",
-	"library_list": ["dsp/genops.lib","/usr/local/share/faust/noises.lib","/usr/local/share/faust/basics.lib","dsp/ufo.lib","/usr/local/share/faust/maths.lib","/usr/local/share/faust/platform.lib","/usr/local/share/faust/signals.lib"],
+	"library_list": ["dsp/genops.lib","/usr/local/share/faust/noises.lib","/usr/local/share/faust/basics.lib","/usr/local/share/faust/maths.lib","/usr/local/share/faust/platform.lib","/usr/local/share/faust/signals.lib"],
 	"include_pathnames": ["dsp","/Users/letz/Developpements/RUST/faust-gen-patches/../faust-rs/target/share/faust","/usr/local/share/faust","/usr/share/faust"],
 	"size": 256,
 	"inputs": 2,
@@ -13,8 +13,6 @@
 		{ "/Users/letz/Developpements/RUST/faust-gen-patches/dsp/genops.lib/license": "MIT" },
 		{ "/Users/letz/Developpements/RUST/faust-gen-patches/dsp/genops.lib/name": "genops" },
 		{ "/Users/letz/Developpements/RUST/faust-gen-patches/dsp/genops.lib/version": "1.0.0" },
-		{ "/Users/letz/Developpements/RUST/faust-gen-patches/dsp/ufo.lib/license": "MIT" },
-		{ "/Users/letz/Developpements/RUST/faust-gen-patches/dsp/ufo.lib/name": "ufo" },
 		{ "/usr/local/share/faust/basics.lib/name": "Faust Basic Element Library" },
 		{ "/usr/local/share/faust/basics.lib/version": "1.23.6" },
 		{ "/usr/local/share/faust/maths.lib/author": "GRAME" },
@@ -45,9 +43,9 @@
 					"varname": "fHslider6",
 					"shortname": "exp1",
 					"address": "/ufo/exp1",
-					"index": 24,
+					"index": 56,
 					"init": 1,
-					"min": 0.1,
+					"min": 0.05,
 					"max": 20,
 					"step": 0.01
 				},
@@ -57,9 +55,9 @@
 					"varname": "fHslider7",
 					"shortname": "exp2",
 					"address": "/ufo/exp2",
-					"index": 32,
+					"index": 64,
 					"init": 1,
-					"min": 0.1,
+					"min": 0.05,
 					"max": 20,
 					"step": 0.01
 				},
@@ -69,10 +67,10 @@
 					"varname": "fHslider5",
 					"shortname": "expc",
 					"address": "/ufo/expc",
-					"index": 16,
+					"index": 48,
 					"init": 1,
 					"min": 0,
-					"max": 4,
+					"max": 8,
 					"step": 0.01
 				},
 				{
@@ -81,7 +79,7 @@
 					"varname": "fHslider8",
 					"shortname": "gain",
 					"address": "/ufo/gain",
-					"index": 40,
+					"index": 72,
 					"init": 1,
 					"min": 0,
 					"max": 10,
@@ -93,7 +91,7 @@
 					"varname": "fHslider1",
 					"shortname": "invert",
 					"address": "/ufo/invert",
-					"index": 56,
+					"index": 16,
 					"meta": [
 						{ "style": "menu{'off':0;'on':1}" }
 					],
@@ -108,7 +106,7 @@
 					"varname": "fHslider2",
 					"shortname": "lfosel",
 					"address": "/ufo/lfosel",
-					"index": 64,
+					"index": 24,
 					"meta": [
 						{ "style": "menu{'cos':0;'triangle':1;'saw':2;'square':3;'random':4;'random smooth':5}" }
 					],
@@ -138,7 +136,7 @@
 					"varname": "fHslider3",
 					"shortname": "oneshot",
 					"address": "/ufo/oneshot",
-					"index": 72,
+					"index": 32,
 					"meta": [
 						{ "style": "menu{'free':0;'one-shot':1}" }
 					],
@@ -153,7 +151,7 @@
 					"varname": "fHslider4",
 					"shortname": "shotnumbers",
 					"address": "/ufo/shotnumbers",
-					"index": 8,
+					"index": 40,
 					"init": 1,
 					"min": 0,
 					"max": 128,
@@ -165,7 +163,7 @@
 					"varname": "fHslider0",
 					"shortname": "unipolar",
 					"address": "/ufo/unipolar",
-					"index": 48,
+					"index": 8,
 					"meta": [
 						{ "style": "menu{'off':0;'on':1}" }
 					],

@@ -88,6 +88,22 @@ def make_input(kind, n, ch):
 # ------------------------------------------------------------------ renders
 
 def render_ref(m, setting, n, inp, noise):
+    """The export's render; for an mc.gen~ patch (`mc`), one render per channel
+    (mc_channel 1..N, mc_channelcount N), its outputs side by side."""
+    if m.get("mc"):
+        N, k = m["mc"], m.get("mc_inputs", 0)
+        outs, cmd = [], None
+        for c in range(1, N + 1):
+            sub = inp[:, (c - 1) * k:c * k] if k and inp is not None else inp
+            st = dict(setting, name=f"{setting['name']}.ch{c}",
+                      set={**setting.get("set", {}), "mc_channel": c, "mc_channelcount": N})
+            o, cmd = _render_ref(m, st, n, sub, noise)
+            outs.append(o)
+        return np.concatenate(outs, axis=1), cmd
+    return _render_ref(m, setting, n, inp, noise)
+
+
+def _render_ref(m, setting, n, inp, noise):
     exe = os.path.join(ROOT, "build", "ref", m["export"])
     tag = f"{m['name']}-{setting['name']}"
     out = os.path.join(BUILD, tag + ".ref.f64")
@@ -181,6 +197,7 @@ def run_model(m, quick):
     nin, nout = process_io(m)
     exp_out = int(subprocess.run([os.path.join(ROOT, "build", "ref", m["export"]), "--list"],
                                  capture_output=True, text=True).stdout.split("outputs=")[1].split()[0])
+    exp_out *= m.get("mc", 1)
     if nin != m["inputs"] or nout != exp_out:
         raise RuntimeError(f"{m['name']}: process has {nin} inputs / {nout} outputs, gen~ {m['inputs']} / {exp_out}")
     rng = np.random.default_rng(12345)

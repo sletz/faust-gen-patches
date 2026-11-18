@@ -409,6 +409,16 @@ const LFO_NOTE = "The LFO output is heard as the pitch of a test tone (110 Hz to
  * default window (s), `note` what the Play drawer says is happening.
  */
 export const MODELS = {
+  "adm-panner": {
+    dsp: "adm_panner", source: "loop",
+    inputs: [A(1, 0, "audio"),
+      { label: "in2: X (-1..1)", kind: "cv", value: 0, range: [-1, 1], depth: 0.9, depthRange: [0, 1], rate: 0.1, rateRange: [0.01, 5] },
+      { label: "in3: Y (-1..1)", kind: "cv", value: 0, range: [-1, 1], depth: 0.5, depthRange: [0, 1], rate: 0.23, rateRange: [0.01, 5] }],
+    outputs: Array.from({ length: 8 }, (_, i) => audioOut(i + 1, `loudspeaker ${i + 1}`)),
+    pair: [0, 1], scope: 0.05,
+    note: "The program is the mc.gen~ patch for 8 loudspeakers (8 outputs). Two slow LFOs move the source (X, Y); "
+      + "loudspeakers 1 and 2 are on the speakers: choose another pair to follow it around the circle.",
+  },
   "aether-drift": { dsp: "aether-drift", ...stereoFx(FX_NOTE) },
   "aether-particle": { dsp: "aether-particle", ...stereoFx(FX_NOTE + " The grains read the input recorded 2 s earlier (g_pos 10 % of a 20 s buffer).") },
   "bernoulli-gate": {
@@ -446,8 +456,48 @@ export const MODELS = {
     pair: [0, 1], scope: 0.05,
     note: FX_NOTE + " In mc_mode '16 channels' the taps are spread over out1..out16: choose the pair to hear.",
   },
+  "driller": {
+    dsp: "driller", source: "loop",
+    inputs: [A(1, 0), A(2, 1), { label: "in3: main delay CV (ms, added)", kind: "cv", value: 0, range: [-500, 500], unit: "ms", depth: 0, depthRange: [0, 500], rate: 0.2, rateRange: [0.01, 10] }, { label: "in4: probability CV (%, added)", kind: "cv", value: 0, range: [-100, 100], unit: "%", depth: 0, depthRange: [0, 100], rate: 0.2, rateRange: [0.01, 10] }],
+    outputs: [audioOut(1, "audio L"), audioOut(2, "audio R"), cvOut(3, "current tap (0 rest, 1 main, 2..6 divisions)", [0, 6])],
+    pair: [0, 1], scope: 0.05, note: FX_NOTE + " The CV inputs are held at 0: the sliders set the delay and the probability.",
+  },
   "erbeverb-clone": { dsp: "erbeverb-clone", ...stereoFx(FX_NOTE) },
+  "fdn-multireverb": {
+    dsp: "fdn_multireverb", source: "loop",
+    inputs: Array.from({ length: 8 }, (_, i) => A(i + 1, i % 2, `audio ${i % 2 ? "R" : "L"} (channel ${i + 1})`)),
+    outputs: Array.from({ length: 8 }, (_, i) => audioOut(i + 1, `channel ${i + 1}`)),
+    pair: [0, 1], scope: 0.05,
+    note: "The program is the mc.gen~ patch for 8 channels, each its own reverb, decorrelated from the others. "
+      + "The source's left channel feeds the odd channels, its right channel the even ones; channels 1 and 2 are on the speakers.",
+  },
+  "fhickup": {
+    dsp: "fhickup", source: "loop",
+    inputs: [A(1, 0), A(2, 1), { label: "in3: drive CV (added)", kind: "cv", value: 0, range: [-100, 100], depth: 0, depthRange: [0, 100], rate: 0.2, rateRange: [0.01, 10] }, { label: "in4: hickup depth CV (%, added)", kind: "cv", value: 0, range: [-100, 100], unit: "%", depth: 0, depthRange: [0, 100], rate: 0.2, rateRange: [0.01, 10] }],
+    outputs: [audioOut(1, "audio L"), audioOut(2, "audio R")],
+    pair: [0, 1], scope: 0.05, note: FX_NOTE + " The CV inputs are held at 0.",
+  },
+  "filterbank-8": {
+    dsp: "filterbank-8", source: "loop",
+    inputs: [A(1, 0), A(2, 1)],
+    outputs: [audioOut(1, "audio L"), audioOut(2, "audio R"), audioOut(3, "bands 1-4"), audioOut(4, "bands 5-8")],
+    pair: [0, 1], scope: 0.05, note: FX_NOTE + " out3 and out4, the low and high band sums, can be chosen for the speakers.",
+  },
+  "fm-supermod": {
+    dsp: "fm-supermod", source: "loop",
+    inputs: [A(1, 0, "audio L / MIDI note (use_note_in)"), A(2, 1, "audio R / ratio CV"),
+      { label: "in3: fm_index CV (added)", kind: "cv", value: 0, range: [-100, 100], depth: 0, depthRange: [0, 100], rate: 0.2, rateRange: [0.01, 10] }, { label: "in4: feedback CV (added)", kind: "cv", value: 0, range: [-2, 2], depth: 0, depthRange: [0, 2], rate: 0.2, rateRange: [0.01, 10] }],
+    outputs: [audioOut(1, "audio L"), audioOut(2, "audio R")],
+    pair: [0, 1], scope: 0.05,
+    note: FX_NOTE + " in2 is both the right channel and the ratio CV, as in the patch; in3 and in4 are held at 0.",
+  },
   "frost-machine": { dsp: "frost-machine", ...stereoFx(FX_NOTE) },
+  "grainer": {
+    dsp: "grainer", source: "loop",
+    inputs: [A(1, 0), A(2, 1), { label: "in3: threshold CV (%, added)", kind: "cv", value: 0, range: [-100, 100], unit: "%", depth: 0, depthRange: [0, 100], rate: 0.2, rateRange: [0.01, 10] }, { label: "in4: probability CV (%, added)", kind: "cv", value: 0, range: [-100, 100], unit: "%", depth: 0, depthRange: [0, 100], rate: 0.2, rateRange: [0.01, 10] }],
+    outputs: [audioOut(1, "audio L"), audioOut(2, "audio R"), cvOut(3, "envelope", [0, 1], "amp"), pulseOut(4, "grain trigger")],
+    pair: [0, 1], scope: 0.05, note: FX_NOTE + " The CV inputs are held at 0.",
+  },
   "householder-fdn-16": { dsp: "householder-fdn-16", ...stereoFx(FX_NOTE) },
   "lorenz-rossler-chaos": {
     dsp: "lorenz-rossler-chaos", source: "loop",
@@ -455,8 +505,20 @@ export const MODELS = {
       { label: "in2: speed CV (+200 per unit)", kind: "cv", value: 0, range: [-1, 1], depth: 0, depthRange: [0, 1], rate: 0.1, rateRange: [0.01, 10] }],
     outputs: [audioOut(1, "x"), audioOut(2, "y"), audioOut(3, "z"), pulseOut(4, "zero-crossing trigger of x", [0, 1])],
     pair: [0, 1], scope: 0.1,
-    note: "The attractor runs at audio rate (speed 150): x and y go to the speakers, as in the demo patch. "
-      + "The source reaches in1 only when inject is raised.",
+    note: "The attractor (Rössler by default, speed 2: a slow orbit) drives the speakers with x and y, as in the demo "
+      + "patch; raise speed towards 150 to hear it at audio rate. The source reaches in1 only when inject is raised.",
+  },
+  "modeldrive": {
+    dsp: "modeldrive", source: "loop",
+    inputs: [A(1, 0), A(2, 1), { label: "in3: drive CV (1 adds 100 to drive)", kind: "cv", value: 0, range: [-1, 1], depth: 0, depthRange: [0, 1], rate: 0.2, rateRange: [0.01, 10] }],
+    outputs: [audioOut(1, "audio L"), audioOut(2, "audio R")],
+    pair: [0, 1], scope: 0.05, note: FX_NOTE + " The drive CV is held at 0.",
+  },
+  "multiband-drive": {
+    dsp: "multiband-drive", source: "loop",
+    inputs: [A(1, 0), A(2, 1)],
+    outputs: [audioOut(1, "audio L"), audioOut(2, "audio R"), audioOut(3, "low band"), audioOut(4, "mid band"), audioOut(5, "high band")],
+    pair: [0, 1], scope: 0.05, note: FX_NOTE + " out3..out5, the three bands, can be chosen for the speakers.",
   },
   "offset-spline-random": {
     dsp: "offset-spline-random", source: "sine",
@@ -484,10 +546,35 @@ export const MODELS = {
       { label: "in2: formant modulation (Hz)", kind: "cv", value: 0, range: [-1000, 1000], unit: "Hz", depth: 0, depthRange: [0, 1000], rate: 0.37, rateRange: [0.01, 20] }],
     outputs: [audioOut(1, "pulsar L"), audioOut(2, "pulsar R")],
     pair: [0, 1], scope: 0.1,
-    note: "The pulsar train plays from its own clock (f0). A sync trigger on in1 redraws the mask and flips the pan; "
-      + "it does not reset the phase (the patch's behaviour).",
+    note: "The pulsar train plays from its own clock (f0). A sync trigger on in1 (a rising edge through 0.5) resets "
+      + "the phase and starts a new period.",
+  },
+  "rings": {
+    dsp: "rings", source: "silence",
+    inputs: [A(1, 0, "audio L (excitation)"), A(2, 1, "audio R (excitation)"),
+      { label: "in3: strum trigger", kind: "clock", button: "Strum", rate: 1, rateRange: [0.1, 10], log: true, auto: true, amp: 1 }],
+    outputs: [audioOut(1, "audio L"), audioOut(2, "audio R"), audioOut(3, "filtered exciter"), cvOut(4, "strum envelope", [0, 1], "amp")],
+    pair: [0, 1], scope: 0.05,
+    note: "A strum every second excites the resonator (internal exciter); choose a source to excite it with audio too.",
   },
   "sature-delay": { dsp: "sature-delay", ...stereoFx(FX_NOTE) },
+  "skipper": {
+    dsp: "skipper", source: "loop",
+    inputs: [A(1, 0), A(2, 1)],
+    outputs: [audioOut(1, "audio L"), audioOut(2, "audio R"), cvOut(3, "loop length (ms)", [0, 6000]), cvOut(4, "speed", [-4, 4])],
+    pair: [0, 1], scope: 0.05, note: FX_NOTE + " The first capture starts after half a second.",
+  },
+  "spatial-dbap": {
+    dsp: "spatial-dbap", source: "loop",
+    inputs: [A(1, 0, "audio (mono)"),
+      { label: "in2: source X (-1..1)", kind: "cv", value: 0, range: [-1, 1], depth: 0.9, depthRange: [0, 1], rate: 0.1, rateRange: [0.01, 5] },
+      { label: "in3: source Y (-1..1)", kind: "cv", value: 0, range: [-1, 1], depth: 0.6, depthRange: [0, 1], rate: 0.17, rateRange: [0.01, 5] },
+      { label: "in4: source Z (-1..1)", kind: "cv", value: 0, range: [-1, 1], depth: 0, depthRange: [0, 1], rate: 0.05, rateRange: [0.01, 5] }],
+    outputs: Array.from({ length: 32 }, (_, i) => audioOut(i + 1, `loudspeaker ${i + 1}`)),
+    pair: [0, 1], scope: 0.05,
+    note: "The program is the mc.gen~ patch for 32 loudspeakers (32 outputs), on the patch's fallback ring of radius 2 "
+      + "(no CSV layout). Two slow LFOs move the source; loudspeakers 1 and 2 are on the speakers: choose another pair to follow it.",
+  },
   "tape-hysteresis": { dsp: "tape-hysteresis", ...stereoFx(FX_NOTE) },
   "ufo-multilfo": {
     dsp: "ufo", source: "silence",
@@ -508,27 +595,12 @@ export const MODELS = {
       + "(burst 0: a one-sample pulse). 'random freq' draws freq at each strike, as the patch does (100..4000 Hz there; 100..2000 Hz here, the range of the program's freq).",
   },
   "zdf-diode-ladder": { dsp: "zdf-diode-ladder", ...stereoFx(FX_NOTE) },
-  // utilities
-  "ufo-core": {
-    dsp: "ufo-core", source: "silence",
-    inputs: [ufoFreq(1), ...["lfosel", "exp1", "expc", "exp2", "oneshot", "shotnumbers", "gain", "offset", "invert", "unipolar"]
-      .map((p, i) => Z(i + 2, `+ ${p} (held at 0)`)), ufoTrig(12)],
-    outputs: [cvOut(1, "LFO", [-1, 1])],
-    pair: [0, 0], scope: 4, note: LFO_NOTE + " in2..in11, added to the parameters, are held at 0: the sliders set them.",
-  },
-  "ufo-core-simple": {
-    dsp: "ufo-core-simple", source: "silence",
-    inputs: [ufoFreq(1), ...["exp1", "expc", "oneshot", "shotnumbers"].map((p, i) => Z(i + 2, `+ ${p} (held at 0)`)), ufoTrig(6)],
-    outputs: [cvOut(1, "shaped phase (-1..1)", [-1, 1])],
-    pair: [0, 0], scope: 4,
-    note: "The phase core alone: a ramp from -1 to 1, heard as the pitch of a test tone. in2..in5 are held at 0.",
-  },
-  lp_butterworth: {
+  "lp-butterworth": {
     dsp: "lp_butterworth", source: "loop",
     inputs: [A(1, 0, "audio")], outputs: [audioOut(1, "audio")], pair: [0, 0], scope: 0.05,
     note: "The source's left channel through the low-pass, on both speakers. Raise freq to open it.",
   },
-  hp_butterworth: {
+  "hp-butterworth": {
     dsp: "hp_butterworth", source: "loop",
     inputs: [A(1, 0, "audio")], outputs: [audioOut(1, "audio")], pair: [0, 0], scope: 0.05,
     note: "The source's left channel through the high-pass, on both speakers.",

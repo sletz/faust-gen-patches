@@ -131,9 +131,9 @@ typedef struct State {
 			
 		};
 		samples_to_seconds = (1 / samplerate);
-		t_sample tmp_sub1_956 = (m_range_11 - ((int)0));
-		t_sample tmp_scale_953 = ((safepow((tmp_sub1_956 * ((t_sample)0.01)), ((int)1)) * ((int)4)) + ((int)0));
-		t_sample scale_amt = tmp_scale_953;
+		t_sample tmp_sub1_721 = (m_range_11 - ((int)0));
+		t_sample tmp_scale_718 = ((safepow((tmp_sub1_721 * ((t_sample)0.01)), ((int)1)) * ((int)4)) + ((int)0));
+		t_sample scale_amt = tmp_scale_718;
 		// the main sample loop;
 		while ((__n--)) {
 			const t_sample in1 = (*(__in1++));
@@ -145,7 +145,7 @@ typedef struct State {
 			t_sample n2 = noise();
 			t_sample u1 = fabs(n1);
 			t_sample u2 = (n2 * ((t_sample)3.1415926535897931));
-			t_sample gen_noise = (sqrt((log(u1) * ((t_sample)-0.25))) * cos(u2));
+			t_sample gen_noise = (sqrt((log(((u1 < ((t_sample)9.9999999999999995e-07)) ? ((t_sample)9.9999999999999995e-07) : u1)) * ((int)-2))) * cos(u2));
 			t_sample m_step_18 = (gen_noise * scale_amt);
 			m_h_rand_walk_7 = fold((m_h_rand_walk_7 + (trig ? m_step_18 : ((int)0))), ((int)-1), ((int)1));
 			if (trig) {
@@ -162,17 +162,17 @@ typedef struct State {
 			t_sample sig_final = (m_mode_10 ? sig_spline : sig_stepped);
 			t_sample audio_out = fixdenorm((sig_final * m_amp_14));
 			t_sample tap_fb = m_delay_fb_9.read_step(((int)120));
-			t_sample tmp_mix_957 = (in1 + (((t_sample)0.5) * (tap_fb - in1)));
-			t_sample mixed_input = tmp_mix_957;
+			t_sample tmp_mix_722 = (in1 + (((t_sample)0.5) * (tap_fb - in1)));
+			t_sample mixed_input = tmp_mix_722;
 			m_delay_fb_9.write(mixed_input);
-			t_sample tmp_expr_333 = fold((mixed_input + audio_out), ((int)-1), ((int)1));
-			int tmp_expr_334 = trig;
-			t_sample tmp_expr_335 = sig_spline;
-			t_sample tmp_expr_336 = sig_stepped;
-			t_sample out4 = tmp_expr_336;
-			t_sample out3 = tmp_expr_335;
-			t_sample out2 = tmp_expr_334;
-			t_sample out1 = tmp_expr_333;
+			t_sample tmp_expr_429 = fold((mixed_input + audio_out), ((int)-1), ((int)1));
+			int tmp_expr_430 = trig;
+			t_sample tmp_expr_431 = sig_spline;
+			t_sample tmp_expr_432 = sig_stepped;
+			t_sample out4 = tmp_expr_432;
+			t_sample out3 = tmp_expr_431;
+			t_sample out2 = tmp_expr_430;
+			t_sample out1 = tmp_expr_429;
 			m_delay_fb_9.step();
 			// assign results to output buffer;
 			(*(__out1++)) = out1;
@@ -191,7 +191,7 @@ typedef struct State {
 		m_range_11 = (_value < 0 ? 0 : (_value > 100 ? 100 : _value));
 	};
 	inline void set_frequency(t_param _value) {
-		m_frequency_12 = (_value < 0 ? 0 : (_value > 1 ? 1 : _value));
+		m_frequency_12 = (_value < 0.01 ? 0.01 : (_value > 500 ? 500 : _value));
 	};
 	inline void set_trigmode(t_param _value) {
 		m_trigmode_13 = (_value < 0 ? 0 : (_value > 1 ? 1 : _value));
@@ -366,8 +366,8 @@ void *create(t_param sr, long vs) {
 	pi->inputmin = 0;
 	pi->inputmax = 1;
 	pi->hasminmax = true;
-	pi->outputmin = 0;
-	pi->outputmax = 1;
+	pi->outputmin = 0.01;
+	pi->outputmax = 500;
 	pi->exp = 0;
 	pi->units = "";		// no units defined
 	// initialize parameter 2 ("m_mode_10")

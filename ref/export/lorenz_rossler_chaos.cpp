@@ -86,14 +86,14 @@ typedef struct State {
 		vectorsize = __vs;
 		samplerate = __sr;
 		m_h_last_x_1 = ((int)0);
-		m_z_2 = ((t_sample)0.10000000000000001);
-		m_y_3 = ((t_sample)0.10000000000000001);
-		m_x_4 = ((t_sample)0.10000000000000001);
+		m_z_2 = ((t_sample)0.20000000000000001);
+		m_y_3 = ((int)0);
+		m_x_4 = ((int)4);
 		m_inject_5 = ((int)0);
-		m_param_rho_6 = ((int)28);
+		m_param_rho_6 = ((int)30);
 		m_drive_7 = ((int)1);
-		m_speed_8 = ((int)150);
-		m_system_9 = ((int)0);
+		m_speed_8 = ((int)2);
+		m_system_9 = ((int)1);
 		genlib_reset_complete(this);
 		
 	};
@@ -114,6 +114,11 @@ typedef struct State {
 			return __exception;
 			
 		};
+		t_sample sig_param = (((int)10) * ((m_drive_7 < ((t_sample)0.050000000000000003)) ? ((t_sample)0.050000000000000003) : m_drive_7));
+		t_sample rho_param = m_param_rho_6;
+		t_sample tmp_sub1_742 = (m_param_rho_6 - ((int)10));
+		t_sample tmp_scale_739 = ((safepow((tmp_sub1_742 * ((t_sample)0.02)), ((int)1)) * ((int)5)) + ((int)4));
+		t_sample c_param = tmp_scale_739;
 		int cond_12 = (m_system_9 < ((t_sample)0.5));
 		int cond_16 = (m_system_9 < ((t_sample)0.5));
 		int cond_20 = (m_system_9 < ((t_sample)0.5));
@@ -127,8 +132,6 @@ typedef struct State {
 			t_sample dt = ((((t_sample)0.024) < mina_11) ? ((t_sample)0.024) : mina_11);
 			t_sample x_in = (m_x_4 + ((in1 * m_inject_5) * ((t_sample)0.20000000000000001)));
 			if ((m_system_9 < ((t_sample)0.5))) {
-				t_sample sig_param = (((int)10) * ((m_drive_7 < ((t_sample)0.050000000000000003)) ? ((t_sample)0.050000000000000003) : m_drive_7));
-				t_sample rho_param = m_param_rho_6;
 				t_sample k1x = lorenz_dx_d_d_d_d(x_in, m_y_3, m_z_2, sig_param);
 				t_sample k1y = lorenz_dy_d_d_d_d(x_in, m_y_3, m_z_2, rho_param);
 				t_sample k1z = lorenz_dz_d_d_d_d(x_in, m_y_3, m_z_2, ((t_sample)2.6666666666666665));
@@ -146,9 +149,6 @@ typedef struct State {
 				m_z_2 = (m_z_2 + ((dt * ((t_sample)0.16666666666666666)) * (((k1z + (((int)2) * k2z)) + (((int)2) * k3z)) + k4z)));
 				
 			} else {
-				t_sample tmp_sub1_961 = (m_param_rho_6 - ((int)10));
-				t_sample tmp_scale_958 = ((safepow((tmp_sub1_961 * ((t_sample)0.02)), ((int)1)) * ((int)5)) + ((int)4));
-				t_sample c_param = tmp_scale_958;
 				t_sample k1x = rossler_dx_d_d_d(x_in, m_y_3, m_z_2);
 				t_sample k1y = rossler_dy_d_d_d_d(x_in, m_y_3, m_z_2, ((t_sample)0.20000000000000001));
 				t_sample k1z = rossler_dz_d_d_d_d_d(x_in, m_y_3, m_z_2, ((t_sample)0.20000000000000001), c_param);
@@ -166,10 +166,10 @@ typedef struct State {
 				m_z_2 = (m_z_2 + ((dt * ((t_sample)0.16666666666666666)) * (((k1z + (((int)2) * k2z)) + (((int)2) * k3z)) + k4z)));
 				
 			};
-			if ((((fabs(m_x_4) > ((int)100)) || (fabs(m_y_3) > ((int)100))) || (fabs(m_z_2) > ((int)100)))) {
-				m_x_4 = ((t_sample)0.10000000000000001);
-				m_y_3 = ((t_sample)0.10000000000000001);
-				m_z_2 = ((t_sample)0.10000000000000001);
+			if (((((((fabs(m_x_4) > ((int)300)) || (fabs(m_y_3) > ((int)300))) || (fabs(m_z_2) > ((int)300))) || genlib_isnan(m_x_4)) || genlib_isnan(m_y_3)) || genlib_isnan(m_z_2))) {
+				m_x_4 = ((int)4);
+				m_y_3 = ((int)0);
+				m_z_2 = ((t_sample)0.20000000000000001);
 				
 			};
 			t_sample iftrue_13 = (m_x_4 * ((t_sample)0.050000000000000003));
@@ -180,20 +180,21 @@ typedef struct State {
 			t_sample iffalse_18 = (m_y_3 * ((t_sample)0.080000000000000002));
 			t_sample v_19 = (cond_16 ? iftrue_17 : iffalse_18);
 			t_sample norm_y = ((v_19 <= ((int)-1)) ? ((int)-1) : ((v_19 >= ((int)1)) ? ((int)1) : v_19));
-			t_sample iftrue_21 = ((m_z_2 - ((int)25)) * ((t_sample)0.040000000000000001));
-			t_sample iffalse_22 = ((m_z_2 - ((int)5)) * ((t_sample)0.14999999999999999));
-			t_sample v_23 = (cond_20 ? iftrue_21 : iffalse_22);
-			t_sample norm_z = ((v_23 <= ((int)-1)) ? ((int)-1) : ((v_23 >= ((int)1)) ? ((int)1) : v_23));
+			t_sample v_21 = ((m_z_2 - (m_param_rho_6 - ((int)1))) * ((t_sample)0.055));
+			t_sample iftrue_22 = ((v_21 <= ((int)-1)) ? ((int)-1) : ((v_21 >= ((int)1)) ? ((int)1) : v_21));
+			t_sample v_23 = ((m_z_2 - ((t_sample)2.5)) * ((t_sample)0.10000000000000001));
+			t_sample iffalse_24 = ((v_23 <= ((int)-1)) ? ((int)-1) : ((v_23 >= ((int)1)) ? ((int)1) : v_23));
+			t_sample norm_z = (cond_20 ? iftrue_22 : iffalse_24);
 			int trig_pulse = ((norm_x > ((int)0)) && (m_h_last_x_1 <= ((int)0)));
 			m_h_last_x_1 = norm_x;
-			t_sample tmp_expr_323 = norm_x;
-			t_sample tmp_expr_324 = norm_y;
-			t_sample tmp_expr_325 = norm_z;
-			int tmp_expr_326 = trig_pulse;
-			t_sample out1 = tmp_expr_323;
-			t_sample out2 = tmp_expr_324;
-			t_sample out3 = tmp_expr_325;
-			t_sample out4 = tmp_expr_326;
+			t_sample tmp_expr_405 = norm_x;
+			t_sample tmp_expr_406 = norm_y;
+			t_sample tmp_expr_407 = norm_z;
+			int tmp_expr_408 = trig_pulse;
+			t_sample out1 = tmp_expr_405;
+			t_sample out2 = tmp_expr_406;
+			t_sample out3 = tmp_expr_407;
+			t_sample out4 = tmp_expr_408;
 			// assign results to output buffer;
 			(*(__out1++)) = out1;
 			(*(__out2++)) = out2;
@@ -262,8 +263,8 @@ int num_params() { return 5; }
 
 /// Assistive lables for the signal inputs and outputs
 
-const char *gen_kernel_innames[] = { "in1", "in2" };
-const char *gen_kernel_outnames[] = { "out1", "out2", "out3", "out4" };
+const char *gen_kernel_innames[] = { "Audio / Cross-Modulation Injection In", "Speed FM Modulation CV In" };
+const char *gen_kernel_outnames[] = { "X Coordinate (-1..1 audio / CV azimuth)", "Y Coordinate (-1..1 audio / CV elevation)", "Z Coordinate (-1..1 spatial height: 0=ear level, -1=floor, +1=ceiling)", "Trigger Impulse (Poincaré section crossing)" };
 
 /// Invoke the signal process of a State object
 

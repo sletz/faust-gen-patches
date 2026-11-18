@@ -70,17 +70,18 @@ typedef struct State {
 	CommonState __commonstate;
 	int __exception;
 	int vectorsize;
-	t_sample m_masking_6;
-	t_sample m_win_type_5;
 	t_sample m_pan_spread_7;
+	t_sample m_masking_6;
 	t_sample m_h_phase_f0_8;
 	t_sample m_h_pulsar_active_9;
+	t_sample m_win_type_5;
 	t_sample m_wave_shape_4;
-	t_sample m_formant_f_2;
 	t_sample m_duty_ratio_3;
 	t_sample samplerate;
-	t_sample m_f0_1;
 	t_sample m_h_pulse_count_10;
+	t_sample m_f0_1;
+	t_sample m_formant_f_2;
+	t_sample m_h_prev_in1_11;
 	// re-initialize all member variables;
 	inline void reset(t_param __sr, int __vs) {
 		__exception = 0;
@@ -96,6 +97,7 @@ typedef struct State {
 		m_h_phase_f0_8 = ((int)0);
 		m_h_pulsar_active_9 = ((int)1);
 		m_h_pulse_count_10 = ((int)0);
+		m_h_prev_in1_11 = ((int)0);
 		genlib_reset_complete(this);
 		
 	};
@@ -120,10 +122,13 @@ typedef struct State {
 		while ((__n--)) {
 			const t_sample in1 = (*(__in1++));
 			const t_sample in2 = (*(__in2++));
-			int new_cycle = ((m_h_phase_f0_8 + f0_step) >= ((int)1));
-			t_sample phase_f0 = wrap((m_h_phase_f0_8 + f0_step), ((int)0), ((int)1));
+			int trig_sync = ((in1 > ((t_sample)0.5)) && (m_h_prev_in1_11 <= ((t_sample)0.5)));
+			m_h_prev_in1_11 = in1;
+			int new_cycle = (((m_h_phase_f0_8 + f0_step) >= ((int)1)) || trig_sync);
+			t_sample iffalse_12 = wrap((m_h_phase_f0_8 + f0_step), ((int)0), ((int)1));
+			t_sample phase_f0 = (trig_sync ? ((int)0) : iffalse_12);
 			m_h_phase_f0_8 = phase_f0;
-			if ((new_cycle || (in1 > ((t_sample)0.5)))) {
+			if (new_cycle) {
 				t_sample rand_val = fabs(noise());
 				m_h_pulsar_active_9 = (rand_val > m_masking_6);
 				m_h_pulse_count_10 = (m_h_pulse_count_10 + ((int)1));
@@ -154,8 +159,8 @@ typedef struct State {
 					};
 					
 				};
-				t_sample v_11 = (m_formant_f_2 + in2);
-				t_sample eff_formant = ((v_11 <= ((int)20)) ? ((int)20) : ((v_11 >= ((int)12000)) ? ((int)12000) : v_11));
+				t_sample v_13 = (m_formant_f_2 + in2);
+				t_sample eff_formant = ((v_13 <= ((int)20)) ? ((int)20) : ((v_13 >= ((int)12000)) ? ((int)12000) : v_13));
 				t_sample pulsar_cycles = (eff_formant * safediv(d_ratio, ((m_f0_1 < ((t_sample)0.10000000000000001)) ? ((t_sample)0.10000000000000001) : m_f0_1)));
 				t_sample p_wave_phase = wrap((p_norm * pulsar_cycles), ((int)0), ((int)1));
 				t_sample osc = ((int)0);
@@ -182,15 +187,15 @@ typedef struct State {
 				sig = (osc * w);
 				
 			};
-			t_sample cond_12 = safemod(m_h_pulse_count_10, ((int)2));
-			int pan_dir = (cond_12 ? ((int)1) : ((int)-1));
+			t_sample cond_14 = safemod(m_h_pulse_count_10, ((int)2));
+			int pan_dir = (cond_14 ? ((int)1) : ((int)-1));
 			t_sample pan_pos = (((t_sample)0.5) + ((pan_dir * m_pan_spread_7) * ((t_sample)0.45000000000000001)));
 			t_sample pan_L = cos((pan_pos * ((t_sample)1.5707963267948966)));
 			t_sample pan_R = sin((pan_pos * ((t_sample)1.5707963267948966)));
-			t_sample tmp_expr_369 = (sig * pan_L);
-			t_sample tmp_expr_370 = (sig * pan_R);
-			t_sample out1 = tmp_expr_369;
-			t_sample out2 = tmp_expr_370;
+			t_sample tmp_expr_465 = (sig * pan_L);
+			t_sample tmp_expr_466 = (sig * pan_R);
+			t_sample out1 = tmp_expr_465;
+			t_sample out2 = tmp_expr_466;
 			// assign results to output buffer;
 			(*(__out1++)) = out1;
 			(*(__out2++)) = out2;

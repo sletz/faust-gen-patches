@@ -134,11 +134,11 @@ typedef struct State {
 				};
 				
 			};
-			t_sample tmp_mix_1066 = (m_a_5 + (curved * (m_b_4 - m_a_5)));
-			t_sample tmp_expr_89 = tmp_mix_1066;
-			t_sample tmp_expr_90 = curved;
-			t_sample out1 = tmp_expr_89;
-			t_sample out2 = tmp_expr_90;
+			t_sample tmp_mix_894 = (m_a_5 + (curved * (m_b_4 - m_a_5)));
+			t_sample tmp_expr_121 = tmp_mix_894;
+			t_sample tmp_expr_122 = curved;
+			t_sample out1 = tmp_expr_121;
+			t_sample out2 = tmp_expr_122;
 			// assign results to output buffer;
 			(*(__out1++)) = out1;
 			(*(__out2++)) = out2;
@@ -157,10 +157,10 @@ typedef struct State {
 		m_shape_3 = (_value < -1 ? -1 : (_value > 1 ? 1 : _value));
 	};
 	inline void set_b(t_param _value) {
-		m_b_4 = (_value < 0 ? 0 : (_value > 1 ? 1 : _value));
+		m_b_4 = (_value < -1000 ? -1000 : (_value > 1000 ? 1000 : _value));
 	};
 	inline void set_a(t_param _value) {
-		m_a_5 = (_value < 0 ? 0 : (_value > 1 ? 1 : _value));
+		m_a_5 = (_value < -1000 ? -1000 : (_value > 1000 ? 1000 : _value));
 	};
 	
 } State;
@@ -315,8 +315,8 @@ void *create(t_param sr, long vs) {
 	pi->inputmin = 0;
 	pi->inputmax = 1;
 	pi->hasminmax = true;
-	pi->outputmin = 0;
-	pi->outputmax = 1;
+	pi->outputmin = -1000;
+	pi->outputmax = 1000;
 	pi->exp = 0;
 	pi->units = "";		// no units defined
 	// initialize parameter 1 ("m_b_4")
@@ -329,8 +329,8 @@ void *create(t_param sr, long vs) {
 	pi->inputmin = 0;
 	pi->inputmax = 1;
 	pi->hasminmax = true;
-	pi->outputmin = 0;
-	pi->outputmax = 1;
+	pi->outputmin = -1000;
+	pi->outputmax = 1000;
 	pi->exp = 0;
 	pi->units = "";		// no units defined
 	// initialize parameter 2 ("m_clamp_in_1")

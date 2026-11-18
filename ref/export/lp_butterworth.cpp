@@ -161,8 +161,8 @@ typedef struct State {
 			m_x1_8 = y0_1;
 			m_y2_11 = m_y1_10;
 			m_y1_10 = y0_2;
-			t_sample tmp_expr_328 = y0_2;
-			t_sample out1 = tmp_expr_328;
+			t_sample tmp_expr_410 = y0_2;
+			t_sample out1 = tmp_expr_410;
 			// assign results to output buffer;
 			(*(__out1++)) = out1;
 			
@@ -171,10 +171,10 @@ typedef struct State {
 		
 	};
 	inline void set_freq(t_param _value) {
-		m_freq_1 = (_value < 10 ? 10 : (_value > 1000 ? 1000 : _value));
+		m_freq_1 = (_value < 10 ? 10 : (_value > 20000 ? 20000 : _value));
 	};
 	inline void set_smooth(t_param _value) {
-		m_smooth_2 = (_value < 0 ? 0 : (_value > 1 ? 1 : _value));
+		m_smooth_2 = (_value < 0 ? 0 : (_value > 1000 ? 1000 : _value));
 	};
 	
 } State;
@@ -324,7 +324,7 @@ void *create(t_param sr, long vs) {
 	pi->inputmax = 1;
 	pi->hasminmax = true;
 	pi->outputmin = 10;
-	pi->outputmax = 1000;
+	pi->outputmax = 20000;
 	pi->exp = 0;
 	pi->units = "";		// no units defined
 	// initialize parameter 1 ("m_smooth_2")
@@ -338,7 +338,7 @@ void *create(t_param sr, long vs) {
 	pi->inputmax = 1;
 	pi->hasminmax = true;
 	pi->outputmin = 0;
-	pi->outputmax = 1;
+	pi->outputmax = 1000;
 	pi->exp = 0;
 	pi->units = "";		// no units defined
 	

@@ -11,12 +11,13 @@ def _triggers(n, sr):
     x[150001, 0] = 1.0
     return x
 
-# occurrences is left at its default 16: the export clamps it to [1, 1].
 MODEL = dict(name="poisson-cloud", export="poisson_cloud", inputs=2, sites=[1, 1, 1], input=_triggers,
     frames=192000,
     settings=[
         dict(name="default"),
-        dict(name="poisson", set=dict(interval=20, jitter=1, width=0.3)),
+        dict(name="poisson", set=dict(interval=20, jitter=1, width=0.3, occurrences=200)),
+        dict(name="few", set=dict(interval=40, jitter=0.3, occurrences=3),
+             at=[(80000, "occurrences", 1), (140000, "occurrences", 1000)]),
         dict(name="loop-dense", set=dict(interval=1, jitter=0.8, width=0.9, loop=1)),
         dict(name="loop-change", set=dict(interval=60, jitter=0.5, loop=1),
              at=[(60000, "interval", 7), (100000, "loop", 0), (120000, "width", 0.05)]),

@@ -11,7 +11,7 @@ declare license "MIT";
 g = library("genops.lib");
 bw = library("butterworth.lib");
 
-freq = hslider("freq [unit:Hz]", 80, 10, 1000, 0.1);
+freq = hslider("freq [unit:Hz]", 80, 10, 20000, 0.1);
 smooth = hslider("smooth [unit:ms]", 100, 0, 1000, 1);
 
 process = bw.lp(freq, smooth);

@@ -1,0 +1,252 @@
+{
+    "patcher": {
+        "fileversion": 1,
+        "appversion": {
+            "major": 9,
+            "minor": 2,
+            "revision": 1,
+            "architecture": "x64",
+            "modernui": 1
+        },
+        "classnamespace": "dsp.gen",
+        "rect": [
+            249.0,
+            102.0,
+            1000.0,
+            1001.0
+        ],
+        "default_fontsize": 11.0,
+        "gridsize": [
+            8.0,
+            8.0
+        ],
+        "boxes": [
+            {
+                "box": {
+                    "id": "obj-1",
+                    "maxclass": "newobj",
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        20.0,
+                        28.0,
+                        150.0,
+                        21.0
+                    ],
+                    "text": "in 1 @comment Audio Left In"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-2",
+                    "maxclass": "newobj",
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        273.66666666666663,
+                        28.0,
+                        157.0,
+                        21.0
+                    ],
+                    "text": "in 2 @comment Audio Right In"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-3",
+                    "maxclass": "newobj",
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        527.3333333333333,
+                        28.0,
+                        187.0,
+                        21.0
+                    ],
+                    "text": "in 3 @comment Main Delay CV (ms)"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-4",
+                    "maxclass": "newobj",
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        781.0,
+                        28.0,
+                        199.0,
+                        21.0
+                    ],
+                    "text": "in 4 @comment Probability CV (0..100)"
+                }
+            },
+            {
+                "box": {
+                    "code": "/**\n * ============================================================================\n * @file driller.gendsp / driller.maxpat\n * @title DRILLER (Stochastic Multi-Tap Glitch Repeat & Beat-Drill Delay)\n * @author Max Bruckert\n *\n * @description\n * High-speed, sample-accurate GenExpr port of the RNBO 'driller' algorithm.\n * Operates as a dynamic stutter, glitch repeater, and beat-drill delay.\n * Uses a continuous circular recording buffer that ALWAYS listens to and\n * buffers incoming live audio in real time.\n *\n * At the boundary of each fundamental period (eff_main), a fresh slice of\n * the newly arrived live audio is captured and drilled across the active\n * subdivision ratios (main, div2, div3, div4, div5, div6):\n *\n * LOTTERY BEHAVIOR (Faithful RNBO Replication):\n *   - When probability == 0: Output is strictly locked to maindelay (Tap 1).\n *   - When probability > 0 : On each beat, a stochastic draw tests against\n *     probability. If triggered, it draws randomly from ALL 6 delay taps:\n *     {1: maindelay, 2: div2, 3: div3, 4: div4, 5: div5, 6: div6}.\n *   - Maindelay is an equal participant in the lottery: when a drill tap\n *     (div2..div6) is chosen, maindelay is 100% MUTED; when maindelay is\n *     chosen, all drill taps are 100% MUTED.\n *\n * MODES:\n *   - Mode 0 (Overlay): Live dry audio passes through; drill delay is mixed\n *     on top with user feedback.\n *   - Mode 1 (Insert) : Drill delay replaces dry audio (dry is muted). At the\n *     end of each period ('au bout d'une p\u00e9riode'), the capture automatically\n *     refreshes with the latest live audio from the circular buffer.\n *   - Mode 2 (Capture): Freeze mode. Permanently holds and loops the captured\n *     slice without updating until mode changes.\n *\n * SOUND DESIGN ENHANCEMENTS:\n *   - Micro-fade anti-click window (1.5 ms raised-cosine) at loop seams.\n *   - Kinetic per-voice spatialization (tap 1 center, fast taps ricocheting).\n *   - Adaptive anti-rumble high-pass filtering tracking division frequency.\n *   - Stochastic lo-fi degradation (decimation, bitcrush, analog tape drive).\n *\n * @inlets\n *   in1 : Audio Left Input\n *   in2 : Audio Right Input\n *   in3 : Main Delay CV in ms (added to maindelay)\n *   in4 : Probability CV in % (added to probability)\n *\n * @outlets\n *   out1 : Processed Audio Left (Dry/Wet)\n *   out2 : Processed Audio Right (Dry/Wet)\n *   out3 : Active Subdivision Slot CV (0=Mute, 1=Main, 2..6=Drill Ratios)\n *\n * @parameters\n *   maindelay     (10..4000 ms, def: 500)  : Fundamental loop/clock period\n *   div2          (1..32, def: 2)          : Drill subdivision ratio 2 (main / div2)\n *   div3          (1..32, def: 4)          : Drill subdivision ratio 3 (main / div3)\n *   div4          (1..32, def: 8)          : Drill subdivision ratio 4 (main / div4)\n *   div5          (1..32, def: 10)         : Drill subdivision ratio 5 (main / div5)\n *   div6          (1..32, def: 12)         : Drill subdivision ratio 6 (main / div6)\n *   vol1          (0..3, def: 1.0)         : Gain of tap 1 (maindelay)\n *   vol2          (0..3, def: 0.8)         : Gain of tap 2 (div2)\n *   vol3          (0..3, def: 0.8)         : Gain of tap 3 (div3)\n *   vol4          (0..3, def: 0.7)         : Gain of tap 4 (div4)\n *   vol5          (0..3, def: 0.7)         : Gain of tap 5 (div5)\n *   vol6          (0..3, def: 0.65)        : Gain of tap 6 (div6)\n *   probability   (0..100 %, def: 75)      : Lottery trigger chance (0 = maindelay only, >0 = draw from all 6 taps)\n *   mute_prob     (0..100 %, def: 10)      : Likelihood of momentary silence/rest slot during a draw\n *   feedback      (0..100 %, def: 60)      : Delay loop regeneration (in overlay mode)\n *   stereo_spread (0..100 %, def: 30)      : Stereo micro-offset between L and R taps (0..12 ms)\n *   pan_spread    (0..100 %, def: 50)      : Dynamic voice spatialization & ricochet width\n *   roll_filter   (0..100 %, def: 50)      : Adaptive highpass cutoff tracking division speed (cleans rumble)\n *   degrade       (0..100 %, def: 0)       : Lo-fi degradation intensity (downsampling, bitcrush, tape drive)\n *   degrade_prob  (0..100 %, def: 30)      : Stochastic probability of degradation striking a cycle\n *   mode          (0..2, def: 0)           : 0: Overlay (Dry+Wet), 1: Insert (Drill only), 2: Capture (Freeze)\n *   mix           (0..100 %, def: 100)     : Master Dry / Wet blend ratio\n * ============================================================================\n */\n\n// 1. PARAMETERS\nParam maindelay(500, min=10, max=4000);\nParam div2(2, min=1, max=32);\nParam div3(4, min=1, max=32);\nParam div4(8, min=1, max=32);\nParam div5(10, min=1, max=32);\nParam div6(12, min=1, max=32);\nParam vol1(1.0, min=0, max=3);\nParam vol2(0.8, min=0, max=3);\nParam vol3(0.8, min=0, max=3);\nParam vol4(0.7, min=0, max=3);\nParam vol5(0.7, min=0, max=3);\nParam vol6(0.65, min=0, max=3);\nParam probability(75, min=0, max=100);\nParam mute_prob(10, min=0, max=100);\nParam feedback(60, min=0, max=100);\nParam stereo_spread(30, min=0, max=100);\nParam pan_spread(50, min=0, max=100);\nParam roll_filter(50, min=0, max=100);\nParam degrade(0, min=0, max=100);\nParam degrade_prob(30, min=0, max=100);\nParam mode(0, min=0, max=2);\nParam mix(100, min=0, max=100);\n\n// 2. CONTINUOUS CIRCULAR RECORDING BUFFERS (4000 ms at 48kHz)\nDelay rec_L(192000), rec_R(192000);\n\n// Histories\nHistory h_target_tap(1);\nHistory h_beat_ph(0);\nHistory h_prev_mode(0);\nHistory h_D(24000);\nHistory h_sub_count(0);\nHistory h_sub_len(24000);\n\n// Tap weights for crossfading\nHistory h_w1(1.0), h_w2(0.0), h_w3(0.0), h_w4(0.0), h_w5(0.0), h_w6(0.0);\n\n// Feedback recirc history\nHistory h_fb_L(0), h_fb_R(0);\n\n// Dynamic Panning & Spatial Histories\nHistory h_pan_cur(0.0);\nHistory h_pan_jitter(0.0);\nHistory h_pingpong(0.0);\n\n// Adaptive Filter Histories\nHistory h_hp_xL(0), h_hp_yL(0);\nHistory h_hp_xR(0), h_hp_yR(0);\n\n// Lo-Fi Degradation Histories\nHistory h_deg_amt(0.0);\nHistory h_is_degraded(0.0);\nHistory h_down_count(0);\nHistory h_hold_L(0.0), h_hold_R(0.0);\n\n// 3. MASTER BEAT CLOCK & PERIODIC CAPTURE\neff_main = clamp(maindelay + in3, 10.0, 4000.0);\nN_main = mstosamps(eff_main);\n\nf_beat = 1000.0 / eff_main;\ninc_beat = (f_beat * TWOPI) / samplerate;\n\nnew_beat_ph = wrap(h_beat_ph + inc_beat, 0.0, TWOPI);\nis_beat = (new_beat_ph < h_beat_ph);\nh_beat_ph = new_beat_ph;\n\nmode_changed = (mode != h_prev_mode);\nh_prev_mode = mode;\n\n// In Mode 0 (Overlay) and Mode 1 (Insert), capture updates every beat ('au bout d'une p\u00e9riode')\n// In Mode 2 (Capture), it freezes the current capture until mode changes\nshould_refresh = (is_beat && mode < 1.5) || mode_changed;\n\n// 4. STOCHASTIC VOICE LOTTERY\nr1 = 1.0;\nr2 = max(1.0, div2);\nr3 = max(1.0, div3);\nr4 = max(1.0, div4);\nr5 = max(1.0, div5);\nr6 = max(1.0, div6);\n\nif (should_refresh) {\n    eff_p = clamp(probability + in4, 0.0, 100.0);\n    eff_m = clamp(mute_prob, 0.0, 100.0);\n    \n    h_pingpong = (h_pingpong > 0.5) ? 0.0 : 1.0;\n    \n    // Lo-fi degradation evaluation\n    roll_deg = (noise() * 0.5 + 0.5) * 100.0;\n    eff_deg_p = clamp(degrade_prob, 0.0, 100.0);\n    h_is_degraded = (roll_deg < eff_deg_p) && (degrade > 0.5);\n    \n    // LOTTERY LOGIC:\n    // If probability <= 0: strictly locked to maindelay (Tap 1)\n    // If probability > 0 : draws from ALL 6 taps {1: maindelay, 2..6: divisions}\n    if (eff_p <= 0.001) {\n        h_target_tap = 1; // Locked to maindelay\n        h_pan_jitter = 0.0;\n    } else {\n        roll = (noise() * 0.5 + 0.5) * 100.0;\n        if (roll < eff_p) {\n            roll_m = (noise() * 0.5 + 0.5) * 100.0;\n            if (roll_m < eff_m) {\n                h_target_tap = 0; // Momentary mute\n            } else {\n                // Draw randomly from ALL 6 taps: {1=maindelay, 2=div2, 3=div3, 4=div4, 5=div5, 6=div6}\n                r_pick = floor((noise() * 0.5 + 0.5) * 6.0) + 1; // 1..6\n                h_target_tap = clamp(r_pick, 1, 6);\n                h_pan_jitter = (noise() * 0.4) * (pan_spread * 0.01);\n            }\n        }\n        // If roll >= eff_p: persists current tap selection\n    }\n    \n    // Calculate active subdivision ratio\n    active_r = (h_target_tap == 0) ? 1.0 :\n               (h_target_tap == 1) ? r1 :\n               (h_target_tap == 2) ? r2 :\n               (h_target_tap == 3) ? r3 :\n               (h_target_tap == 4) ? r4 :\n               (h_target_tap == 5) ? r5 : r6;\n    \n    new_sub_samps = max(2.0, floor(N_main / active_r));\n    h_sub_len = new_sub_samps;\n    h_D = new_sub_samps;\n    h_sub_count = 0;\n}\n\n// 5. CONTINUOUS CIRCULAR BUFFER RECORDING\n// The circular buffer ALWAYS records live input audio continuously!\nuser_fb = clamp(feedback * 0.01, 0.0, 0.95);\nfb_in_L = tanh(h_fb_L * 1.05) * user_fb;\nfb_in_R = tanh(h_fb_R * 1.05) * user_fb;\n\nrec_L.write(in1 + fb_in_L);\nrec_R.write(in2 + fb_in_R);\n\n// 6. LOOPING DRILL READ HEAD\nspr_samps = mstosamps(stereo_spread * 0.01 * 12.0);\n\nread_D_L = clamp(h_D, 2.0, 190000.0);\nread_D_R = clamp(h_D + spr_samps, 2.0, 190000.0);\n\nraw_tap_L = rec_L.read(read_D_L, interp=\"cubic\");\nraw_tap_R = rec_R.read(read_D_R, interp=\"cubic\");\n\n// Micro-fade anti-click window at loop seams (1.5 ms raised-cosine)\nfade_samps = min(mstosamps(1.5), floor(h_sub_len * 0.25));\nfade_gain = 1.0;\nif (fade_samps > 1.0) {\n    if (h_sub_count < fade_samps) {\n        fade_gain = 0.5 - 0.5 * cos((h_sub_count / fade_samps) * PI);\n    } else if (h_sub_count > (h_sub_len - fade_samps)) {\n        dist_end = h_sub_len - h_sub_count;\n        fade_gain = 0.5 - 0.5 * cos((dist_end / fade_samps) * PI);\n    }\n}\n\n// Advance looping counter & delay distance\nh_sub_count += 1;\nif (h_sub_count >= h_sub_len) {\n    h_sub_count = 0;\n    h_D += h_sub_len; // Jump back to start of loop slice!\n}\n\n// 7. VOICE GAINS & MUTING\n// Maindelay is STRICTLY MUTED when a drill division is playing.\n// When maindelay (1) is drawn, all drill divisions are strictly muted.\ntarget_w1 = (h_target_tap == 1) ? 1.0 : 0.0;\ntarget_w2 = (h_target_tap == 2) ? 1.0 : 0.0;\ntarget_w3 = (h_target_tap == 3) ? 1.0 : 0.0;\ntarget_w4 = (h_target_tap == 4) ? 1.0 : 0.0;\ntarget_w5 = (h_target_tap == 5) ? 1.0 : 0.0;\ntarget_w6 = (h_target_tap == 6) ? 1.0 : 0.0;\n\nh_w1 = fixdenorm(h_w1 + (target_w1 - h_w1) * 0.05);\nh_w2 = fixdenorm(h_w2 + (target_w2 - h_w2) * 0.05);\nh_w3 = fixdenorm(h_w3 + (target_w3 - h_w3) * 0.05);\nh_w4 = fixdenorm(h_w4 + (target_w4 - h_w4) * 0.05);\nh_w5 = fixdenorm(h_w5 + (target_w5 - h_w5) * 0.05);\nh_w6 = fixdenorm(h_w6 + (target_w6 - h_w6) * 0.05);\n\nv1 = clamp(vol1, 0.0, 3.0);\nv2 = clamp(vol2, 0.0, 3.0);\nv3 = clamp(vol3, 0.0, 3.0);\nv4 = clamp(vol4, 0.0, 3.0);\nv5 = clamp(vol5, 0.0, 3.0);\nv6 = clamp(vol6, 0.0, 3.0);\n\nactive_vol = (v1 * h_w1 +\n              v2 * h_w2 +\n              v3 * h_w3 +\n              v4 * h_w4 +\n              v5 * h_w5 +\n              v6 * h_w6);\n\ndrill_clean_L = raw_tap_L * fade_gain * active_vol;\ndrill_clean_R = raw_tap_R * fade_gain * active_vol;\n\n// Store feedback for recirculation\nh_fb_L = fixdenorm(drill_clean_L);\nh_fb_R = fixdenorm(drill_clean_R);\n\n// 8. KINETIC VOICE SPATIALIZATION & STEREO SCATTER\nbase_pan = (h_target_tap == 0) ? 0.0 :\n           (h_target_tap == 1) ? 0.0 :\n           (h_target_tap == 2) ? -0.35 :\n           (h_target_tap == 3) ? 0.35 :\n           (h_target_tap == 4) ? -0.75 :\n           (h_target_tap == 5) ? 0.75 :\n           ((h_pingpong > 0.5) ? -0.95 : 0.95);\n\npan_target = clamp(base_pan * (pan_spread * 0.01) + h_pan_jitter, -1.0, 1.0);\nh_pan_cur = fixdenorm(h_pan_cur + (pan_target - h_pan_cur) * 0.03);\n\ntheta_pan = (h_pan_cur + 1.0) * (PI * 0.25);\npan_gL = cos(theta_pan) * 1.41421356;\npan_gR = sin(theta_pan) * 1.41421356;\n\npan_drill_L = drill_clean_L * pan_gL;\npan_drill_R = drill_clean_R * pan_gR;\n\n// 9. ADAPTIVE ANTI-RUMBLE HIGH-PASS FILTER\nactive_r_cur = (h_target_tap == 0) ? 1.0 :\n               (h_target_tap == 1) ? r1 :\n               (h_target_tap == 2) ? r2 :\n               (h_target_tap == 3) ? r3 :\n               (h_target_tap == 4) ? r4 :\n               (h_target_tap == 5) ? r5 : r6;\n\nf_hp = clamp(20.0 + (active_r_cur - 1.0) * 45.0 * (roll_filter * 0.01), 20.0, 2500.0);\nomega_hp = (f_hp * TWOPI) / samplerate;\nalpha_hp = 1.0 / (1.0 + omega_hp);\n\nhp_outL = alpha_hp * (h_hp_yL + pan_drill_L - h_hp_xL);\nh_hp_xL = pan_drill_L; h_hp_yL = hp_outL;\n\nhp_outR = alpha_hp * (h_hp_yR + pan_drill_R - h_hp_xR);\nh_hp_xR = pan_drill_R; h_hp_yR = hp_outR;\n\nfilt_mix = clamp(roll_filter * 0.01, 0.0, 1.0);\nfilt_drill_L = mix(pan_drill_L, hp_outL, filt_mix);\nfilt_drill_R = mix(pan_drill_R, hp_outR, filt_mix);\n\n// 10. STOCHASTIC LO-FI DEGRADATION (Downsampling / Bitcrush / Tape Drive)\ntarget_deg_amt = h_is_degraded ? clamp(degrade * 0.01, 0.0, 1.0) : 0.0;\nh_deg_amt = fixdenorm(h_deg_amt + (target_deg_amt - h_deg_amt) * 0.05);\n\ndown_factor = floor(1.0 + h_deg_amt * 24.0); // 1..25 decimation\nh_down_count += 1;\nif (h_down_count >= down_factor) {\n    h_hold_L = filt_drill_L;\n    h_hold_R = filt_drill_R;\n    h_down_count = 0;\n}\n\nbit_steps = floor(pow(2.0, max(3.0, 16.0 - h_deg_amt * 12.0))); // 16-bit down to 4-bit\ncrush_L = floor(h_hold_L * bit_steps + 0.5) / bit_steps;\ncrush_R = floor(h_hold_R * bit_steps + 0.5) / bit_steps;\n\ndrive_gain = 1.0 + h_deg_amt * 2.5;\ndrive_norm = 1.0 / (1.0 + h_deg_amt * 0.35);\ndriven_L = tanh(crush_L * drive_gain) * drive_norm;\ndriven_R = tanh(crush_R * drive_gain) * drive_norm;\n\ndrill_L = mix(filt_drill_L, driven_L, h_deg_amt);\ndrill_R = mix(filt_drill_R, driven_R, h_deg_amt);\n\n// 11. OUTPUT STAGES & MASTER MIX\n// Mode 0 (Overlay): Dry input + Drill delay\n// Mode 1 (Insert) : Drill delay only (dry is completely muted)\n// Mode 2 (Capture): Drill delay only (dry is completely muted, freeze loop)\nwet_L = (mode < 0.5) ? (in1 + drill_L) : drill_L;\nwet_R = (mode < 0.5) ? (in2 + drill_R) : drill_R;\n\nmix_val = clamp(mix * 0.01, 0.0, 1.0);\nout1 = mix(in1, wet_L, mix_val);\nout2 = mix(in2, wet_R, mix_val);\nout3 = h_target_tap;\n",
+                    "fontface": 0,
+                    "fontname": "<Monospaced>",
+                    "fontsize": 11.0,
+                    "id": "obj-5",
+                    "maxclass": "codebox",
+                    "numinlets": 4,
+                    "numoutlets": 3,
+                    "outlettype": [
+                        "",
+                        "",
+                        ""
+                    ],
+                    "patching_rect": [
+                        20.0,
+                        60.0,
+                        780.0,
+                        869.0
+                    ]
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-6",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        20.0,
+                        949.0,
+                        180.0,
+                        21.0
+                    ],
+                    "text": "out 1 @comment Processed Left"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-7",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        400.5,
+                        949.0,
+                        180.0,
+                        21.0
+                    ],
+                    "text": "out 2 @comment Processed Right"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-8",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        781.0,
+                        949.0,
+                        164.0,
+                        21.0
+                    ],
+                    "text": "out 3 @comment Active Tap CV"
+                }
+            }
+        ],
+        "lines": [
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-5",
+                        0
+                    ],
+                    "source": [
+                        "obj-1",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-5",
+                        1
+                    ],
+                    "source": [
+                        "obj-2",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-5",
+                        2
+                    ],
+                    "source": [
+                        "obj-3",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-5",
+                        3
+                    ],
+                    "source": [
+                        "obj-4",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-6",
+                        0
+                    ],
+                    "source": [
+                        "obj-5",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-7",
+                        0
+                    ],
+                    "source": [
+                        "obj-5",
+                        1
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-8",
+                        0
+                    ],
+                    "source": [
+                        "obj-5",
+                        2
+                    ]
+                }
+            }
+        ]
+    }
+}

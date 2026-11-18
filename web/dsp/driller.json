@@ -1,0 +1,340 @@
+{
+	"name": "driller",
+	"filename": "driller.dsp",
+	"version": "0.9.6",
+	"compile_options": "-lang wasm -double",
+	"library_list": ["dsp/genops.lib","/usr/local/share/faust/noises.lib","/usr/local/share/faust/basics.lib","/usr/local/share/faust/signals.lib","/usr/local/share/faust/maths.lib","/usr/local/share/faust/platform.lib"],
+	"include_pathnames": ["dsp","/Users/letz/Developpements/RUST/faust-gen-patches/../faust-rs/target/share/faust","/usr/local/share/faust","/usr/share/faust"],
+	"size": 8389392,
+	"inputs": 4,
+	"outputs": 3,
+	"sr_index": 0,
+	"meta": [ 
+		{ "/Users/letz/Developpements/RUST/faust-gen-patches/dsp/genops.lib/license": "MIT" },
+		{ "/Users/letz/Developpements/RUST/faust-gen-patches/dsp/genops.lib/name": "genops" },
+		{ "/Users/letz/Developpements/RUST/faust-gen-patches/dsp/genops.lib/version": "1.0.0" },
+		{ "/usr/local/share/faust/basics.lib/name": "Faust Basic Element Library" },
+		{ "/usr/local/share/faust/basics.lib/version": "1.23.6" },
+		{ "/usr/local/share/faust/maths.lib/author": "GRAME" },
+		{ "/usr/local/share/faust/maths.lib/copyright": "GRAME" },
+		{ "/usr/local/share/faust/maths.lib/license": "LicenseRef-LGPL-2.1-or-later-with-Faust-exception" },
+		{ "/usr/local/share/faust/maths.lib/name": "Faust Math Library" },
+		{ "/usr/local/share/faust/maths.lib/version": "2.9.3" },
+		{ "/usr/local/share/faust/noises.lib/name": "Faust Noise Generator Library" },
+		{ "/usr/local/share/faust/noises.lib/version": "1.9.0" },
+		{ "/usr/local/share/faust/platform.lib/name": "Generic Platform Library" },
+		{ "/usr/local/share/faust/platform.lib/version": "1.3.1" },
+		{ "/usr/local/share/faust/signals.lib/name": "Faust Routing Library" },
+		{ "/usr/local/share/faust/signals.lib/version": "1.8.0" },
+		{ "author": "Max Bruckert (gen~), Faust port" },
+		{ "compile_options": "-lang wasm -double" },
+		{ "filename": "driller.dsp" },
+		{ "license": "MIT" },
+		{ "name": "driller" }
+	],
+	"ui": [ 
+		{
+			"type": "vgroup",
+			"label": "driller",
+			"items": [ 
+				{
+					"type": "hslider",
+					"label": "degrade",
+					"varname": "fHslider7",
+					"shortname": "degrade",
+					"address": "/driller/degrade",
+					"index": 48,
+					"meta": [
+						{ "unit": "%" }
+					],
+					"init": 0,
+					"min": 0,
+					"max": 100,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "degrade_prob",
+					"varname": "fHslider6",
+					"shortname": "degrade_prob",
+					"address": "/driller/degrade_prob",
+					"index": 40,
+					"meta": [
+						{ "unit": "%" }
+					],
+					"init": 30,
+					"min": 0,
+					"max": 100,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "div2",
+					"varname": "fHslider13",
+					"shortname": "div2",
+					"address": "/driller/div2",
+					"index": 88,
+					"init": 2,
+					"min": 1,
+					"max": 32,
+					"step": 0.001
+				},
+				{
+					"type": "hslider",
+					"label": "div3",
+					"varname": "fHslider12",
+					"shortname": "div3",
+					"address": "/driller/div3",
+					"index": 80,
+					"init": 4,
+					"min": 1,
+					"max": 32,
+					"step": 0.001
+				},
+				{
+					"type": "hslider",
+					"label": "div4",
+					"varname": "fHslider11",
+					"shortname": "div4",
+					"address": "/driller/div4",
+					"index": 72,
+					"init": 8,
+					"min": 1,
+					"max": 32,
+					"step": 0.001
+				},
+				{
+					"type": "hslider",
+					"label": "div5",
+					"varname": "fHslider10",
+					"shortname": "div5",
+					"address": "/driller/div5",
+					"index": 64,
+					"init": 10,
+					"min": 1,
+					"max": 32,
+					"step": 0.001
+				},
+				{
+					"type": "hslider",
+					"label": "div6",
+					"varname": "fHslider9",
+					"shortname": "div6",
+					"address": "/driller/div6",
+					"index": 56,
+					"init": 12,
+					"min": 1,
+					"max": 32,
+					"step": 0.001
+				},
+				{
+					"type": "hslider",
+					"label": "feedback",
+					"varname": "fHslider2",
+					"shortname": "feedback",
+					"address": "/driller/feedback",
+					"index": 152,
+					"meta": [
+						{ "unit": "%" }
+					],
+					"init": 60,
+					"min": 0,
+					"max": 100,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "maindelay",
+					"varname": "fHslider3",
+					"shortname": "maindelay",
+					"address": "/driller/maindelay",
+					"index": 16,
+					"meta": [
+						{ "unit": "ms" }
+					],
+					"init": 500,
+					"min": 10,
+					"max": 4000,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "mix",
+					"varname": "fHslider0",
+					"shortname": "mix",
+					"address": "/driller/mix",
+					"index": 144,
+					"meta": [
+						{ "unit": "%" }
+					],
+					"init": 100,
+					"min": 0,
+					"max": 100,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "mode",
+					"varname": "fHslider1",
+					"shortname": "mode",
+					"address": "/driller/mode",
+					"index": 8,
+					"meta": [
+						{ "style": "menu{'overlay':0;'insert':1;'capture':2}" }
+					],
+					"init": 0,
+					"min": 0,
+					"max": 2,
+					"step": 1
+				},
+				{
+					"type": "hslider",
+					"label": "mute_prob",
+					"varname": "fHslider5",
+					"shortname": "mute_prob",
+					"address": "/driller/mute_prob",
+					"index": 32,
+					"meta": [
+						{ "unit": "%" }
+					],
+					"init": 10,
+					"min": 0,
+					"max": 100,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "pan_spread",
+					"varname": "fHslider8",
+					"shortname": "pan_spread",
+					"address": "/driller/pan_spread",
+					"index": 160,
+					"meta": [
+						{ "unit": "%" }
+					],
+					"init": 50,
+					"min": 0,
+					"max": 100,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "probability",
+					"varname": "fHslider4",
+					"shortname": "probability",
+					"address": "/driller/probability",
+					"index": 24,
+					"meta": [
+						{ "unit": "%" }
+					],
+					"init": 75,
+					"min": 0,
+					"max": 100,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "roll_filter",
+					"varname": "fHslider21",
+					"shortname": "roll_filter",
+					"address": "/driller/roll_filter",
+					"index": 208,
+					"meta": [
+						{ "unit": "%" }
+					],
+					"init": 50,
+					"min": 0,
+					"max": 100,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "stereo_spread",
+					"varname": "fHslider20",
+					"shortname": "stereo_spread",
+					"address": "/driller/stereo_spread",
+					"index": 200,
+					"meta": [
+						{ "unit": "%" }
+					],
+					"init": 30,
+					"min": 0,
+					"max": 100,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "vol1",
+					"varname": "fHslider14",
+					"shortname": "vol1",
+					"address": "/driller/vol1",
+					"index": 96,
+					"init": 1,
+					"min": 0,
+					"max": 3,
+					"step": 0.001
+				},
+				{
+					"type": "hslider",
+					"label": "vol2",
+					"varname": "fHslider15",
+					"shortname": "vol2",
+					"address": "/driller/vol2",
+					"index": 104,
+					"init": 0.8,
+					"min": 0,
+					"max": 3,
+					"step": 0.001
+				},
+				{
+					"type": "hslider",
+					"label": "vol3",
+					"varname": "fHslider16",
+					"shortname": "vol3",
+					"address": "/driller/vol3",
+					"index": 112,
+					"init": 0.8,
+					"min": 0,
+					"max": 3,
+					"step": 0.001
+				},
+				{
+					"type": "hslider",
+					"label": "vol4",
+					"varname": "fHslider17",
+					"shortname": "vol4",
+					"address": "/driller/vol4",
+					"index": 120,
+					"init": 0.7,
+					"min": 0,
+					"max": 3,
+					"step": 0.001
+				},
+				{
+					"type": "hslider",
+					"label": "vol5",
+					"varname": "fHslider18",
+					"shortname": "vol5",
+					"address": "/driller/vol5",
+					"index": 128,
+					"init": 0.7,
+					"min": 0,
+					"max": 3,
+					"step": 0.001
+				},
+				{
+					"type": "hslider",
+					"label": "vol6",
+					"varname": "fHslider19",
+					"shortname": "vol6",
+					"address": "/driller/vol6",
+					"index": 136,
+					"init": 0.65,
+					"min": 0,
+					"max": 3,
+					"step": 0.001
+				}
+			]
+		}
+	]
+}

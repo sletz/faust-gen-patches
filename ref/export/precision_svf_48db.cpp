@@ -257,26 +257,26 @@ typedef struct State {
 				t_sample hp_f = ((((tLP_L - (((t_sample)1.4142135600000001) * v1_L)) - (gL * v1_L)) - v2_L) * hL);
 				t_sample v1_n = ((gL * hp_f) + v1_L);
 				t_sample lp_f = ((gL * v1_n) + v2_L);
-				t_sample tmp_v1_L_355 = (v1_n + (gL * hp_f));
-				t_sample tmp_v2_L_356 = (lp_f + (gL * v1_n));
+				t_sample tmp_v1_L_451 = (v1_n + (gL * hp_f));
+				t_sample tmp_v2_L_452 = (lp_f + (gL * v1_n));
 				tLP_L = lp_f;
 				if ((i == ((int)0))) {
-					m_lpL1_v1_46 = tmp_v1_L_355;
-					m_lpL1_v2_45 = tmp_v2_L_356;
+					m_lpL1_v1_46 = tmp_v1_L_451;
+					m_lpL1_v2_45 = tmp_v2_L_452;
 					
 				} else {
 					if ((i == ((int)1))) {
-						m_lpL2_v1_44 = tmp_v1_L_355;
-						m_lpL2_v2_43 = tmp_v2_L_356;
+						m_lpL2_v1_44 = tmp_v1_L_451;
+						m_lpL2_v2_43 = tmp_v2_L_452;
 						
 					} else {
 						if ((i == ((int)2))) {
-							m_lpL3_v1_42 = tmp_v1_L_355;
-							m_lpL3_v2_41 = tmp_v2_L_356;
+							m_lpL3_v1_42 = tmp_v1_L_451;
+							m_lpL3_v2_41 = tmp_v2_L_452;
 							
 						} else {
-							m_lpL4_v1_40 = tmp_v1_L_355;
-							m_lpL4_v2_39 = tmp_v2_L_356;
+							m_lpL4_v1_40 = tmp_v1_L_451;
+							m_lpL4_v2_39 = tmp_v2_L_452;
 							
 						};
 						
@@ -298,26 +298,26 @@ typedef struct State {
 				t_sample hp_h = ((((tHP_L - (((t_sample)1.4142135600000001) * v1_H)) - (gL * v1_H)) - v2_H) * hL);
 				t_sample v1H_n = ((gL * hp_h) + v1_H);
 				t_sample lp_h = ((gL * v1H_n) + v2_H);
-				t_sample tmp_v1_H_357 = (v1H_n + (gL * hp_h));
-				t_sample tmp_v2_H_358 = (lp_h + (gL * v1H_n));
+				t_sample tmp_v1_H_453 = (v1H_n + (gL * hp_h));
+				t_sample tmp_v2_H_454 = (lp_h + (gL * v1H_n));
 				tHP_L = hp_h;
 				if ((i == ((int)0))) {
-					m_hpL1_v1_30 = tmp_v1_H_357;
-					m_hpL1_v2_29 = tmp_v2_H_358;
+					m_hpL1_v1_30 = tmp_v1_H_453;
+					m_hpL1_v2_29 = tmp_v2_H_454;
 					
 				} else {
 					if ((i == ((int)1))) {
-						m_hpL2_v1_28 = tmp_v1_H_357;
-						m_hpL2_v2_27 = tmp_v2_H_358;
+						m_hpL2_v1_28 = tmp_v1_H_453;
+						m_hpL2_v2_27 = tmp_v2_H_454;
 						
 					} else {
 						if ((i == ((int)2))) {
-							m_hpL3_v1_26 = tmp_v1_H_357;
-							m_hpL3_v2_25 = tmp_v2_H_358;
+							m_hpL3_v1_26 = tmp_v1_H_453;
+							m_hpL3_v2_25 = tmp_v2_H_454;
 							
 						} else {
-							m_hpL4_v1_24 = tmp_v1_H_357;
-							m_hpL4_v2_23 = tmp_v2_H_358;
+							m_hpL4_v1_24 = tmp_v1_H_453;
+							m_hpL4_v2_23 = tmp_v2_H_454;
 							
 						};
 						
@@ -339,26 +339,26 @@ typedef struct State {
 				t_sample hp_fR = ((((tLP_R - (((t_sample)1.4142135600000001) * v1_LR)) - (gR * v1_LR)) - v2_LR) * hR);
 				t_sample v1_nR = ((gR * hp_fR) + v1_LR);
 				t_sample lp_fR = ((gR * v1_nR) + v2_LR);
-				t_sample tmp_v1_LR_359 = (v1_nR + (gR * hp_fR));
-				t_sample tmp_v2_LR_360 = (lp_fR + (gR * v1_nR));
+				t_sample tmp_v1_LR_455 = (v1_nR + (gR * hp_fR));
+				t_sample tmp_v2_LR_456 = (lp_fR + (gR * v1_nR));
 				tLP_R = lp_fR;
 				if ((i == ((int)0))) {
-					m_lpR1_v1_38 = tmp_v1_LR_359;
-					m_lpR1_v2_37 = tmp_v2_LR_360;
+					m_lpR1_v1_38 = tmp_v1_LR_455;
+					m_lpR1_v2_37 = tmp_v2_LR_456;
 					
 				} else {
 					if ((i == ((int)1))) {
-						m_lpR2_v1_36 = tmp_v1_LR_359;
-						m_lpR2_v2_35 = tmp_v2_LR_360;
+						m_lpR2_v1_36 = tmp_v1_LR_455;
+						m_lpR2_v2_35 = tmp_v2_LR_456;
 						
 					} else {
 						if ((i == ((int)2))) {
-							m_lpR3_v1_34 = tmp_v1_LR_359;
-							m_lpR3_v2_33 = tmp_v2_LR_360;
+							m_lpR3_v1_34 = tmp_v1_LR_455;
+							m_lpR3_v2_33 = tmp_v2_LR_456;
 							
 						} else {
-							m_lpR4_v1_32 = tmp_v1_LR_359;
-							m_lpR4_v2_31 = tmp_v2_LR_360;
+							m_lpR4_v1_32 = tmp_v1_LR_455;
+							m_lpR4_v2_31 = tmp_v2_LR_456;
 							
 						};
 						
@@ -380,26 +380,26 @@ typedef struct State {
 				t_sample hp_hR = ((((tHP_R - (((t_sample)1.4142135600000001) * v1_HR)) - (gR * v1_HR)) - v2_HR) * hR);
 				t_sample v1H_nR = ((gR * hp_hR) + v1_HR);
 				t_sample lp_hR = ((gR * v1H_nR) + v2_HR);
-				t_sample tmp_v1_HR_361 = (v1H_nR + (gR * hp_hR));
-				t_sample tmp_v2_HR_362 = (lp_hR + (gR * v1H_nR));
+				t_sample tmp_v1_HR_457 = (v1H_nR + (gR * hp_hR));
+				t_sample tmp_v2_HR_458 = (lp_hR + (gR * v1H_nR));
 				tHP_R = hp_hR;
 				if ((i == ((int)0))) {
-					m_hpR1_v1_22 = tmp_v1_HR_361;
-					m_hpR1_v2_21 = tmp_v2_HR_362;
+					m_hpR1_v1_22 = tmp_v1_HR_457;
+					m_hpR1_v2_21 = tmp_v2_HR_458;
 					
 				} else {
 					if ((i == ((int)1))) {
-						m_hpR2_v1_20 = tmp_v1_HR_361;
-						m_hpR2_v2_19 = tmp_v2_HR_362;
+						m_hpR2_v1_20 = tmp_v1_HR_457;
+						m_hpR2_v2_19 = tmp_v2_HR_458;
 						
 					} else {
 						if ((i == ((int)2))) {
-							m_hpR3_v1_18 = tmp_v1_HR_361;
-							m_hpR3_v2_17 = tmp_v2_HR_362;
+							m_hpR3_v1_18 = tmp_v1_HR_457;
+							m_hpR3_v2_17 = tmp_v2_HR_458;
 							
 						} else {
-							m_hpR4_v1_16 = tmp_v1_HR_361;
-							m_hpR4_v2_15 = tmp_v2_HR_362;
+							m_hpR4_v1_16 = tmp_v1_HR_457;
+							m_hpR4_v2_15 = tmp_v2_HR_458;
 							
 						};
 						
@@ -414,15 +414,15 @@ typedef struct State {
 			t_sample wet_fL = ((tHP_L * cos(angle_m)) + (tLP_L * sin(angle_m)));
 			t_sample wet_fR = ((tHP_R * cos(angle_m)) + (tLP_R * sin(angle_m)));
 			t_sample log_f_diff = log2((current_freq * ((t_sample)0.001)));
-			t_sample tmp_abs_946 = fabs(((log_f_diff < ((int)0)) ? log_f_diff : ((int)0)));
-			t_sample tmp_abs_947 = fabs(((((int)0) < log_f_diff) ? log_f_diff : ((int)0)));
-			t_sample tmp_mix_945 = (tmp_abs_946 + (m_s_mode_13 * (tmp_abs_947 - tmp_abs_946)));
-			t_sample gain_agc = (((int)1) + ((m_agc_2 * tmp_mix_945) * ((t_sample)0.25)));
-			t_sample tmp_wet_fL_363 = (wet_fL * gain_agc);
-			t_sample tmp_wet_fR_364 = (wet_fR * gain_agc);
+			t_sample tmp_abs_711 = fabs(((log_f_diff < ((int)0)) ? log_f_diff : ((int)0)));
+			t_sample tmp_abs_712 = fabs(((((int)0) < log_f_diff) ? log_f_diff : ((int)0)));
+			t_sample tmp_mix_710 = (tmp_abs_711 + (m_s_mode_13 * (tmp_abs_712 - tmp_abs_711)));
+			t_sample gain_agc = (((int)1) + ((m_agc_2 * tmp_mix_710) * ((t_sample)0.25)));
+			t_sample tmp_wet_fL_459 = (wet_fL * gain_agc);
+			t_sample tmp_wet_fR_460 = (wet_fR * gain_agc);
 			t_sample wet_out_amp = safepow(((int)10), (m_s_drive_10 * ((t_sample)0.050000000000000003)));
-			t_sample xL = (tmp_wet_fL_363 * wet_out_amp);
-			t_sample xR = (tmp_wet_fR_364 * wet_out_amp);
+			t_sample xL = (tmp_wet_fL_459 * wet_out_amp);
+			t_sample xR = (tmp_wet_fR_460 * wet_out_amp);
 			t_sample distL = tanh((xL + (((t_sample)0.059999999999999998) * tanh((xL * ((t_sample)0.5))))));
 			t_sample distR = tanh((xR + (((t_sample)0.059999999999999998) * tanh((xR * ((t_sample)0.5))))));
 			t_sample v_91 = (distL * ((t_sample)1.25));
@@ -432,10 +432,10 @@ typedef struct State {
 			t_sample angle_x = (m_s_mix_12 * ((t_sample)1.57079632679));
 			t_sample outL = ((dryL * cos(angle_x)) + (wet_finalL * sin(angle_x)));
 			t_sample outR = ((dryR * cos(angle_x)) + (wet_finalR * sin(angle_x)));
-			t_sample tmp_expr_365 = __m_dcblock_93(outL);
-			t_sample tmp_expr_366 = __m_dcblock_94(outR);
-			t_sample out2 = tmp_expr_366;
-			t_sample out1 = tmp_expr_365;
+			t_sample tmp_expr_461 = __m_dcblock_93(outL);
+			t_sample tmp_expr_462 = __m_dcblock_94(outR);
+			t_sample out2 = tmp_expr_462;
+			t_sample out1 = tmp_expr_461;
 			// assign results to output buffer;
 			(*(__out1++)) = out1;
 			(*(__out2++)) = out2;

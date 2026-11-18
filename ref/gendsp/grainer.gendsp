@@ -1,0 +1,277 @@
+{
+    "patcher": {
+        "fileversion": 1,
+        "appversion": {
+            "major": 9,
+            "minor": 2,
+            "revision": 1,
+            "architecture": "x64",
+            "modernui": 1
+        },
+        "classnamespace": "dsp.gen",
+        "rect": [
+            100.0,
+            100.0,
+            850.0,
+            950.0
+        ],
+        "default_fontsize": 11.0,
+        "gridsize": [
+            8.0,
+            8.0
+        ],
+        "boxes": [
+            {
+                "box": {
+                    "id": "obj-1",
+                    "maxclass": "newobj",
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        20.0,
+                        20.0,
+                        180.0,
+                        21.0
+                    ],
+                    "text": "in 1 @comment Audio Left In"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-2",
+                    "maxclass": "newobj",
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        220.0,
+                        20.0,
+                        180.0,
+                        21.0
+                    ],
+                    "text": "in 2 @comment Audio Right In"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-3",
+                    "maxclass": "newobj",
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        420.0,
+                        20.0,
+                        180.0,
+                        21.0
+                    ],
+                    "text": "in 3 @comment Threshold CV"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-4",
+                    "maxclass": "newobj",
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        620.0,
+                        20.0,
+                        180.0,
+                        21.0
+                    ],
+                    "text": "in 4 @comment Probability CV"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-5",
+                    "maxclass": "codebox",
+                    "numinlets": 4,
+                    "numoutlets": 4,
+                    "outlettype": [
+                        "",
+                        "",
+                        "",
+                        ""
+                    ],
+                    "patching_rect": [
+                        20.0,
+                        60.0,
+                        780.0,
+                        800.0
+                    ],
+                    "code": "/**\n * ============================================================================\n * @file grainer.gendsp / grainer.maxpat\n * @title GRAINER (Envelope-Follower Dynamic Grain Burst Generator)\n * @author Max Bruckert\n *\n * @description\n * Sample-accurate GenExpr port of the RNBO 'grainer' processor.\n * Automatically segments incoming audio into crisp micro-sound grains\n * modulated by an attack-tracking envelope follower.\n *\n * Features:\n *   - Fast Schmitt-trigger transient detector with input sensitivity 'gain'\n *     (which exclusively modulates envelope tracking, preserving the true\n *     original gain and dynamics of the grain audio).\n *   - Square/rectangular grain window with ultra-fast raised-cosine micro-fades\n *     (1.5 ms fade-in and fade-out), completely eliminating clicks while\n *     preserving 100% of the sharp attack transient and punch.\n *   - Automatic pre-delay alignment matching the micro-fade ramp, ensuring\n *     the full transient onset is captured with pristine clarity.\n *   - Sample-accurate refractory lockout period (antibis) and Bernoulli\n *     stochastic chance gate (proba).\n *   - Control outlets: Envelope CV (out3) and Grain Trigger Impulse (out4).\n *\n * @inlets\n *   in1 : Audio Left Input\n *   in2 : Audio Right Input\n *   in3 : Threshold CV (added to thresh parameter)\n *   in4 : Probability CV (added to proba parameter)\n *\n * @outlets\n *   out1 : Processed Audio Left (Dry/Wet)\n *   out2 : Processed Audio Right (Dry/Wet)\n *   out3 : Envelope Follower CV (0..1)\n *   out4 : Grain Trigger Impulse (0 or 1)\n *\n * @parameters\n *   gain         (1..10, def: 4)          : Input sensitivity for envelope tracking (does NOT affect audio volume)\n *   thresh       (0..100 %, def: 40)      : Transient threshold level\n *   slide_attack (0..500 ms, def: 5)      : Envelope follower rise time in ms\n *   slide_decay  (0..5000 ms, def: 50)    : Envelope follower fall time in ms\n *   grain        (6..20000 ms, def: 250)  : Grain window duration in ms\n *   antibis      (0..10000 ms, def: 150)  : Retrigger lockout cooldown in ms\n *   proba        (0..100 %, def: 100)     : Probability of grain trigger passing\n *   fade         (0.5..20 ms, def: 1.5)   : Micro-fade ramp time (anti-click protection)\n *   mix          (0..100 %, def: 100)     : Global Dry / Grain blend ratio\n * ============================================================================\n */\n\n// 1. PARAMETERS\nParam gain(4, min=1, max=10);\nParam thresh(40, min=0, max=100);\nParam slide_attack(5, min=0, max=500);\nParam slide_decay(50, min=0, max=5000);\nParam grain(250, min=6, max=20000);\nParam antibis(150, min=0, max=10000);\nParam proba(100, min=0, max=100);\nParam fade(1.5, min=0.5, max=20);\nParam mix(100, min=0, max=100);\n\n// 2. MEMORIES & DELAYS\nHistory h_env(0);\nHistory h_cooldown(0);\nHistory h_was_over(0);\nHistory h_grain_active(0);\nHistory h_grain_count(0);\nDelay dly_L(9600), dly_R(9600); // Pre-delay buffer (up to 200 ms at 48kHz)\n\n// 3. ENVELOPE FOLLOWER (Sensitivity scaled by gain, strictly for tracking)\nin_level = max(abs(in1), abs(in2)) * clamp(gain, 1.0, 10.0);\natt_samps = max(1.0, mstosamps(clamp(slide_attack, 0.0, 500.0)));\ndec_samps = max(1.0, mstosamps(clamp(slide_decay, 0.0, 5000.0)));\n\nalpha = (in_level > h_env) ? (1.0 / att_samps) : (1.0 / dec_samps);\nh_env = fixdenorm(h_env + (in_level - h_env) * alpha);\n\n// 4. SCHMITT TRIGGER & RETRIGGER LOCKOUT (ANTIBIS)\nantibis_samps = max(1.0, mstosamps(clamp(antibis, 0.0, 10000.0)));\nh_cooldown = max(0, h_cooldown - 1);\n\neff_thresh = clamp((thresh + in3) * 0.01, 0.0, 1.0);\nis_over = (h_env > eff_thresh);\ntransient_hit = (is_over && !h_was_over && h_cooldown == 0);\nh_was_over = is_over;\n\n// 5. BERNOULLI STOCHASTIC GATE\neff_proba = clamp(proba + in4, 0.0, 100.0);\ntrig_pulse = 0.0;\nif (transient_hit) {\n    h_cooldown = antibis_samps;\n    rnd = (noise() * 0.5 + 0.5) * 100.0;\n    if (rnd <= eff_proba) {\n        // If already active, keep gate open at full sustain level\n        h_grain_count = (h_grain_active && h_grain_count > mstosamps(fade)) ? mstosamps(fade) : 0;\n        h_grain_active = 1;\n        trig_pulse = 1.0;\n    }\n}\n\n// 6. SQUARE GRAIN WINDOW WITH MICRO-FADES (RAISED COSINE ATTACK/RELEASE)\nfade_samps = max(8.0, mstosamps(clamp(fade, 0.5, 20.0)));\ngrain_samps = max(fade_samps * 2.0, mstosamps(clamp(grain, 6.0, 20000.0)));\n\ngrain_win = 0.0;\nif (h_grain_active) {\n    h_grain_count += 1;\n    if (h_grain_count >= grain_samps) {\n        h_grain_active = 0;\n        h_grain_count = 0;\n        grain_win = 0.0;\n    } else if (h_grain_count < fade_samps) {\n        // Fast micro-fade-in (raised-cosine S-curve 0 -> 1)\n        grain_win = 0.5 - 0.5 * cos(PI * h_grain_count / fade_samps);\n    } else if (h_grain_count >= (grain_samps - fade_samps)) {\n        // Fast micro-fade-out (raised-cosine S-curve 1 -> 0)\n        k = grain_samps - h_grain_count;\n        grain_win = 0.5 - 0.5 * cos(PI * k / fade_samps);\n    } else {\n        // Pure flat sustain (100% transparent unity gain)\n        grain_win = 1.0;\n    }\n}\n\n// 7. PRE-DELAY (Matches fade-in duration to capture full transient attack at peak)\ndel_samps = fade_samps;\ndly_L.write(in1);\ndly_R.write(in2);\ndel_L = dly_L.read(del_samps);\ndel_R = dly_R.read(del_samps);\n\n// 8. GRAIN AUDIO MULTIPLICATION & MASTER MIX\n// Notice: del_L is multiplied by grain_win ONLY.\n// 'gain' is NEVER applied to the audio signal.\ngrain_out_L = del_L * grain_win;\ngrain_out_R = del_R * grain_win;\n\nmix_val = clamp(mix * 0.01, 0.0, 1.0);\nout1 = mix(del_L, grain_out_L, mix_val);\nout2 = mix(del_R, grain_out_R, mix_val);\nout3 = h_env;\nout4 = trig_pulse;\n"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-6",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        20.0,
+                        880.0,
+                        180.0,
+                        21.0
+                    ],
+                    "text": "out 1 @comment Processed Left"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-7",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        220.0,
+                        880.0,
+                        180.0,
+                        21.0
+                    ],
+                    "text": "out 2 @comment Processed Right"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-8",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        420.0,
+                        880.0,
+                        180.0,
+                        21.0
+                    ],
+                    "text": "out 3 @comment Envelope CV"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-9",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        620.0,
+                        880.0,
+                        180.0,
+                        21.0
+                    ],
+                    "text": "out 4 @comment Trigger Pulse"
+                }
+            }
+        ],
+        "lines": [
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-5",
+                        0
+                    ],
+                    "source": [
+                        "obj-1",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-5",
+                        1
+                    ],
+                    "source": [
+                        "obj-2",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-5",
+                        2
+                    ],
+                    "source": [
+                        "obj-3",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-5",
+                        3
+                    ],
+                    "source": [
+                        "obj-4",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-6",
+                        0
+                    ],
+                    "source": [
+                        "obj-5",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-7",
+                        0
+                    ],
+                    "source": [
+                        "obj-5",
+                        1
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-8",
+                        0
+                    ],
+                    "source": [
+                        "obj-5",
+                        2
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-9",
+                        0
+                    ],
+                    "source": [
+                        "obj-5",
+                        3
+                    ]
+                }
+            }
+        ]
+    }
+}

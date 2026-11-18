@@ -9,7 +9,12 @@
             "modernui": 1
         },
         "classnamespace": "dsp.gen",
-        "rect": [ 34.0, 102.0, 1041.0, 920.0 ],
+        "rect": [
+            34.0,
+            102.0,
+            1041.0,
+            920.0
+        ],
         "boxes": [
             {
                 "box": {
@@ -17,7 +22,12 @@
                     "maxclass": "newobj",
                     "numinlets": 1,
                     "numoutlets": 0,
-                    "patching_rect": [ 848.0, 827.0, 35.0, 22.0 ],
+                    "patching_rect": [
+                        848.0,
+                        827.0,
+                        35.0,
+                        22.0
+                    ],
                     "text": "out 3"
                 }
             },
@@ -27,13 +37,18 @@
                     "maxclass": "newobj",
                     "numinlets": 1,
                     "numoutlets": 0,
-                    "patching_rect": [ 449.0, 827.0, 35.0, 22.0 ],
+                    "patching_rect": [
+                        449.0,
+                        827.0,
+                        35.0,
+                        22.0
+                    ],
                     "text": "out 2"
                 }
             },
             {
                 "box": {
-                    "code": "/**\n * ============================================================================\n * @file poisson-cloud.gendsp / poisson-cloud.maxpat\n * @title POISSON-CLOUD (Stochastic Poisson / Geiger Pulse Burst Generator)\n * @author Max Bruckert (assisted by Gemini)\n *\n * @description\n * Memoryless stochastic event generator based on a Poisson / Geiger-Müller\n * point process. Uses the inverse transform method (-log(r)) to generate true\n * exponential inter-arrival times, creating natural organic grain clustering.\n * Guaranteed 1-sample inter-pulse separation ensures reliable trigger capture\n * by external Max/MSP counters and modular gear.\n *\n * @inlets\n *   in1 : Start Trigger (Signal > 0.1 starts burst sequence immediately)\n *   in2 : Stop Trigger (Signal > 0.1 stops burst sequence immediately)\n *\n * @outlets\n *   out1 : Pulse PWM Stream (1.0 during active pulse width, 0.0 elsewhere)\n *   out2 : Pulse Counter Output (1 to N, holds final value on finish)\n *   out3 : Activity State Flag (1.0 while process is running, 0.0 when idle/finished)\n *\n * @parameters\n *   n_pulses       (1..1000, def: 32)       : Total number of pulses to emit\n *   total_time_ms  (10..60000 ms, def: 2000): Target burst duration in ms\n *   jitter         (0..1, def: 0.8)         : Poisson clustering factor (0 = regular, 1 = Poisson)\n *   pulse_width_ms (0.1..50 ms, def: 5)     : Width of each individual pulse\n * ============================================================================\n */\nHistory running(0);      // État d'activité\nHistory count(0);        // Valeur du compteur\nHistory phase(0);        // Position dans l'intervalle (0 à 1)\nHistory current_dur(0);  // Durée de l'intervalle en cours (samples)\nHistory base_s(0);       // Stockage de l'intervalle de base converti\n\n// --- PARAMÈTRES (BRIDÉS STRICTEMENT) ---\nParam occurrences(16, min=1);           // Nombre de pulses\nParam interval(250, min=1, max=30000);  // Durée ms (Bridé à 30s)\nParam width(0.5, min=0.01, max=0.99);   // PWM\nParam loop(0, min=0, max=1);            // 0 = Stop au max, 1 = Boucle\nParam jitter(0, min=0, max=1);          // 0 = Stable, 1 = Clusters\n\n// --- 1. CALCULS PRÉALABLES (SÉCURITÉ SCOPE) ---\n// On calcule l'intervalle de base à chaque échantillon pour qu'il soit\n// accessible partout sans erreur de compilation.\nbase_s = (interval * samplerate) / 1000;\n\n// --- 2. GESTION DES TRIGGERS D'ENTRÉE ---\n\n// START (Inlet 0)\nif (in1 > 0.1) {\n    running = 1;\n    count = 1; \n    phase = 0;\n    \n    // Calcul initial de durée (Loi de Poisson pour l'effet nuage)\n    r = max((noise() + 1) * 0.5, 0.001); \n    j_dist = -log(r);\n    current_dur = max(2, base_s * mix(1, j_dist, jitter));\n}\n\n// STOP (Inlet 1)\nif (in2 > 0.1) {\n    running = 0;\n    count = 0;\n    phase = 0;\n}\n\n// --- 3. LOGIQUE AUDIO PRINCIPALE ---\npulse_signal = 0;\n\nif (running) {\n    // Sécurité pour éviter la division par zéro\n    safe_dur = max(current_dur, 2);\n    p_inc = 1 / safe_dur;\n    \n    // Génération de la pulse PWM\n    // La condition (1 - p_inc) force un gap d'un sample pour éviter la fusion des pulses\n    if (phase < width && phase < (1 - p_inc)) {\n        pulse_signal = 1;\n    }\n\n    // Progression du temps\n    phase += p_inc;\n\n    // --- FIN D'UN INTERVALLE ---\n    if (phase >= 1) {\n        phase = 0;\n        \n        if (count >= occurrences) {\n            if (loop > 0.5) {\n                // REBOUCLAGE\n                count = 1;\n                r_loop = max((noise() + 1) * 0.5, 0.001);\n                current_dur = max(2, base_s * mix(1, -log(r_loop), jitter));\n            } else {\n                // FIN DE SÉQUENCE\n                running = 0; \n                // count reste à sa valeur max (Outlet 2)\n            }\n        } else {\n            // PULSE SUIVANTE\n            count += 1;\n            r_next = max((noise() + 1) * 0.5, 0.001);\n            current_dur = max(2, base_s * mix(1, -log(r_next), jitter));\n        }\n    }\n}\n\n// --- 4. AFFECTATION DES SORTIES (OUTLETS) ---\nout1 = pulse_signal; // Outlet 0 : Audio PWM\nout2 = count;        // Outlet 1 : Compteur (1 à N)\nout3 = running;      // Outlet 2 : État (1 = en cours, 0 = fini)",
+                    "code": "/**\n * ============================================================================\n * @file poisson-cloud.gendsp / poisson-cloud.maxpat\n * @title POISSON-CLOUD (Stochastic Poisson / Geiger Pulse Burst Generator)\n * @author Max Bruckert (assisted by Gemini)\n *\n * @description\n * Memoryless stochastic event generator based on a Poisson / Geiger-M\u00fcller\n * point process. Uses the inverse transform method (-log(r)) to generate true\n * exponential inter-arrival times, creating natural organic grain clustering.\n * Guaranteed 1-sample inter-pulse separation ensures reliable trigger capture\n * by external Max/MSP counters and modular gear.\n *\n * @inlets\n *   in1 : Start Trigger (Signal > 0.1 starts burst sequence immediately)\n *   in2 : Stop Trigger (Signal > 0.1 stops burst sequence immediately)\n *\n * @outlets\n *   out1 : Pulse PWM Stream (1.0 during active pulse width, 0.0 elsewhere)\n *   out2 : Pulse Counter Output (1 to N, holds final value on finish)\n *   out3 : Activity State Flag (1.0 while process is running, 0.0 when idle/finished)\n *\n * @parameters\n *   occurrences    (1..1000, def: 16)       : Total number of pulses to emit\n *   interval       (1..30000 ms, def: 250)  : Base inter-pulse duration in ms\n *   width          (0.01..0.99, def: 0.5)   : PWM duty ratio of each pulse\n *   loop           (0/1, def: 0)            : 0 = Stop at occurrences, 1 = Loop indefinitely\n *   jitter         (0..1, def: 0)           : Poisson clustering factor (0 = regular, 1 = stochastic)\n * ============================================================================\n */\nHistory running(0);      // \u00c9tat d'activit\u00e9\nHistory count(0);        // Valeur du compteur\nHistory phase(0);        // Position dans l'intervalle (0 \u00e0 1)\nHistory current_dur(0);  // Dur\u00e9e de l'intervalle en cours (samples)\nHistory base_s(0);       // Stockage de l'intervalle de base converti\n\n// --- PARAM\u00c8TRES (BRID\u00c9S STRICTEMENT) ---\nParam occurrences(16, min=1, max=1000); // Nombre de pulses\nParam interval(250, min=1, max=30000);  // Dur\u00e9e ms (Brid\u00e9 \u00e0 30s)\nParam width(0.5, min=0.01, max=0.99);   // PWM\nParam loop(0, min=0, max=1);            // 0 = Stop au max, 1 = Boucle\nParam jitter(0, min=0, max=1);          // 0 = Stable, 1 = Clusters\n\n// --- 1. CALCULS PR\u00c9ALABLES (S\u00c9CURIT\u00c9 SCOPE) ---\n// On calcule l'intervalle de base \u00e0 chaque \u00e9chantillon pour qu'il soit\n// accessible partout sans erreur de compilation.\nbase_s = (interval * samplerate) / 1000;\n\n// --- 2. GESTION DES TRIGGERS D'ENTR\u00c9E ---\n\n// START (Inlet 0)\nif (in1 > 0.1) {\n    running = 1;\n    count = 1; \n    phase = 0;\n    \n    // Calcul initial de dur\u00e9e (Loi de Poisson pour l'effet nuage)\n    r = max((noise() + 1) * 0.5, 0.001); \n    j_dist = -log(r);\n    current_dur = max(2, base_s * mix(1, j_dist, jitter));\n}\n\n// STOP (Inlet 1)\nif (in2 > 0.1) {\n    running = 0;\n    count = 0;\n    phase = 0;\n}\n\n// --- 3. LOGIQUE AUDIO PRINCIPALE ---\npulse_signal = 0;\n\nif (running) {\n    // S\u00e9curit\u00e9 pour \u00e9viter la division par z\u00e9ro\n    safe_dur = max(current_dur, 2);\n    p_inc = 1 / safe_dur;\n    \n    // G\u00e9n\u00e9ration de la pulse PWM\n    // La condition (1 - p_inc) force un gap d'un sample pour \u00e9viter la fusion des pulses\n    if (phase < width && phase < (1 - p_inc)) {\n        pulse_signal = 1;\n    }\n\n    // Progression du temps\n    phase += p_inc;\n\n    // --- FIN D'UN INTERVALLE ---\n    if (phase >= 1) {\n        phase = 0;\n        \n        if (count >= occurrences) {\n            if (loop > 0.5) {\n                // REBOUCLAGE\n                count = 1;\n                r_loop = max((noise() + 1) * 0.5, 0.001);\n                current_dur = max(2, base_s * mix(1, -log(r_loop), jitter));\n            } else {\n                // FIN DE S\u00c9QUENCE\n                running = 0; \n                // count reste \u00e0 sa valeur max (Outlet 2)\n            }\n        } else {\n            // PULSE SUIVANTE\n            count += 1;\n            r_next = max((noise() + 1) * 0.5, 0.001);\n            current_dur = max(2, base_s * mix(1, -log(r_next), jitter));\n        }\n    }\n}\n\n// --- 4. AFFECTATION DES SORTIES (OUTLETS) ---\nout1 = pulse_signal; // Outlet 0 : Audio PWM\nout2 = count;        // Outlet 1 : Compteur (1 \u00e0 N)\nout3 = running;      // Outlet 2 : \u00c9tat (1 = en cours, 0 = fini)",
                     "fontface": 0,
                     "fontname": "<Monospaced>",
                     "fontsize": 12.0,
@@ -41,8 +56,17 @@
                     "maxclass": "codebox",
                     "numinlets": 2,
                     "numoutlets": 3,
-                    "outlettype": [ "", "", "" ],
-                    "patching_rect": [ 50.0, 84.0, 817.0, 714.0 ]
+                    "outlettype": [
+                        "",
+                        "",
+                        ""
+                    ],
+                    "patching_rect": [
+                        50.0,
+                        84.0,
+                        817.0,
+                        714.0
+                    ]
                 }
             },
             {
@@ -51,8 +75,15 @@
                     "maxclass": "newobj",
                     "numinlets": 0,
                     "numoutlets": 1,
-                    "outlettype": [ "" ],
-                    "patching_rect": [ 50.0, 21.0, 28.0, 22.0 ],
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        50.0,
+                        21.0,
+                        28.0,
+                        22.0
+                    ],
                     "text": "in 1"
                 }
             },
@@ -62,8 +93,15 @@
                     "maxclass": "newobj",
                     "numinlets": 0,
                     "numoutlets": 1,
-                    "outlettype": [ "" ],
-                    "patching_rect": [ 848.0, 21.0, 28.0, 22.0 ],
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        848.0,
+                        21.0,
+                        28.0,
+                        22.0
+                    ],
                     "text": "in 2"
                 }
             },
@@ -73,7 +111,12 @@
                     "maxclass": "newobj",
                     "numinlets": 1,
                     "numoutlets": 0,
-                    "patching_rect": [ 50.0, 827.0, 35.0, 22.0 ],
+                    "patching_rect": [
+                        50.0,
+                        827.0,
+                        35.0,
+                        22.0
+                    ],
                     "text": "out 1"
                 }
             }
@@ -81,32 +124,62 @@
         "lines": [
             {
                 "patchline": {
-                    "destination": [ "obj-5", 0 ],
-                    "source": [ "obj-1", 0 ]
+                    "destination": [
+                        "obj-5",
+                        0
+                    ],
+                    "source": [
+                        "obj-1",
+                        0
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-5", 1 ],
-                    "source": [ "obj-2", 0 ]
+                    "destination": [
+                        "obj-5",
+                        1
+                    ],
+                    "source": [
+                        "obj-2",
+                        0
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-4", 0 ],
-                    "source": [ "obj-5", 0 ]
+                    "destination": [
+                        "obj-4",
+                        0
+                    ],
+                    "source": [
+                        "obj-5",
+                        0
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-6", 0 ],
-                    "source": [ "obj-5", 1 ]
+                    "destination": [
+                        "obj-6",
+                        0
+                    ],
+                    "source": [
+                        "obj-5",
+                        1
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-7", 0 ],
-                    "source": [ "obj-5", 2 ]
+                    "destination": [
+                        "obj-7",
+                        0
+                    ],
+                    "source": [
+                        "obj-5",
+                        2
+                    ]
                 }
             }
         ]

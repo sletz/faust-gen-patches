@@ -138,12 +138,12 @@ typedef struct State {
 				};
 				
 			};
-			int tmp_expr_76 = pulse_A;
-			int tmp_expr_77 = pulse_B;
-			t_sample tmp_expr_78 = m_h_state_6;
-			t_sample out3 = tmp_expr_78;
-			t_sample out2 = tmp_expr_77;
-			t_sample out1 = tmp_expr_76;
+			int tmp_expr_108 = pulse_A;
+			int tmp_expr_109 = pulse_B;
+			t_sample tmp_expr_110 = m_h_state_6;
+			t_sample out3 = tmp_expr_110;
+			t_sample out2 = tmp_expr_109;
+			t_sample out1 = tmp_expr_108;
 			// assign results to output buffer;
 			(*(__out1++)) = out1;
 			(*(__out2++)) = out2;

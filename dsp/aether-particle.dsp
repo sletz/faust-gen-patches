@@ -24,9 +24,11 @@
 // r_size (0.5..100 %), r_decay (0..110 %), r_absorb (0..100 %), r_tilt (-1..1),
 // r_speed (0.1..10 Hz), r_depth (0..20).
 //
-// gen~ quirks kept: `freeze` and `clear` both write zeros at the write head
-// (neither holds nor flushes the buffer at once: the buffer empties over 20 s);
-// get_window's guard `if (p < 0 || p >= 1) return 0` is absent from the
+// `freeze` stops the writing and the write head (the buffer is held, the
+// grains go on reading it); `clear` writes zeros at the write head and cuts
+// the regeneration (the buffer empties over 20 s, it is not flushed at once).
+//
+// gen~ quirk kept: get_window's guard `if (p < 0 || p >= 1) return 0` is absent from the
 // export (harmless: a voice only runs while tmr < dur).
 //
 // Noise sites (export order): 0 the g_prob trial, 1 the g_crush trial, 2 the
@@ -71,8 +73,10 @@ tclamp = g.clip;
 // ---------------------------------------------------------------- grains
 BUFMAX = 20 * 192000;           // compile-time bound of dim
 dim = int(ma.SR * 20);          // Data g_bufferL(samplerate * 20)
-hw = (+(1) : g.wrap(0, dim)) ~ _;   // h_g_write after its increment
-wn = hw';                           // the slot poked this frame
+is_frozen = freeze > 0.5;
+// h_g_write after its update: incremented unless frozen
+hw = (\(h).(select2(is_frozen, g.wrap(0, dim, h + 1), h))) ~ _;
+wn = hw';                           // the slot poked this frame (if not frozen)
 
 box_muller(na, nb) = sqrt((-2) * log(u1)) * cos(u2)
 with {
@@ -159,13 +163,12 @@ with {
     };
 };
 
-// peek(buf, idx) after this frame's poke: the slot j holds x@((wn - j) mod dim)
-peek(x, idx) = select2((j >= dim) | (j < 0), x @ max(0, min(BUFMAX, k)), 0)
-with {
-    j = int(floor(idx));
-    kk = wn - j;
-    k = select2(kk < 0, kk, kk + dim);
-};
+// Data g_buffer: a table of BUFMAX slots and a trash slot, written at wn
+// (at the trash slot when frozen) before this frame's peeks
+widx = int(select2(is_frozen, wn, BUFMAX));
+// peek(buf, idx) after this frame's poke of x
+peek(x, idx) = select2((j >= dim) | (j < 0), rwtable(BUFMAX + 1, 0.0, widx, x, max(0, min(BUFMAX - 1, j))), 0)
+with { j = int(floor(idx)); };
 
 // the audio part of a voice: sample-and-hold of the buffer, windowed
 vout(xL, xR, active, upd, idxL, idxR, w_env) = oL, oR
@@ -178,7 +181,6 @@ with {
 
 is_clearing = clear > 0.5;
 fb_g = select2(is_clearing, g_regen * 0.01, 0);
-cond_in = (freeze > 0.5) | is_clearing;
 
 // grains(in1, in2, the 20 voice signals): wet_granL, wet_granR
 grains(in1, in2, a1, u1, l1, r1, w1, a2, u2, l2, r2, w2, a3, u3, l3, r3, w3, a4, u4, l4, r4, w4) =
@@ -186,12 +188,14 @@ grains(in1, in2, a1, u1, l1, r1, w1, a2, u2, l2, r2, w2, a3, u3, l3, r3, w3, a4,
 with {
     loop(fbLd, fbRd) = g.fixdenorm(wet_granL), g.fixdenorm(wet_granR), wet_granL, wet_granR
     with {
-        in_effL = select2(cond_in, g.dcblock(in1 + ma.tanh(fbLd * fb_g)), 0);
-        in_effR = select2(cond_in, g.dcblock(in2 + ma.tanh(fbRd * fb_g)), 0);
-        o1 = vout(in_effL, in_effR, a1, u1, l1, r1, w1);
-        o2 = vout(in_effL, in_effR, a2, u2, l2, r2, w2);
-        o3 = vout(in_effL, in_effR, a3, u3, l3, r3, w3);
-        o4 = vout(in_effL, in_effR, a4, u4, l4, r4, w4);
+        in_effL = g.dcblock(in1 + ma.tanh(fbLd * fb_g));
+        in_effR = g.dcblock(in2 + ma.tanh(fbRd * fb_g));
+        wL = select2(is_clearing, in_effL, 0);
+        wR = select2(is_clearing, in_effR, 0);
+        o1 = vout(wL, wR, a1, u1, l1, r1, w1);
+        o2 = vout(wL, wR, a2, u2, l2, r2, w2);
+        o3 = vout(wL, wR, a3, u3, l3, r3, w3);
+        o4 = vout(wL, wR, a4, u4, l4, r4, w4);
         wet_granL = ((((o1 : _, !) + (o2 : _, !)) + (o3 : _, !)) + (o4 : _, !)) * 0.5;
         wet_granR = ((((o1 : !, _) + (o2 : !, _)) + (o3 : !, _)) + (o4 : !, _)) * 0.5;
     };

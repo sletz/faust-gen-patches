@@ -11,11 +11,8 @@
 //
 // in1, in2: audio L, R      out1, out2: filtered L, R
 //
-// The gendsp's header comment documents other parameters (cutoff,
-// resonance, mode 0..3 with bandpass and notch, slope_db) than the code has:
-// the code's are those below, the damping is fixed at sqrt(2) (Butterworth
-// stages, no resonance control) and mode only morphs high-pass to low-pass.
-// The stage update (v1 + 2 g hp, lp + g v1n) is the TPT one (2 bp - v1,
+// The damping is fixed at sqrt(2) (Butterworth stages, no resonance
+// control) and mode only morphs high-pass to low-pass. The stage update (v1 + 2 g hp, lp + g v1n) is the TPT one (2 bp - v1,
 // 2 lp - v2) written another way, kept in gen's order.
 
 declare name "precision-svf-48db";

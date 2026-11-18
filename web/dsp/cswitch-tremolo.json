@@ -5,7 +5,7 @@
 	"compile_options": "-lang wasm -double",
 	"library_list": ["dsp/genops.lib","/usr/local/share/faust/noises.lib","/usr/local/share/faust/basics.lib","/usr/local/share/faust/maths.lib","/usr/local/share/faust/platform.lib"],
 	"include_pathnames": ["dsp","/Users/letz/Developpements/RUST/faust-gen-patches/../faust-rs/target/share/faust","/usr/local/share/faust","/usr/share/faust"],
-	"size": 304,
+	"size": 336,
 	"inputs": 2,
 	"outputs": 4,
 	"sr_index": 0,

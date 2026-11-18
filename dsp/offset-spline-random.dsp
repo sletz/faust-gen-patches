@@ -12,15 +12,11 @@
 // in1: audio / signal thru    in2: external phase / clock (trigmode on)
 // out1: fold(comb(in1) + amp * (mode ? spline : stepped), -1, 1)
 // out2: trigger   out3: spline output   out4: stepped (sample-and-hold) walk
-// (the gendsp header comment documents another outlet order: spline CV,
-// stepped, trigger, phasor; the code's is above.)
 //
 // Parameters: amp (0..1, def 0.2), trigmode (0/1, def 0: internal phasor),
-// frequency (def 20 Hz: internal phasor), range (0..100, def 50: step size),
+// frequency (0.01..500 Hz, def 20: internal phasor), range (0..100, def 50: step size),
 // mode (0/1, def 1: spline, 0: stepped). trigmode and mode are tested for
 // nonzero, not >= 0.5, as gen does.
-// frequency is declared without min/max: the export clamps it to [0, 1]
-// (setparameter), gen~ in Max does not; the range here is 0.01..500 Hz.
 
 declare name "offset-spline-random";
 declare author "Max Bruckert (gen~), Faust port";
@@ -41,10 +37,10 @@ with {
     phase = select2(trigmode != 0, phasor_int, in2);
     trig = abs(g.delta(phase)) > 0.5;
 
-    // Box-Muller (with -0.25 where the textbook form has -2)
+    // Box-Muller, u1 kept away from 0
     u1 = abs(n1);
     u2 = n2 * ma.PI;
-    gen_noise = sqrt(log(u1) * -0.25) * cos(u2);
+    gen_noise = sqrt(log(max(u1, 0.000001)) * -2.0) * cos(u2);
     scale_amt = g.scale(range, 0, 100, 0, 4, 1);
     step = gen_noise * scale_amt;
     h_rand_walk = (\(h).(g.fold(-1, 1, h + select2(trig, 0, step)))) ~ _;

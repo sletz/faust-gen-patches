@@ -130,10 +130,10 @@ typedef struct State {
 		m_h_tR_17 = ((int)0);
 		m_h_tL_18 = ((int)0);
 		m_h_smTime_19 = ((int)0);
-		m_apR2_20.reset("m_apR2_20", ((int)4000));
-		m_apR1_21.reset("m_apR1_21", ((int)4000));
-		m_apL2_22.reset("m_apL2_22", ((int)4000));
-		m_apL1_23.reset("m_apL1_23", ((int)4000));
+		m_apR2_20.reset("m_apR2_20", ((int)16000));
+		m_apR1_21.reset("m_apR1_21", ((int)16000));
+		m_apL2_22.reset("m_apL2_22", ((int)16000));
+		m_apL1_23.reset("m_apL1_23", ((int)16000));
 		m_delayR_24.reset("m_delayR_24", (samplerate * ((int)2)));
 		m_delayL_25.reset("m_delayL_25", (samplerate * ((int)2)));
 		m_mix_bal_26 = ((t_sample)0.5);
@@ -171,8 +171,8 @@ typedef struct State {
 		t_sample v_dg = (diff_c * ((t_sample)0.81999999999999995));
 		t_sample fb_raw = (((m_fb_33 <= ((int)0)) ? ((int)0) : ((m_fb_33 >= ((t_sample)1.2)) ? ((t_sample)1.2) : m_fb_33)) * ((t_sample)1.04));
 		t_sample pp = ((m_pingpong_27 <= ((int)0)) ? ((int)0) : ((m_pingpong_27 >= ((int)1)) ? ((int)1) : m_pingpong_27));
-		t_sample tmp_clamp_941 = ((m_mix_bal_26 <= ((int)0)) ? ((int)0) : ((m_mix_bal_26 >= ((int)1)) ? ((int)1) : m_mix_bal_26));
-		t_sample tmp_clamp_943 = ((m_mix_bal_26 <= ((int)0)) ? ((int)0) : ((m_mix_bal_26 >= ((int)1)) ? ((int)1) : m_mix_bal_26));
+		t_sample tmp_clamp_705 = ((m_mix_bal_26 <= ((int)0)) ? ((int)0) : ((m_mix_bal_26 >= ((int)1)) ? ((int)1) : m_mix_bal_26));
+		t_sample tmp_clamp_707 = ((m_mix_bal_26 <= ((int)0)) ? ((int)0) : ((m_mix_bal_26 >= ((int)1)) ? ((int)1) : m_mix_bal_26));
 		// the main sample loop;
 		while ((__n--)) {
 			const t_sample in1 = (*(__in1++));
@@ -242,10 +242,10 @@ typedef struct State {
 			m_h_tR_17 = return_80;
 			t_sample v_dfL = allpass_fx_d_d_del_i(allpass_fx_d_d_del_i(v_tiL, v_dg, m_apL1_23, ((int)23)), v_dg, m_apL2_22, ((int)51));
 			t_sample v_dfR = allpass_fx_d_d_del_i(allpass_fx_d_d_del_i(v_tiR, v_dg, m_apR1_21, ((int)29)), v_dg, m_apR2_20, ((int)57));
-			t_sample tmp_mix_934 = (v_tiL + (diff_c * (v_dfL - v_tiL)));
-			t_sample v_procL = tmp_mix_934;
-			t_sample tmp_mix_935 = (v_tiR + (diff_c * (v_dfR - v_tiR)));
-			t_sample v_procR = tmp_mix_935;
+			t_sample tmp_mix_698 = (v_tiL + (diff_c * (v_dfL - v_tiL)));
+			t_sample v_procL = tmp_mix_698;
+			t_sample tmp_mix_699 = (v_tiR + (diff_c * (v_dfR - v_tiR)));
+			t_sample v_procR = tmp_mix_699;
 			t_sample return_81;
 			t_sample return_82;
 			t_sample return_83;
@@ -273,20 +273,20 @@ typedef struct State {
 			t_sample minb_92 = (fb_raw * agc_duck);
 			t_sample v_fb_eff = ((minb_92 < ((t_sample)1.04)) ? minb_92 : ((t_sample)1.04));
 			t_sample pp_in = ((in1 + in2) * ((t_sample)0.5));
-			t_sample tmp_mix_936 = (in1 + (pp * (pp_in - in1)));
-			t_sample tmp_mix_937 = (v_finalL + (pp * (v_finalR - v_finalL)));
-			t_sample tmp_v_feedL_376 = (tmp_mix_936 + (tmp_mix_937 * v_fb_eff));
-			t_sample tmp_mix_938 = (in2 + (pp * (((int)0) - in2)));
-			t_sample tmp_mix_939 = (v_finalR + (pp * (v_finalL - v_finalR)));
-			t_sample tmp_v_feedR_377 = (tmp_mix_938 + (tmp_mix_939 * v_fb_eff));
-			m_delayL_25.write(fixdenorm(tmp_v_feedL_376));
-			m_delayR_24.write(fixdenorm(tmp_v_feedR_377));
-			t_sample tmp_mix_940 = (in1 + (tmp_clamp_941 * (v_finalL - in1)));
-			t_sample tmp_expr_379 = tmp_mix_940;
-			t_sample tmp_mix_942 = (in2 + (tmp_clamp_943 * (v_finalR - in2)));
-			t_sample tmp_expr_380 = tmp_mix_942;
-			t_sample out2 = tmp_expr_380;
-			t_sample out1 = tmp_expr_379;
+			t_sample tmp_mix_700 = (in1 + (pp * (pp_in - in1)));
+			t_sample tmp_mix_701 = (v_finalL + (pp * (v_finalR - v_finalL)));
+			t_sample tmp_v_feedL_486 = (tmp_mix_700 + (tmp_mix_701 * v_fb_eff));
+			t_sample tmp_mix_702 = (in2 + (pp * (((int)0) - in2)));
+			t_sample tmp_mix_703 = (v_finalR + (pp * (v_finalL - v_finalR)));
+			t_sample tmp_v_feedR_487 = (tmp_mix_702 + (tmp_mix_703 * v_fb_eff));
+			m_delayL_25.write(fixdenorm(tmp_v_feedL_486));
+			m_delayR_24.write(fixdenorm(tmp_v_feedR_487));
+			t_sample tmp_mix_704 = (in1 + (tmp_clamp_705 * (v_finalL - in1)));
+			t_sample tmp_expr_489 = tmp_mix_704;
+			t_sample tmp_mix_706 = (in2 + (tmp_clamp_707 * (v_finalR - in2)));
+			t_sample tmp_expr_490 = tmp_mix_706;
+			t_sample out2 = tmp_expr_490;
+			t_sample out1 = tmp_expr_489;
 			m_apR2_20.step();
 			m_apR1_21.step();
 			m_apL2_22.step();
@@ -330,9 +330,9 @@ typedef struct State {
 	};
 	inline void digital_fx_d_d_d_d_d_d(t_sample sigL, t_sample sigR, t_sample amt, t_sample count, t_sample hL, t_sample hR, t_sample& out1, t_sample& out2, t_sample& out3, t_sample& out4, t_sample& out5) {
 		t_sample c_log = (((int)1) - safepow((((int)1) - amt), ((int)3)));
-		t_sample tmp_pow_919 = safepow(c_log, ((int)2));
-		t_sample tmp_mix_918 = (((int)1) + (tmp_pow_919 * (((int)32) - ((int)1))));
-		t_sample period = floor(tmp_mix_918);
+		t_sample tmp_pow_683 = safepow(c_log, ((int)2));
+		t_sample tmp_mix_682 = (((int)1) + (tmp_pow_683 * (((int)32) - ((int)1))));
+		t_sample period = floor(tmp_mix_682);
 		t_sample cnt = (count + ((int)1));
 		t_sample newL = hL;
 		t_sample newR = hR;
@@ -342,8 +342,8 @@ typedef struct State {
 			cnt = ((int)0);
 			
 		};
-		t_sample tmp_mix_920 = (((int)24) + (c_log * (((t_sample)4.5) - ((int)24))));
-		t_sample st = safepow(((int)2), tmp_mix_920);
+		t_sample tmp_mix_684 = (((int)24) + (c_log * (((t_sample)4.5) - ((int)24))));
+		t_sample st = safepow(((int)2), tmp_mix_684);
 		t_sample yL = (safediv(floor(((fabs(newL) * st) + ((t_sample)0.5))), st) * ((newL > 0) ? 1 : ((newL < 0) ? -1 : 0)));
 		t_sample yR = (safediv(floor(((fabs(newR) * st) + ((t_sample)0.5))), st) * ((newR > 0) ? 1 : ((newR < 0) ? -1 : 0)));
 		out1 = (yL * ((t_sample)0.97999999999999998));
@@ -357,9 +357,9 @@ typedef struct State {
 		t_sample maxa_46 = fabs(sigL);
 		t_sample maxb_47 = fabs(sigR);
 		t_sample draw = ((maxa_46 < maxb_47) ? maxb_47 : maxa_46);
-		t_sample tmp_pow_922 = safepow(amt, ((t_sample)0.84999999999999998));
-		t_sample tmp_mix_921 = (((int)1) + (tmp_pow_922 * (((t_sample)0.28000000000000003) - ((int)1))));
-		t_sample v_nom = tmp_mix_921;
+		t_sample tmp_pow_686 = safepow(amt, ((t_sample)0.84999999999999998));
+		t_sample tmp_mix_685 = (((int)1) + (tmp_pow_686 * (((t_sample)0.28000000000000003) - ((int)1))));
+		t_sample v_nom = tmp_mix_685;
 		t_sample maxb_48 = safediv(v_nom, (((int)1) + ((draw * amt) * ((t_sample)3.5))));
 		t_sample v_target = ((((t_sample)0.12) < maxb_48) ? maxb_48 : ((t_sample)0.12));
 		int cond_49 = (v_target < m_h_sag_15);
@@ -369,24 +369,25 @@ typedef struct State {
 		t_sample new_sag = (m_h_sag_15 + (rc_coeff * (v_target - m_h_sag_15)));
 		t_sample minb_52 = (draw * ((int)50));
 		t_sample presence = ((minb_52 < ((int)1)) ? minb_52 : ((int)1));
-		t_sample tmp_noise_924 = noise();
-		t_sample tmp_mix_923 = (m_h_noise_16 + (((t_sample)0.34999999999999998) * (tmp_noise_924 - m_h_noise_16)));
-		t_sample crackle = (((tmp_mix_923 * safepow(amt, ((t_sample)1.3999999999999999))) * ((t_sample)0.012)) * presence);
+		t_sample tmp_noise_688 = noise();
+		t_sample tmp_mix_687 = (m_h_noise_16 + (((t_sample)0.34999999999999998) * (tmp_noise_688 - m_h_noise_16)));
+		t_sample new_noise = tmp_mix_687;
+		t_sample crackle = (((new_noise * safepow(amt, ((t_sample)1.3999999999999999))) * ((t_sample)0.012)) * presence);
 		t_sample thresh = ((safepow(amt, ((t_sample)1.6000000000000001)) * ((t_sample)0.029999999999999999)) * (((t_sample)1.2) - new_sag));
 		t_sample yL = battery_stage_d_d_d_d_d(sigL, amt, new_sag, thresh, crackle);
 		t_sample yR = battery_stage_d_d_d_d_d(sigR, amt, new_sag, thresh, crackle);
 		t_sample v_60 = (((t_sample)0.45000000000000001) + (new_sag * ((t_sample)0.55000000000000004)));
 		t_sample lp_cut = ((v_60 <= ((t_sample)0.45000000000000001)) ? ((t_sample)0.45000000000000001) : ((v_60 >= ((int)1)) ? ((int)1) : v_60));
-		t_sample tmp_mix_925 = (h_lpfL + (lp_cut * (yL - h_lpfL)));
-		t_sample fL = tmp_mix_925;
-		t_sample tmp_mix_926 = (h_lpfR + (lp_cut * (yR - h_lpfR)));
-		t_sample fR = tmp_mix_926;
+		t_sample tmp_mix_689 = (h_lpfL + (lp_cut * (yL - h_lpfL)));
+		t_sample fL = tmp_mix_689;
+		t_sample tmp_mix_690 = (h_lpfR + (lp_cut * (yR - h_lpfR)));
+		t_sample fR = tmp_mix_690;
 		out1 = fL;
 		out2 = fR;
 		out3 = new_sag;
 		out4 = fL;
 		out5 = fR;
-		out6 = crackle;
+		out6 = new_noise;
 		
 	};
 	inline t_sample battery_stage_d_d_d_d_d(t_sample x, t_sample amt, t_sample v_sag, t_sample thresh, t_sample crackle) {
@@ -417,7 +418,7 @@ typedef struct State {
 		return res;
 		
 	};
-	inline void hpf40_clean_d_d_d(t_sample sig, t_sample d1, t_sample d2, t_sample& out1, t_sample& out2, t_sample& out3) {
+	inline void hpf40_clean_d_d_d(t_sample sig, t_sample s1, t_sample s2, t_sample& out1, t_sample& out2, t_sample& out3) {
 		t_sample f_hpf = safediv(((int)40), samplerate);
 		t_sample r_hpf = ((t_sample)0.70699999999999996);
 		t_sample c_hpf = tan((((t_sample)3.1415899999999999) * f_hpf));
@@ -426,31 +427,33 @@ typedef struct State {
 		t_sample a3_h = a1_h;
 		t_sample b1_h = ((((int)2) * a1_h) * ((c_hpf * c_hpf) - ((int)1)));
 		t_sample b2_h = (a1_h * ((((int)1) - (r_hpf * c_hpf)) + (c_hpf * c_hpf)));
-		t_sample y_hpf = (((((a1_h * sig) + (a2_h * d1)) + (a3_h * d2)) - (b1_h * d1)) - (b2_h * d2));
+		t_sample y_hpf = ((a1_h * sig) + s1);
+		t_sample new_s1 = (((a2_h * sig) - (b1_h * y_hpf)) + s2);
+		t_sample new_s2 = ((a3_h * sig) - (b2_h * y_hpf));
 		out1 = y_hpf;
-		out2 = sig;
-		out3 = d1;
+		out2 = new_s1;
+		out3 = new_s2;
 		
 	};
 	inline void tilt_process_d_d_d_d(t_sample sig, t_sample t_val, t_sample f_hinge, t_sample h_lp, t_sample& out1, t_sample& out2) {
 		t_sample f_hz = ((f_hinge <= ((int)40)) ? ((int)40) : ((f_hinge >= ((int)18000)) ? ((int)18000) : f_hinge));
 		t_sample v_73 = (((int)1) - exp(safediv(((-((t_sample)6.2831853071795862)) * f_hz), samplerate)));
 		t_sample f_norm = ((v_73 <= ((t_sample)0.002)) ? ((t_sample)0.002) : ((v_73 >= ((t_sample)0.92000000000000004)) ? ((t_sample)0.92000000000000004) : v_73));
-		t_sample tmp_mix_927 = (h_lp + (f_norm * (sig - h_lp)));
-		t_sample lows = tmp_mix_927;
+		t_sample tmp_mix_691 = (h_lp + (f_norm * (sig - h_lp)));
+		t_sample lows = tmp_mix_691;
 		t_sample highs = (sig - lows);
 		int min_74 = (-((int)1));
 		t_sample t_c = ((t_val <= min_74) ? min_74 : ((t_val >= ((int)1)) ? ((int)1) : t_val));
-		t_sample tmp_mix_928 = (((int)1) + (t_c * (((t_sample)0.10000000000000001) - ((int)1))));
-		t_sample tmp_neg_930 = (-t_c);
-		t_sample tmp_mix_929 = (((int)1) + (tmp_neg_930 * (((t_sample)1.3) - ((int)1))));
+		t_sample tmp_mix_692 = (((int)1) + (t_c * (((t_sample)0.10000000000000001) - ((int)1))));
+		t_sample tmp_neg_694 = (-t_c);
+		t_sample tmp_mix_693 = (((int)1) + (tmp_neg_694 * (((t_sample)1.3) - ((int)1))));
 		int cond_75 = (t_c >= ((int)0));
-		t_sample g_low = (cond_75 ? tmp_mix_928 : tmp_mix_929);
-		t_sample tmp_mix_931 = (((int)1) + (t_c * (((t_sample)1.3) - ((int)1))));
-		t_sample tmp_neg_933 = (-t_c);
-		t_sample tmp_mix_932 = (((int)1) + (tmp_neg_933 * (((t_sample)0.10000000000000001) - ((int)1))));
+		t_sample g_low = (cond_75 ? tmp_mix_692 : tmp_mix_693);
+		t_sample tmp_mix_695 = (((int)1) + (t_c * (((t_sample)1.3) - ((int)1))));
+		t_sample tmp_neg_697 = (-t_c);
+		t_sample tmp_mix_696 = (((int)1) + (tmp_neg_697 * (((t_sample)0.10000000000000001) - ((int)1))));
 		int cond_76 = (t_c >= ((int)0));
-		t_sample g_high = (cond_76 ? tmp_mix_931 : tmp_mix_932);
+		t_sample g_high = (cond_76 ? tmp_mix_695 : tmp_mix_696);
 		t_sample y_tilt = ((lows * g_low) + (highs * g_high));
 		out1 = y_tilt;
 		out2 = lows;

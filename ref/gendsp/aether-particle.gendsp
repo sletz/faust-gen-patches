@@ -9,7 +9,12 @@
             "modernui": 1
         },
         "classnamespace": "dsp.gen",
-        "rect": [ 530.0, 138.0, 942.0, 950.0 ],
+        "rect": [
+            530.0,
+            138.0,
+            942.0,
+            950.0
+        ],
         "boxes": [
             {
                 "box": {
@@ -17,7 +22,12 @@
                     "maxclass": "newobj",
                     "numinlets": 1,
                     "numoutlets": 0,
-                    "patching_rect": [ 894.0, 912.0, 35.0, 22.0 ],
+                    "patching_rect": [
+                        894.0,
+                        912.0,
+                        35.0,
+                        22.0
+                    ],
                     "text": "out 2"
                 }
             },
@@ -27,8 +37,15 @@
                     "maxclass": "newobj",
                     "numinlets": 0,
                     "numoutlets": 1,
-                    "outlettype": [ "" ],
-                    "patching_rect": [ 20.0, 11.0, 28.0, 22.0 ],
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        20.0,
+                        11.0,
+                        28.0,
+                        22.0
+                    ],
                     "text": "in 1"
                 }
             },
@@ -38,14 +55,21 @@
                     "maxclass": "newobj",
                     "numinlets": 0,
                     "numoutlets": 1,
-                    "outlettype": [ "" ],
-                    "patching_rect": [ 894.0, 17.0, 28.0, 22.0 ],
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        894.0,
+                        17.0,
+                        28.0,
+                        22.0
+                    ],
                     "text": "in 2"
                 }
             },
             {
                 "box": {
-                    "code": "/**\n * ============================================================================\n * @file aether-particle.gendsp / aether-particle.maxpat\n * @title AETHER-PARTICLE (Generative Microsound & Granular Cloud Engine)\n * @author Max Bruckert (assisted by Gemini)\n *\n * @description\n * Ultra-high precision granular microsound sculpture engine coupled to a\n * variable-geometry 4x4 Hadamard FDN reverberator. Captures incoming audio\n * into a circular 20-second delay memory, shatters it into 4 asynchronous\n * probabilistic grain streams with Gaussian position jitter and sample-rate\n * reduction, and diffuses the cloud into a malleable 4D acoustic space.\n *\n * ARCHITECTURE:\n * 1. INPUT -> 20s Ring Buffer with Cumulative Granular Feedback\n * 2. GRAIN ENGINE -> 4 Asynchronous Voices, Box-Muller Gaussian Jitter, Pitch Shift\n * 3. DIGITAL EROSION -> Bitcrush & Sample Rate Reduction on grain streams\n * 4. REVERB ENGINE -> Predelay -> Diffusers -> 4x4 Hadamard Unitary Matrix FDN\n * 5. OUTPUT -> Dry/Wet Mix -> DC Blocker -> Asymmetric Tanh Soft Limiter\n *\n * @inlets\n *   in1 : Audio Left Input\n *   in2 : Audio Right Input\n *\n * @outlets\n *   out1 : Processed Audio Left\n *   out2 : Processed Audio Right\n *\n * @parameters\n *   g_density  (0.5..100 Hz, def: 15)  : Granular stream firing rate / density\n *   g_size     (2..1000 ms, def: 80)   : Individual grain duration\n *   g_spray    (0..100 %, def: 30)     : Buffer read position randomization\n *   g_pitch    (-24..24 st, def: 0)    : Granular pitch shift in semitones\n *   g_reverse  (0..100 %, def: 10)     : Probability of reversed grain playback\n *   g_degrade  (0..100 %, def: 0)      : Lo-Fi digital sample-rate reduction\n *   g_fb       (0..95 %, def: 20)      : Cumulative granular feedback into buffer\n *   r_size     (0.5..100 %, def: 50)   : FDN spatial size scale\n *   r_decay    (0..110 %, def: 60)     : Reverb decay time (100 = infinite)\n *   r_warp     (0..100 %, def: 40)     : Allpass diffusion smearing\n *   r_tilt     (-1..1, def: 0)         : Spectral balance (-1: dark, +1: bright)\n *   r_damp     (0..100 %, def: 30)     : High-frequency absorption damping\n *   g_to_r     (0..100 %, def: 70)     : Routing level from granulator to reverb\n *   mix        (0..100 %, def: 100)    : Global Dry/Wet balance\n *   gainout    (-60..12 dB, def: 0)    : Final master gain\n *   clear      (0/1, def: 0)           : Flush internal delay buffer memory\n * ============================================================================\n */\nbox_muller() {\n    u1 = clamp(abs(noise()), 0.0001, 1);\n    u2 = noise() * PI;\n    return sqrt(-2.0 * log(u1)) * cos(u2);\n}\n\nget_window(p, shape) {\n    if (p < 0 || p >= 1) return 0;\n    tri = 1.0 - abs(p * 2.0 - 1.0); \n    spline = (3.0 * pow(tri, 2)) - (2.0 * pow(tri, 3));\n    perc = pow(tri, 4);\n    trap = clamp(tri * 3, 0, 1);\n    return (shape < 0.5) ? mix(perc, spline, shape * 2) : mix(spline, trap, (shape - 0.5) * 2);\n}\n\n// 2. PARAMÈTRES\n// ------------------------------------------------------------------------------------------\nParam gainout(0, min=-60, max=12);\nParam clear(0, min=0, max=1);\nParam freeze(0, min=0, max=1);\n\nParam g_mix(50, min=0, max=100);\nParam g_prob(100, min=0, max=100);\nParam g_density(4, min=0.001, max=60);\nParam g_std_density(20, min=0, max=100); \nParam g_pos(10, min=0, max=100);        \nParam g_std_pos(5, min=0, max=100);\nParam g_size(200, min=2, max=2000);\nParam g_std_size(50, min=0, max=1000);\nParam g_pitch(1, min=-4, max=4);\nParam g_window(0.5, min=0, max=1);\nParam g_crush(30, min=0, max=100);      \nParam g_regen(40, min=0, max=100);\nParam g_skew(0, min=0, max=100);\n\nParam r_mix(40, min=0, max=100);\nParam r_size(50, min=0.5, max=100);     \nParam r_decay(60, min=0, max=110);      \nParam r_absorb(40, min=0, max=100);     \nParam r_tilt(0, min=-1, max=1);         \nParam r_speed(1, min=0.1, max=10);      \nParam r_depth(2, min=0, max=20);        \n\n// 3. MÉMOIRES\n// ------------------------------------------------------------------------------------------\nData g_bufferL(samplerate * 20), g_bufferR(samplerate * 20);\nHistory h_g_write(0), h_g_fbL(0), h_g_fbR(0), h_g_clock(0), h_g_next(1);\nHistory v1_tmr(999999), v1_dur(100), v1_ptr(0), v1_crsh(1), v1_sL(0), v1_sR(0), v1_c_cnt(0), v1_sk(0);\nHistory v2_tmr(999999), v2_dur(100), v2_ptr(0), v2_crsh(1), v2_sL(0), v2_sR(0), v2_c_cnt(0), v2_sk(0);\nHistory v3_tmr(999999), v3_dur(100), v3_ptr(0), v3_crsh(1), v3_sL(0), v3_sR(0), v3_c_cnt(0), v3_sk(0);\nHistory v4_tmr(999999), v4_dur(100), v4_ptr(0), v4_crsh(1), v4_sL(0), v4_sR(0), v4_c_cnt(0), v4_sk(0);\n\nDelay rd1(15000), rd2(15000), rd3(15000), rd4(15000);\nDelay rap1(2000), rap2(2000), rpre_dly(9600);\nHistory rh1(0), rh2(0), rh3(0), rh4(0), rh_lpL(0), rh_lpR(0), rh_ph(0);\nHistory h_dcL(0), h_dcR(0), h_dc_inL(0), h_dc_inR(0);\n\n// 4. LOGIQUE DSP\n// ------------------------------------------------------------------------------------------\n\no1L, o1R, o2L, o2R, o3L, o3R, o4L, o4R = 0, 0, 0, 0, 0, 0, 0, 0;\n\n// --- A. GRANULATEUR (AETHER-SCULPT) ---\nis_clearing = clear > 0.5;\nfb_g = is_clearing ? 0 : (g_regen / 100);\nin_effL = (freeze > 0.5 || is_clearing) ? 0 : dcblock(in1 + tanh(h_g_fbL * fb_g));\nin_effR = (freeze > 0.5 || is_clearing) ? 0 : dcblock(in2 + tanh(h_g_fbR * fb_g));\npoke(g_bufferL, in_effL, h_g_write);\npoke(g_bufferR, in_effR, h_g_write);\nh_g_write = wrap(h_g_write + 1, 0, dim(g_bufferL));\n\nh_g_clock += 1;\nif (h_g_clock >= h_g_next) {\n    h_g_clock = 0;\n    bp = samplerate / max(g_density, 0.001);\n    jt = 1.0 + (box_muller() * (g_std_density / 100));\n    h_g_next = clamp(bp * jt, 40, samplerate * 5);\n\n    if ((noise() * 0.5 + 0.5) < (g_prob / 100)) {\n        v_idx = (v1_tmr >= v1_dur) ? 1 : (v2_tmr >= v2_dur ? 2 : (v3_tmr >= v3_dur ? 3 : (v4_tmr >= v4_dur ? 4 : 0)));\n        if (v_idx > 0) {\n            gauss = box_muller();\n            d = mstosamps(max(g_size + (gauss * g_std_size), 1));\n            ms = dim(g_bufferL);\n            off = clamp(((g_pos/100)*ms) + (gauss * (g_std_pos/100)*ms*0.2), 10, ms - d - 100);\n            skw = mstosamps(pow(g_skew / 100, 3) * 1000);\n            cr = ((noise()*0.5+0.5) < (g_crush/100)) ? (floor(abs(noise()) * 80) + 2) : 1;\n            p_st = wrap(h_g_write - off, 0, ms);\n            if (v_idx == 1) { v1_tmr=0; v1_dur=d; v1_ptr=p_st; v1_crsh=cr; v1_sk=skw; v1_c_cnt=0; }\n            if (v_idx == 2) { v2_tmr=0; v2_dur=d; v2_ptr=p_st; v2_crsh=cr; v2_sk=skw; v2_c_cnt=0; }\n            if (v_idx == 3) { v3_tmr=0; v3_dur=d; v3_ptr=p_st; v3_crsh=cr; v3_sk=skw; v3_c_cnt=0; }\n            if (v_idx == 4) { v4_tmr=0; v4_dur=d; v4_ptr=p_st; v4_crsh=cr; v4_sk=skw; v4_c_cnt=0; }\n        }\n    }\n}\n\nif (v1_tmr < v1_dur) {\n    v1_ptr = wrap(v1_ptr + g_pitch, 0, dim(g_bufferL)); v1_c_cnt += 1;\n    if (v1_c_cnt >= v1_crsh) { v1_sL = peek(g_bufferL, v1_ptr); v1_sR = peek(g_bufferR, wrap(v1_ptr - v1_sk, 0, dim(g_bufferL))); v1_c_cnt = 0; }\n    w_env = get_window(v1_tmr/v1_dur, g_window); o1L, o1R = v1_sL * w_env, v1_sR * w_env; v1_tmr += 1;\n}\nif (v2_tmr < v2_dur) {\n    v2_ptr = wrap(v2_ptr + g_pitch, 0, dim(g_bufferL)); v2_c_cnt += 1;\n    if (v2_c_cnt >= v2_crsh) { v2_sL = peek(g_bufferL, v2_ptr); v2_sR = peek(g_bufferR, wrap(v2_ptr - v2_sk, 0, dim(g_bufferL))); v2_c_cnt = 0; }\n    w_env = get_window(v2_tmr/v2_dur, g_window); o2L, o2R = v2_sL * w_env, v2_sR * w_env; v2_tmr += 1;\n}\nif (v3_tmr < v3_dur) {\n    v3_ptr = wrap(v3_ptr + g_pitch, 0, dim(g_bufferL)); v3_c_cnt += 1;\n    if (v3_c_cnt >= v3_crsh) { v3_sL = peek(g_bufferL, v3_ptr); v3_sR = peek(g_bufferR, wrap(v3_ptr - v3_sk, 0, dim(g_bufferL))); v3_c_cnt = 0; }\n    w_env = get_window(v3_tmr/v3_dur, g_window); o3L, o3R = v3_sL * w_env, v3_sR * w_env; v3_tmr += 1;\n}\nif (v4_tmr < v4_dur) {\n    v4_ptr = wrap(v4_ptr + g_pitch, 0, dim(g_bufferL)); v4_c_cnt += 1;\n    if (v4_c_cnt >= v4_crsh) { v4_sL = peek(g_bufferL, v4_ptr); v4_sR = peek(g_bufferR, wrap(v4_ptr - v4_sk, 0, dim(g_bufferL))); v4_c_cnt = 0; }\n    w_env = get_window(v4_tmr/v4_dur, g_window); o4L, o4R = v4_sL * w_env, v4_sR * w_env; v4_tmr += 1;\n}\n\nwet_granL = (o1L + o2L + o3L + o4L) * 0.5;\nwet_granR = (o1R + o2R + o3R + o4R) * 0.5;\nh_g_fbL, h_g_fbR = fixdenorm(wet_granL), fixdenorm(wet_granR);\n\n// --- B. RÉVERBÉRATION (ERBE-CLONE) ---\nrs_size = slide(r_size / 100, 2000, 2000); \nrh_ph = wrap(rh_ph + r_speed / samplerate, 0, 1);\nrlfo = sin(rh_ph * TWOPI) * (r_depth * 5);\nrt1 = clamp(1531 * rs_size + rlfo, 10, 14000);\nrt2 = clamp(2237 * rs_size - rlfo, 10, 14000);\nrt3 = clamp(3163 * rs_size + rlfo, 10, 14000);\nrt4 = clamp(4453 * rs_size - rlfo, 10, 14000);\n\nr_in = (wet_granL + wet_granR) * 0.5;\nr_pre = rpre_dly.read(mstosamps(10)); rpre_dly.write(r_in);\nrv_ap1 = r_pre - rap1.read(400 * rs_size) * 0.6; rap1.write(rv_ap1); rdf1 = rap1.read(400 * rs_size) + rv_ap1 * 0.6;\nrv_ap2 = rdf1 - rap2.read(600 * rs_size) * 0.6; rap2.write(rv_ap2); r_diff_in = rap2.read(600 * rs_size) + rv_ap2 * 0.6;\n\nrfb = r_decay / 100; rdamp = r_absorb / 100;\nrr1 = rd1.read(rt1); rr2 = rd2.read(rt2); rr3 = rd3.read(rt3); rr4 = rd4.read(rt4);\nrj1 = (rr1 + rr2 + rr3 + rr4) * 0.5; rj2 = (rr1 - rr2 + rr3 - rr4) * 0.5;\nrj3 = (rr1 + rr2 - rr3 - rr4) * 0.5; rj4 = (rr1 - rr2 - rr3 + rr4) * 0.5;\n\nrh1 = mix(rj1, rh1, rdamp); rh2 = mix(rj2, rh2, rdamp);\nrh3 = mix(rj3, rh3, rdamp); rh4 = mix(rj4, rh4, rdamp);\nrd1.write(fixdenorm(dcblock(r_diff_in + tanh(rh1 * rfb))));\nrd2.write(fixdenorm(dcblock(r_diff_in + tanh(rh2 * rfb))));\nrd3.write(fixdenorm(dcblock(r_diff_in + tanh(rh3 * rfb))));\nrd4.write(fixdenorm(dcblock(r_diff_in + tanh(rh4 * rfb))));\n\nrrawL = (rr1 + rr3) * 0.5; rrawR = (rr2 + rr4) * 0.5;\nrt_lpL = mix(rrawL, rh_lpL, 0.1); rh_lpL = rt_lpL;\nrt_lpR = mix(rrawR, rh_lpR, 0.1); rh_lpR = rt_lpR;\nrresL = (r_tilt < 0) ? mix(rrawL, rt_lpL, abs(r_tilt)) : mix(rrawL, rrawL - rt_lpL, r_tilt);\nrresR = (r_tilt < 0) ? mix(rrawR, rt_lpR, abs(r_tilt)) : mix(rrawR, rrawR - rt_lpR, r_tilt);\n\n// --- C. SORTIE ---\nfinalL = mix(mix(in1, wet_granL, g_mix / 100), rresL, r_mix / 100) * dbtoa(gainout);\nfinalR = mix(mix(in2, wet_granR, g_mix / 100), rresR, r_mix / 100) * dbtoa(gainout);\n\nout_fL = finalL - h_dc_inL + (0.995 * h_dcL); h_dc_inL = finalL; h_dcL = out_fL;\nout_fR = finalR - h_dc_inR + (0.995 * h_dcR); h_dc_inR = finalR; h_dcR = out_fR;\n\nout1, out2 = tanh(out_fL), tanh(out_fR);",
+                    "code": "/**\n * ============================================================================\n * @file aether-particle.gendsp / aether-particle.maxpat\n * @title AETHER-PARTICLE (Generative Microsound & Granular Cloud Engine)\n * @author Max Bruckert (assisted by Gemini)\n *\n * @description\n * Ultra-high precision granular microsound sculpture engine coupled to a\n * variable-geometry 4x4 Hadamard FDN reverberator. Captures incoming audio\n * into a circular 20-second delay memory, shatters it into 4 asynchronous\n * probabilistic grain streams with Gaussian position jitter and sample-rate\n * reduction, and diffuses the cloud into a malleable 4D acoustic space.\n *\n * ARCHITECTURE:\n * 1. INPUT -> 20s Ring Buffer with Cumulative Granular Feedback\n * 2. GRAIN ENGINE -> 4 Asynchronous Voices, Box-Muller Gaussian Jitter, Pitch Shift\n * 3. DIGITAL EROSION -> Bitcrush & Sample Rate Reduction on grain streams\n * 4. REVERB ENGINE -> Predelay -> Diffusers -> 4x4 Hadamard Unitary Matrix FDN\n * 5. OUTPUT -> Dry/Wet Mix -> DC Blocker -> Asymmetric Tanh Soft Limiter\n *\n * @inlets\n *   in1 : Audio Left Input\n *   in2 : Audio Right Input\n *\n * @outlets\n *   out1 : Processed Audio Left\n *   out2 : Processed Audio Right\n *\n * @parameters\n *   gainout       (-60..12 dB, def: 0)    : Final master gain\n *   clear         (0/1, def: 0)           : Erase / flush buffer memory\n *   freeze        (0/1, def: 0)           : Freeze buffer recording (grains loop indefinitely)\n *   g_mix         (0..100 %, def: 50)     : Granular cloud dry/wet mix\n *   g_prob        (0..100 %, def: 100)    : Grain firing probability\n *   g_density     (0.001..60 Hz, def: 4)  : Grain trigger rate / density\n *   g_std_density (0..100 %, def: 20)     : Density Gaussian jitter\n *   g_pos         (0..100 %, def: 10)     : Grain buffer read position offset\n *   g_std_pos     (0..100 %, def: 5)      : Position Gaussian randomization\n *   g_size        (2..2000 ms, def: 200)  : Grain duration\n *   g_std_size    (0..1000 ms, def: 50)   : Duration Gaussian jitter\n *   g_pitch       (-4..4, def: 1)         : Playback speed / pitch multiplier\n *   g_window      (0..1, def: 0.5)        : Window shape (0=Perc, 0.5=Spline, 1=Trap)\n *   g_crush       (0..100 %, def: 30)     : Lo-Fi sample & hold probability\n *   g_regen       (0..100 %, def: 40)     : Granular cloud feedback into buffer\n *   g_skew        (0..100 %, def: 0)      : Right channel temporal skew\n *   r_mix         (0..100 %, def: 40)     : FDN Reverb mix level\n *   r_size        (0.5..100 %, def: 50)   : Reverb acoustic space size\n *   r_decay       (0..110 %, def: 60)     : Reverb feedback decay time\n *   r_absorb      (0..100 %, def: 40)     : High-frequency absorption damping\n *   r_tilt        (-1..1, def: 0)         : Spectral tilt (-1: Dark, +1: Bright)\n *   r_speed       (0.1..10 Hz, def: 1)    : FDN allpass modulation speed\n *   r_depth       (0..20, def: 2)         : FDN allpass modulation depth\n * ============================================================================\n */\nbox_muller() {\n    u1 = clamp(abs(noise()), 0.0001, 1);\n    u2 = noise() * PI;\n    return sqrt(-2.0 * log(u1)) * cos(u2);\n}\n\nget_window(p, shape) {\n    if (p < 0 || p >= 1) return 0;\n    tri = 1.0 - abs(p * 2.0 - 1.0); \n    spline = (3.0 * pow(tri, 2)) - (2.0 * pow(tri, 3));\n    perc = pow(tri, 4);\n    trap = clamp(tri * 3, 0, 1);\n    return (shape < 0.5) ? mix(perc, spline, shape * 2) : mix(spline, trap, (shape - 0.5) * 2);\n}\n\n// 2. PARAM\u00c8TRES\n// ------------------------------------------------------------------------------------------\nParam gainout(0, min=-60, max=12);\nParam clear(0, min=0, max=1);\nParam freeze(0, min=0, max=1);\n\nParam g_mix(50, min=0, max=100);\nParam g_prob(100, min=0, max=100);\nParam g_density(4, min=0.001, max=60);\nParam g_std_density(20, min=0, max=100); \nParam g_pos(10, min=0, max=100);        \nParam g_std_pos(5, min=0, max=100);\nParam g_size(200, min=2, max=2000);\nParam g_std_size(50, min=0, max=1000);\nParam g_pitch(1, min=-4, max=4);\nParam g_window(0.5, min=0, max=1);\nParam g_crush(30, min=0, max=100);      \nParam g_regen(40, min=0, max=100);\nParam g_skew(0, min=0, max=100);\n\nParam r_mix(40, min=0, max=100);\nParam r_size(50, min=0.5, max=100);     \nParam r_decay(60, min=0, max=110);      \nParam r_absorb(40, min=0, max=100);     \nParam r_tilt(0, min=-1, max=1);         \nParam r_speed(1, min=0.1, max=10);      \nParam r_depth(2, min=0, max=20);        \n\n// 3. M\u00c9MOIRES\n// ------------------------------------------------------------------------------------------\nData g_bufferL(samplerate * 20), g_bufferR(samplerate * 20);\nHistory h_g_write(0), h_g_fbL(0), h_g_fbR(0), h_g_clock(0), h_g_next(1);\nHistory v1_tmr(999999), v1_dur(100), v1_ptr(0), v1_crsh(1), v1_sL(0), v1_sR(0), v1_c_cnt(0), v1_sk(0);\nHistory v2_tmr(999999), v2_dur(100), v2_ptr(0), v2_crsh(1), v2_sL(0), v2_sR(0), v2_c_cnt(0), v2_sk(0);\nHistory v3_tmr(999999), v3_dur(100), v3_ptr(0), v3_crsh(1), v3_sL(0), v3_sR(0), v3_c_cnt(0), v3_sk(0);\nHistory v4_tmr(999999), v4_dur(100), v4_ptr(0), v4_crsh(1), v4_sL(0), v4_sR(0), v4_c_cnt(0), v4_sk(0);\n\nDelay rd1(15000), rd2(15000), rd3(15000), rd4(15000);\nDelay rap1(2000), rap2(2000), rpre_dly(9600);\nHistory rh1(0), rh2(0), rh3(0), rh4(0), rh_lpL(0), rh_lpR(0), rh_ph(0);\nHistory h_dcL(0), h_dcR(0), h_dc_inL(0), h_dc_inR(0);\n\n// 4. LOGIQUE DSP\n// ------------------------------------------------------------------------------------------\n\no1L, o1R, o2L, o2R, o3L, o3R, o4L, o4R = 0, 0, 0, 0, 0, 0, 0, 0;\n\n// --- A. GRANULATEUR (AETHER-SCULPT) ---\nis_frozen = freeze > 0.5;\nis_clearing = clear > 0.5;\nfb_g = is_clearing ? 0 : (g_regen / 100);\nin_effL = dcblock(in1 + tanh(h_g_fbL * fb_g));\nin_effR = dcblock(in2 + tanh(h_g_fbR * fb_g));\n\nif (!is_frozen) {\n    poke(g_bufferL, is_clearing ? 0 : in_effL, h_g_write);\n    poke(g_bufferR, is_clearing ? 0 : in_effR, h_g_write);\n    h_g_write = wrap(h_g_write + 1, 0, dim(g_bufferL));\n}\n\nh_g_clock += 1;\nif (h_g_clock >= h_g_next) {\n    h_g_clock = 0;\n    bp = samplerate / max(g_density, 0.001);\n    jt = 1.0 + (box_muller() * (g_std_density / 100));\n    h_g_next = clamp(bp * jt, 40, samplerate * 5);\n\n    if ((noise() * 0.5 + 0.5) < (g_prob / 100)) {\n        v_idx = (v1_tmr >= v1_dur) ? 1 : (v2_tmr >= v2_dur ? 2 : (v3_tmr >= v3_dur ? 3 : (v4_tmr >= v4_dur ? 4 : 0)));\n        if (v_idx > 0) {\n            gauss = box_muller();\n            d = mstosamps(max(g_size + (gauss * g_std_size), 1));\n            ms = dim(g_bufferL);\n            off = clamp(((g_pos/100)*ms) + (gauss * (g_std_pos/100)*ms*0.2), 10, ms - d - 100);\n            skw = mstosamps(pow(g_skew / 100, 3) * 1000);\n            cr = ((noise()*0.5+0.5) < (g_crush/100)) ? (floor(abs(noise()) * 80) + 2) : 1;\n            p_st = wrap(h_g_write - off, 0, ms);\n            if (v_idx == 1) { v1_tmr=0; v1_dur=d; v1_ptr=p_st; v1_crsh=cr; v1_sk=skw; v1_c_cnt=0; }\n            if (v_idx == 2) { v2_tmr=0; v2_dur=d; v2_ptr=p_st; v2_crsh=cr; v2_sk=skw; v2_c_cnt=0; }\n            if (v_idx == 3) { v3_tmr=0; v3_dur=d; v3_ptr=p_st; v3_crsh=cr; v3_sk=skw; v3_c_cnt=0; }\n            if (v_idx == 4) { v4_tmr=0; v4_dur=d; v4_ptr=p_st; v4_crsh=cr; v4_sk=skw; v4_c_cnt=0; }\n        }\n    }\n}\n\nif (v1_tmr < v1_dur) {\n    v1_ptr = wrap(v1_ptr + g_pitch, 0, dim(g_bufferL)); v1_c_cnt += 1;\n    if (v1_c_cnt >= v1_crsh) { v1_sL = peek(g_bufferL, v1_ptr); v1_sR = peek(g_bufferR, wrap(v1_ptr - v1_sk, 0, dim(g_bufferL))); v1_c_cnt = 0; }\n    w_env = get_window(v1_tmr/v1_dur, g_window); o1L, o1R = v1_sL * w_env, v1_sR * w_env; v1_tmr += 1;\n}\nif (v2_tmr < v2_dur) {\n    v2_ptr = wrap(v2_ptr + g_pitch, 0, dim(g_bufferL)); v2_c_cnt += 1;\n    if (v2_c_cnt >= v2_crsh) { v2_sL = peek(g_bufferL, v2_ptr); v2_sR = peek(g_bufferR, wrap(v2_ptr - v2_sk, 0, dim(g_bufferL))); v2_c_cnt = 0; }\n    w_env = get_window(v2_tmr/v2_dur, g_window); o2L, o2R = v2_sL * w_env, v2_sR * w_env; v2_tmr += 1;\n}\nif (v3_tmr < v3_dur) {\n    v3_ptr = wrap(v3_ptr + g_pitch, 0, dim(g_bufferL)); v3_c_cnt += 1;\n    if (v3_c_cnt >= v3_crsh) { v3_sL = peek(g_bufferL, v3_ptr); v3_sR = peek(g_bufferR, wrap(v3_ptr - v3_sk, 0, dim(g_bufferL))); v3_c_cnt = 0; }\n    w_env = get_window(v3_tmr/v3_dur, g_window); o3L, o3R = v3_sL * w_env, v3_sR * w_env; v3_tmr += 1;\n}\nif (v4_tmr < v4_dur) {\n    v4_ptr = wrap(v4_ptr + g_pitch, 0, dim(g_bufferL)); v4_c_cnt += 1;\n    if (v4_c_cnt >= v4_crsh) { v4_sL = peek(g_bufferL, v4_ptr); v4_sR = peek(g_bufferR, wrap(v4_ptr - v4_sk, 0, dim(g_bufferL))); v4_c_cnt = 0; }\n    w_env = get_window(v4_tmr/v4_dur, g_window); o4L, o4R = v4_sL * w_env, v4_sR * w_env; v4_tmr += 1;\n}\n\nwet_granL = (o1L + o2L + o3L + o4L) * 0.5;\nwet_granR = (o1R + o2R + o3R + o4R) * 0.5;\nh_g_fbL, h_g_fbR = fixdenorm(wet_granL), fixdenorm(wet_granR);\n\n// --- B. R\u00c9VERB\u00c9RATION (ERBE-CLONE) ---\nrs_size = slide(r_size / 100, 2000, 2000); \nrh_ph = wrap(rh_ph + r_speed / samplerate, 0, 1);\nrlfo = sin(rh_ph * TWOPI) * (r_depth * 5);\nrt1 = clamp(1531 * rs_size + rlfo, 10, 14000);\nrt2 = clamp(2237 * rs_size - rlfo, 10, 14000);\nrt3 = clamp(3163 * rs_size + rlfo, 10, 14000);\nrt4 = clamp(4453 * rs_size - rlfo, 10, 14000);\n\nr_in = (wet_granL + wet_granR) * 0.5;\nr_pre = rpre_dly.read(mstosamps(10)); rpre_dly.write(r_in);\nrv_ap1 = r_pre - rap1.read(400 * rs_size) * 0.6; rap1.write(rv_ap1); rdf1 = rap1.read(400 * rs_size) + rv_ap1 * 0.6;\nrv_ap2 = rdf1 - rap2.read(600 * rs_size) * 0.6; rap2.write(rv_ap2); r_diff_in = rap2.read(600 * rs_size) + rv_ap2 * 0.6;\n\nrfb = r_decay / 100; rdamp = r_absorb / 100;\nrr1 = rd1.read(rt1); rr2 = rd2.read(rt2); rr3 = rd3.read(rt3); rr4 = rd4.read(rt4);\nrj1 = (rr1 + rr2 + rr3 + rr4) * 0.5; rj2 = (rr1 - rr2 + rr3 - rr4) * 0.5;\nrj3 = (rr1 + rr2 - rr3 - rr4) * 0.5; rj4 = (rr1 - rr2 - rr3 + rr4) * 0.5;\n\nrh1 = mix(rj1, rh1, rdamp); rh2 = mix(rj2, rh2, rdamp);\nrh3 = mix(rj3, rh3, rdamp); rh4 = mix(rj4, rh4, rdamp);\nrd1.write(fixdenorm(dcblock(r_diff_in + tanh(rh1 * rfb))));\nrd2.write(fixdenorm(dcblock(r_diff_in + tanh(rh2 * rfb))));\nrd3.write(fixdenorm(dcblock(r_diff_in + tanh(rh3 * rfb))));\nrd4.write(fixdenorm(dcblock(r_diff_in + tanh(rh4 * rfb))));\n\nrrawL = (rr1 + rr3) * 0.5; rrawR = (rr2 + rr4) * 0.5;\nrt_lpL = mix(rrawL, rh_lpL, 0.1); rh_lpL = rt_lpL;\nrt_lpR = mix(rrawR, rh_lpR, 0.1); rh_lpR = rt_lpR;\nrresL = (r_tilt < 0) ? mix(rrawL, rt_lpL, abs(r_tilt)) : mix(rrawL, rrawL - rt_lpL, r_tilt);\nrresR = (r_tilt < 0) ? mix(rrawR, rt_lpR, abs(r_tilt)) : mix(rrawR, rrawR - rt_lpR, r_tilt);\n\n// --- C. SORTIE ---\nfinalL = mix(mix(in1, wet_granL, g_mix / 100), rresL, r_mix / 100) * dbtoa(gainout);\nfinalR = mix(mix(in2, wet_granR, g_mix / 100), rresR, r_mix / 100) * dbtoa(gainout);\n\nout_fL = finalL - h_dc_inL + (0.995 * h_dcL); h_dc_inL = finalL; h_dcL = out_fL;\nout_fR = finalR - h_dc_inR + (0.995 * h_dcR); h_dc_inR = finalR; h_dcR = out_fR;\n\nout1, out2 = tanh(out_fL), tanh(out_fR);",
                     "fontface": 0,
                     "fontname": "<Monospaced>",
                     "fontsize": 12.0,
@@ -53,8 +77,16 @@
                     "maxclass": "codebox",
                     "numinlets": 2,
                     "numoutlets": 2,
-                    "outlettype": [ "", "" ],
-                    "patching_rect": [ 20.0, 45.0, 893.0, 841.0 ]
+                    "outlettype": [
+                        "",
+                        ""
+                    ],
+                    "patching_rect": [
+                        20.0,
+                        45.0,
+                        893.0,
+                        841.0
+                    ]
                 }
             },
             {
@@ -63,7 +95,12 @@
                     "maxclass": "newobj",
                     "numinlets": 1,
                     "numoutlets": 0,
-                    "patching_rect": [ 20.0, 912.0, 35.0, 22.0 ],
+                    "patching_rect": [
+                        20.0,
+                        912.0,
+                        35.0,
+                        22.0
+                    ],
                     "text": "out 1"
                 }
             }
@@ -71,26 +108,50 @@
         "lines": [
             {
                 "patchline": {
-                    "destination": [ "obj-3", 0 ],
-                    "source": [ "obj-1", 0 ]
+                    "destination": [
+                        "obj-3",
+                        0
+                    ],
+                    "source": [
+                        "obj-1",
+                        0
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-3", 1 ],
-                    "source": [ "obj-2", 0 ]
+                    "destination": [
+                        "obj-3",
+                        1
+                    ],
+                    "source": [
+                        "obj-2",
+                        0
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-4", 0 ],
-                    "source": [ "obj-3", 0 ]
+                    "destination": [
+                        "obj-4",
+                        0
+                    ],
+                    "source": [
+                        "obj-3",
+                        0
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-5", 0 ],
-                    "source": [ "obj-3", 1 ]
+                    "destination": [
+                        "obj-5",
+                        0
+                    ],
+                    "source": [
+                        "obj-3",
+                        1
+                    ]
                 }
             }
         ]

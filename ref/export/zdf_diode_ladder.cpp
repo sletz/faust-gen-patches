@@ -188,10 +188,10 @@ typedef struct State {
 			m_s4R_13 = return_36;
 			m_h_hpf_inR_16 = return_37;
 			m_h_hpf_outR_17 = return_38;
-			t_sample tmp_expr_540 = fixdenorm(outL);
-			t_sample tmp_expr_541 = fixdenorm(outR);
-			t_sample out1 = tmp_expr_540;
-			t_sample out2 = tmp_expr_541;
+			t_sample tmp_expr_591 = fixdenorm(outL);
+			t_sample tmp_expr_592 = fixdenorm(outR);
+			t_sample out1 = tmp_expr_591;
+			t_sample out2 = tmp_expr_592;
 			// assign results to output buffer;
 			(*(__out1++)) = out1;
 			(*(__out2++)) = out2;

@@ -10,7 +10,7 @@
 //  - battery mode (mode >= 0.5): a dying 9 V battery, RC supply sag following
 //    the signal, asymmetric rails, bias shift, a smoothstep "velcro" gate
 //    with crackle noise, and a lowpass closing as the supply sags;
-//  - a "40 Hz highpass" (see the quirks), a tilt EQ around `freq`
+//  - a 40 Hz Butterworth highpass (transposed direct form II), a tilt EQ around `freq`
 //    (-1 dark .. +1 bright), two allpasses per channel for diffusion, a DC
 //    blocker and a tanh limiter;
 //  - a feedback AGC limiting high feedback at the edge of self-oscillation,
@@ -23,16 +23,10 @@
 // 1: battery), pingpong (0..1), mix_bal (0..1).
 //
 // Quirks kept from gen~:
-//  - hpf40_clean subtracts its "feedback" terms b1*d1 + b2*d2 from the past
-//    INPUTS (it returns sig, d1 as its new states), not the past outputs: it is
-//    an FIR y = a1*(x - 2c^2 x[n-1] + (r c - c^2) x[n-2]), c = tan(pi 40/SR),
-//    nearly a gain of a1 (0.99815 at 48 kHz), not a highpass;
-//  - analog_fx returns `crackle` as the new h_noise, so the noise smoothing
-//    mix(h_noise, noise(), 0.35) mixes the new noise with the previous crackle
-//    (already scaled by amt^1.4 * 0.012 * presence), not with the previous noise;
-//  - the allpass delays (23, 51, 29, 57 ms) live in Delays of 4000 samples:
-//    the reads are clamped to 4000 samples above 70.2 kHz (57 ms),
-//    78.4 kHz (51 ms), 137.9 kHz (29 ms) and 173.9 kHz (23 ms);
+//  - the highpass's r = 0.707 is Q's reciprocal written as a damping, and
+//    pi is 3.14159: its cutoff is close to, not exactly, 40 Hz;
+//  - the allpass delays (23, 51, 29, 57 ms) live in Delays of 16000 samples:
+//    the reads are clamped to 16000 samples above 280.7 kHz (57 ms);
 //  - the delay time slides up from 0 at start: while it is below 4 samples,
 //    read_cubic's 4 points reach the write head and read stale ring slots
 //    (genops.lib reproduces that ring: g.rd_cubic_fb);
@@ -95,8 +89,8 @@ with {
 };
 
 // Mode Battery; nz: the noise() of the frame (site 1);
-// returns fL, fR, new_sag, fL, fR, crackle
-analog_fx(sigL, sigR, amt, h_sag, h_lpfL, h_lpfR, h_noise, nz) = fL, fR, new_sag, fL, fR, crackle
+// returns fL, fR, new_sag, fL, fR, new_noise
+analog_fx(sigL, sigR, amt, h_sag, h_lpfL, h_lpfR, h_noise, nz) = fL, fR, new_sag, fL, fR, new_noise
 with {
     draw = max(abs(sigL), abs(sigR));
     v_nom = 1 + (g.safepow(amt, 0.85) * (0.28 - 1));
@@ -105,7 +99,8 @@ with {
                                          1 - exp(g.safediv(-1, 0.002 * ma.SR)));
     new_sag = h_sag + (rc_coeff * (v_target - h_sag));
     presence = min(draw * 50, 1);
-    crackle = ((g.mix(h_noise, nz, 0.35) * g.safepow(amt, 1.4)) * 0.012) * presence;
+    new_noise = g.mix(h_noise, nz, 0.35);
+    crackle = ((new_noise * g.safepow(amt, 1.4)) * 0.012) * presence;
     thresh = (g.safepow(amt, 1.6) * 0.03) * (1.2 - new_sag);
     yL = battery_stage(sigL, amt, new_sag, thresh, crackle);
     yR = battery_stage(sigR, amt, new_sag, thresh, crackle);
@@ -116,11 +111,15 @@ with {
 
 // ---------------------------------------------------------------- filters
 
-// hpf40_clean: states (d1, d2) = (sig, d1) of the previous frame: x', x''
-hpf40_clean(sig) = ((((a1_h * sig) + (a2_h * d1)) + (a3_h * d2)) - (b1_h * d1)) - (b2_h * d2)
+// hpf40_clean: transposed direct form II, states s1, s2
+hpf40_clean(sig) = rec ~ (_, _) : !, !, _
 with {
-    d1 = sig';
-    d2 = sig'';
+    rec(s1, s2) = new_s1, new_s2, y_hpf
+    with {
+        y_hpf = (a1_h * sig) + s1;
+        new_s1 = ((a2_h * sig) - (b1_h * y_hpf)) + s2;
+        new_s2 = (a3_h * sig) - (b2_h * y_hpf);
+    };
     f_hpf = g.safediv(40, ma.SR);
     r_hpf = 0.707;
     c_hpf = tan(3.14159 * f_hpf);
@@ -143,12 +142,12 @@ with {
     g_high = select2(t_c >= 0, 1 + ((0 - t_c) * (0.1 - 1)), 1 + (t_c * (1.3 - 1)));
 };
 
-// allpass on a Delay(4000) read (linear, before its write) at sz_ms ms
+// allpass on a Delay(16000) read (linear, before its write) at sz_ms ms
 allpass_fx(g_ap, sz_ms, sig) = loop ~ _ : !, _
 with {
     loop(vd) = v_ap, s_read + (v_ap * g_ap)
     with {
-        s_read = g.rd_linear_fb(4000, 4000, vd, sz_ms * (ma.SR * 0.001));
+        s_read = g.rd_linear_fb(16000, 16000, vd, sz_ms * (ma.SR * 0.001));
         v_ap = sig - (s_read * g_ap);
     };
 };

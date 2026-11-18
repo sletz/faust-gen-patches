@@ -159,10 +159,10 @@ typedef struct State {
 			m_h_dcOutR_17 = dc_R;
 			t_sample wetL = (dc_L * out_gain);
 			t_sample wetR = (dc_R * out_gain);
-			t_sample tmp_expr_383 = fixdenorm(((in1 * (((int)1) - bal)) + (wetL * bal)));
-			t_sample tmp_expr_384 = fixdenorm(((in2 * (((int)1) - bal)) + (wetR * bal)));
-			t_sample out1 = tmp_expr_383;
-			t_sample out2 = tmp_expr_384;
+			t_sample tmp_expr_555 = fixdenorm(((in1 * (((int)1) - bal)) + (wetL * bal)));
+			t_sample tmp_expr_556 = fixdenorm(((in2 * (((int)1) - bal)) + (wetR * bal)));
+			t_sample out1 = tmp_expr_555;
+			t_sample out2 = tmp_expr_556;
 			// assign results to output buffer;
 			(*(__out1++)) = out1;
 			(*(__out2++)) = out2;

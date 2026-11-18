@@ -1,35 +1,45 @@
 # CPU cost: gen~ exports against the Faust ports
 
-Written by `scripts/bench_cpu.py` on 2026-11-12: Apple M5, Darwin 25.6.0, Now drawing from 'AC Power'; load average 2.5 at the start, 2.9 at the end. Apple clang version 21.0.0 (clang-2100.4.1.1), `-std=c++17 -O3 -ffp-contract=off`; FAUST Version 2.92.5; faust-rs 8c6bab82 2026-11-11.
+Written by `scripts/bench_cpu.py` on 2026-11-18: Apple M5, Darwin 25.6.0, Now drawing from 'AC Power'; load average 2.3 at the start, 3.3 at the end. Apple clang version 21.0.0 (clang-2100.4.1.1), `-std=c++17 -O3 -ffp-contract=off`; FAUST Version 2.94.0; faust-rs 8f1b5d71 2026-11-16.
 
 Real-time factors (seconds of audio per second of compute; higher is cheaper), 5 s of audio at 48 kHz in blocks of 64, every input fed uniform noise, controls at their defaults, the compute call alone timed, best of 3 runs taken in turn. The last column is the speed of the Faust C++ over the gen~ export's (above 1: the Faust program is cheaper).
 
 | model | gen~ export | Faust (faust C++) | Faust (faust-rs C++) | Faust (faustprobe JIT) | faust / gen~ |
 |---|---|---|---|---|---|
-| aether-drift | 427.6x | 376.8x | 376.9x | 201.0x | 0.88 |
-| aether-particle | 388.4x | 237.0x | 219.6x | 98.5x | 0.61 |
-| bernoulli-gate | 2433.8x | 13268.3x | 13155.1x | 2280.0x | 5.45 |
-| cswitch-tremolo | 1048.3x | 1119.7x | 1195.9x | 548.0x | 1.07 |
-| curvature-shaper | 1981.0x | 2006.8x | 2339.2x | 1096.0x | 1.01 |
-| delays-delays | 24.5x | 24.2x | 23.8x | 11.7x | 0.99 |
-| erbeverb-clone | 390.6x | 353.4x | 370.4x | 197.0x | 0.90 |
-| frost-machine | 720.9x | 899.9x | 917.0x | 363.0x | 1.25 |
-| householder-fdn-16 | 201.4x | 212.4x | 203.7x | 107.0x | 1.05 |
-| hp_butterworth | 1870.5x | 3102.2x | 3021.7x | 2088.0x | 1.66 |
-| lorenz-rossler-chaos | 1069.7x | 649.5x | 739.7x | 282.0x | 0.61 |
-| lp_butterworth | 1799.8x | 2958.2x | 3009.6x | 2062.0x | 1.64 |
-| offset-spline-random | 1022.6x | 1833.6x | 2170.0x | 598.0x | 1.79 |
-| poisson-cloud | 1947.9x | 1846.8x | 1965.4x | 941.0x | 0.95 |
-| precision-svf-48db | 370.8x | 398.4x | 399.6x | 205.0x | 1.07 |
-| pulsar-synth | 2550.5x | 1685.5x | 1822.2x | 385.0x | 0.66 |
-| sature-delay | 446.4x | 467.9x | 444.6x | 172.0x | 1.05 |
-| tape-hysteresis | 620.4x | 662.8x | 717.4x | 597.0x | 1.07 |
-| ufo-core-simple | 1451.5x | 1555.8x | 1717.6x | 1150.0x | 1.07 |
-| ufo-core | 510.8x | 762.7x | 889.3x | 388.0x | 1.49 |
-| ufo | 660.0x | 766.2x | 774.5x | 467.0x | 1.16 |
-| volt-drama | 409.5x | 333.1x | 335.1x | 193.0x | 0.81 |
-| volt-syphon | 468.0x | 461.6x | 464.5x | 356.0x | 0.99 |
-| waveguide-string | 291.4x | 256.6x | 263.2x | 174.0x | 0.88 |
-| zdf-diode-ladder | 410.7x | 388.4x | 394.7x | 270.0x | 0.95 |
+| adm_panner | 830.5x | 585.8x | 594.5x | 184.0x | 0.71 |
+| aether-drift | 421.1x | 366.2x | 366.7x | 198.0x | 0.87 |
+| aether-particle | 387.8x | 235.2x | 216.7x | 99.3x | 0.61 |
+| bernoulli-gate | 4587.6x | 21644.7x | 21403.9x | 2414.0x | 4.72 |
+| cswitch-tremolo | 1264.6x | 1338.3x | 1438.5x | 525.0x | 1.06 |
+| curvature-shaper | 3015.8x | 2839.2x | 3106.1x | 1092.0x | 0.94 |
+| delays-delays | 24.5x | 23.7x | 24.5x | 11.7x | 0.97 |
+| driller | 468.9x | 288.7x | 343.5x | 127.0x | 0.62 |
+| erbeverb-clone | 388.9x | 352.6x | 362.3x | 193.0x | 0.91 |
+| fdn_multireverb | 363.0x | 37.0x | 38.1x | 28.5x | 0.10 |
+| fhickup | 326.9x | 324.3x | 324.1x | 185.0x | 0.99 |
+| filterbank-8 | 179.5x | 150.1x | 172.6x | 121.0x | 0.84 |
+| fm-supermod | 311.1x | 277.4x | 335.8x | 106.0x | 0.89 |
+| frost-machine | 832.2x | 995.8x | 980.9x | 361.0x | 1.20 |
+| grainer | 2240.5x | 2981.8x | 2942.5x | 913.0x | 1.33 |
+| householder-fdn-16 | 169.6x | 142.2x | 139.1x | 73.5x | 0.84 |
+| hp_butterworth | 3045.8x | 4739.4x | 4408.9x | 2077.0x | 1.56 |
+| lorenz-rossler-chaos | 1426.0x | 749.1x | 888.9x | 257.0x | 0.53 |
+| lp_butterworth | 3072.3x | 4667.1x | 4413.5x | 2043.0x | 1.52 |
+| modeldrive | 374.8x | 346.0x | 358.9x | 280.0x | 0.92 |
+| multiband-drive | 128.1x | 151.3x | 177.5x | 111.0x | 1.18 |
+| offset-spline-random | 1428.8x | 2640.6x | 2748.2x | 571.0x | 1.85 |
+| poisson-cloud | 3036.7x | 2605.6x | 2690.5x | 901.0x | 0.86 |
+| precision-svf-48db | 364.5x | 376.7x | 389.4x | 197.0x | 1.03 |
+| pulsar-synth | 3504.9x | 2400.2x | 2323.3x | 586.0x | 0.68 |
+| rings | 95.9x | 283.0x | 309.5x | 103.0x | 2.95 |
+| sature-delay | 454.0x | 389.1x | 408.4x | 148.0x | 0.86 |
+| skipper | 1240.7x | 816.1x | 860.4x | 306.0x | 0.66 |
+| spatial-dbap | 861.8x | 113.5x | 116.9x | 49.4x | 0.13 |
+| tape-hysteresis | 715.1x | 732.4x | 725.1x | 573.0x | 1.02 |
+| ufo | 805.2x | 832.4x | 879.1x | 476.0x | 1.03 |
+| volt-drama | 397.5x | 300.6x | 310.6x | 169.0x | 0.76 |
+| volt-syphon | 453.1x | 427.5x | 431.4x | 336.0x | 0.94 |
+| waveguide-string | 277.2x | 226.1x | 245.5x | 150.0x | 0.82 |
+| zdf-diode-ladder | 387.1x | 357.3x | 363.8x | 250.0x | 0.92 |
 
-Geometric mean of the speed ratios: faust C++ / gen~ 1.10, faust-rs C++ / gen~ 1.14.
+Geometric mean of the speed ratios: faust C++ / gen~ 0.89, faust-rs C++ / gen~ 0.93.

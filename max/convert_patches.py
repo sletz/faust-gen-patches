@@ -1,19 +1,27 @@
 #!/usr/bin/env python3
 """The demo patchers of GEN-patches, with the Faust ports in faustgen~ instead of gen~.
 
-For every `<model>.maxpat` of GEN-patches (../GEN-patches, GEN_PATCHES
+For every `<patch>.maxpat` of GEN-patches (../GEN-patches, GEN_PATCHES
 otherwise), loaded and saved with py2max (PY2MAX: its checkout, by default the
-one of the GRAME studio project), writes max/<model>.maxpat where
+one of the GRAME studio project), writes max/<patch>.maxpat where every gen~
+of a ported model (a patch may hold several: spatial-dbap's demo drives it
+with lorenz-rossler-chaos, lowpasss_highpass holds both Butterworth filters)
+is replaced:
 
-  - the `gen~ @gen <model>` box becomes a `faustgen~` box holding the Faust
+  - a `gen~ @gen <model>` box becomes a `faustgen~` box holding the Faust
     port (dsp/<model>.dsp) as its source code, its local libraries
-    (genops.lib, ufo.lib, butterworth.lib) embedded as environments, so the
+    (genops.lib, butterworth.lib) embedded as environments, so the
     patch needs nothing but the faustgen package; same id, place, inlets and
     signal outlets, so every patch cord stays; compiled in double precision
     (sample_format 1), as gen~ computes;
   - `mc.gen~ @chans 2 @gen cswitch-tremolo` becomes `mc.faustgen~` running
     max/cswitch-tremolo-mc2.dsp (the two instances in one program) followed by
     `mc.separate~ 2 2 2 2`, which gives back the four MC outlets;
+  - another `mc.gen~ @gen <model>` (spatial-dbap) becomes `mc.faustgen~`
+    running the port, which is the N instances in one program (one output per
+    channel): its one inlet takes the program's inputs as the channels of a
+    multichannel signal, so the signal cords into the mc.gen~'s inlets go to
+    an `mc.pack~ <inputs>` in front of it, and the messages stay on inlet 0;
   - every `attrui` that drives gen~ (gen~ shows its params as attributes,
     faustgen~ does not) becomes a number box (same id, so the preset data and
     the cords into it stay valid) sending `<param> $1` through a hidden
@@ -26,7 +34,7 @@ one of the GRAME studio project), writes max/<model>.maxpat where
     constants (its cord is removed and a comment says so).
 
     max/convert_patches.py                 every patch
-    max/convert_patches.py ufo sature-delay
+    max/convert_patches.py ufo spatial-dbap
     max/convert_patches.py --check         compile the embedded sources with
                                            faustprobe and compare them with
                                            dsp/<model>.dsp, sample for sample
@@ -41,7 +49,8 @@ GEN_PATCHES = Path(os.environ.get("GEN_PATCHES", ROOT.parent.parent / "GEN-patch
 PY2MAX = Path(os.environ.get("PY2MAX", "/Users/letz/Developpements/Recherche/Studio 2025/studio/faust/maxmsp/py2max"))
 FAUST = os.environ.get("FAUST", "faust")
 FAUST_RS = Path(os.environ.get("FAUST_RS", ROOT.parent / "faust-rs"))
-FAUSTPROBE = os.environ.get("FAUSTPROBE", str(FAUST_RS / "target" / "release" / "faustprobe"))
+# absolute: the checks run in a temporary directory (make exports a relative path)
+FAUSTPROBE = os.path.abspath(os.environ.get("FAUSTPROBE", str(FAUST_RS / "target" / "release" / "faustprobe")))
 FAUSTGEN_VERSION = "1.87"
 
 sys.path.insert(0, str(PY2MAX))
@@ -216,26 +225,35 @@ def convert_presets(p, converted):
         b.preset_data = json.dumps(data) if isinstance(b.preset_data, str) else data
 
 
-def convert(model: str, out_dir: Path) -> dict:
-    src = GEN_PATCHES / f"{model}.maxpat"
-    p = Patcher.from_file(src)
-    lent = lend_rect(p)
-    original_ids = {b.id for b in p._boxes}
-    gens = [b for b in p._boxes if re.match(r"(mc\.)?gen~ .*@gen " + re.escape(model) + r"\b", getattr(b, "text", "") or "")]
-    if len(gens) != 1:
-        raise RuntimeError(f"{model}: {len(gens)} gen~ @gen {model} boxes")
-    gen = gens[0]
+GEN_RE = re.compile(r"(mc\.)?gen~ .*@gen (\S+)")
+
+
+def gen_boxes(p):
+    """(box, model) of every gen~ / mc.gen~ of a patcher whose model has a port."""
+    out = []
+    for b in p._boxes:
+        m = GEN_RE.match(getattr(b, "text", "") or "")
+        if m and (m[2] in WRAPPERS or (DSP / f"{m[2]}.dsp").is_file()):
+            out.append((b, m[2]))
+    return out
+
+
+def models_of(patch: str):
+    return [m for _, m in gen_boxes(Patcher.from_file(GEN_PATCHES / f"{patch}.maxpat"))]
+
+
+def convert_gen(p, gen, model, report):
+    """One gen~ box of patcher p -> faustgen~ (or mc.faustgen~) running the port."""
     source = source_of(model)
     nin, nout, controls = faust_ui(source)
-    report = dict(model=model, inputs=nin, outputs=nout, controls=len(controls), attrui=0, notes=[])
-
-    # the faustgen~ box, in place of gen~
+    report["boxes"].append(dict(model=model, inputs=nin, outputs=nout, controls=len(controls)))
+    boxes = {b.id: b for b in p._boxes}
     mc = gen.text.startswith("mc.")
     common = dict(sourcecode=source, sourcecode_size=len(source.encode("utf-8")), sample_format=1,
                   version=FAUSTGEN_VERSION, varname=f"faust_{model.replace('-', '_')}")
-    if mc:
+    x, y, w, h = gen.patching_rect
+    if mc and model in WRAPPERS:
         sep = WRAPPERS[model]["separate"]
-        x, y, w, h = gen.patching_rect
         gen_outs = [(pl.source[1], pl.dst, pl.destination[1]) for pl in p._lines if pl.src == gen.id]
         for pl in [pl for pl in p._lines if pl.src == gen.id]:
             p.remove_line(pl)
@@ -249,6 +267,34 @@ def convert(model: str, out_dir: Path) -> dict:
         for o, dst, inl in gen_outs:
             p.add_patchline(sp.id, o, dst, inl)
         report["notes"].append(f"mc.gen~ @chans 2 -> mc.faustgen~ ({nin} in, {nout} out) + mc.separate~")
+    elif mc:
+        # mc.gen~ @chans N of a patch ported as its N instances in one program
+        # (N outputs per output of the patch): mc.faustgen~, whose one inlet
+        # takes the program's inputs as the channels of a multichannel signal.
+        # The signal cords into the mc.gen~'s inlets go to an `mc.pack~ <nin>`
+        # in front of it (each inlet its channel); the messages stay on inlet 0.
+        if gen.numoutlets != 1:
+            raise RuntimeError(f"{model}: mc.gen~ with {gen.numoutlets} outlets")
+        gen.__dict__["text"] = "mc.faustgen~"
+        gen.numinlets, gen.numoutlets = 1, 3
+        gen.outlettype = ["multichannelsignal", "", ""]
+        gen.__dict__.update(common)
+        if nin > 1:
+            pk = p.add_textbox(f"mc.pack~ {nin}", numinlets=nin, numoutlets=1, outlettype=["multichannelsignal"],
+                               patching_rect=[x, y - 26, w, 22])
+            for pl in [pl for pl in p._lines if pl.dst == gen.id]:
+                src = boxes[pl.src]
+                types = getattr(src, "outlettype", None) or []
+                sig = pl.source[1] < len(types) and "signal" in str(types[pl.source[1]])
+                if sig:
+                    if pl.destination[1] >= nin:
+                        raise RuntimeError(f"{model}: signal into inlet {pl.destination[1] + 1}, the program has {nin} inputs")
+                    p.remove_line(pl)
+                    p.add_patchline(src.id, pl.source[1], pk.id, pl.destination[1])
+                elif pl.destination[1] != 0:
+                    raise RuntimeError(f"{model}: message into inlet {pl.destination[1] + 1} of mc.gen~")
+            p.add_line(pk, gen)
+        report["notes"].append(f"mc.gen~ {model} -> mc.pack~ {nin} + mc.faustgen~ ({nin} in, {nout} out)")
     else:
         if nin != gen.numinlets and not (nin == 0 and gen.numinlets == 1):
             raise RuntimeError(f"{model}: gen~ has {gen.numinlets} inlets, the Faust program {nin} inputs")
@@ -260,7 +306,7 @@ def convert(model: str, out_dir: Path) -> dict:
         gen.__dict__.update(common)
 
     loadbang = p.add_textbox("loadbang", numinlets=1, numoutlets=1, outlettype=["bang"],
-                             patching_rect=[gen.patching_rect[0] + 200, gen.patching_rect[1] + 30, 60, 22], hidden=1)
+                             patching_rect=[x + 200, y + 30, 60, 22], hidden=1)
 
     # attrui -> number boxes
     converted = {}
@@ -274,15 +320,14 @@ def convert(model: str, out_dir: Path) -> dict:
                 raise RuntimeError(f"{model}: attrui '{b.attr}' has no Faust control")
             # gen~ shows its History variables as attributes too: a state the
             # Faust program keeps to itself
-            x, y, w, h = b.patching_rect
+            bx, by, bw, bh = b.patching_rect
             p.remove_box(b)
             p.add_comment(f"gen~ History '{b.attr}': internal state in Faust, not settable",
-                          patching_rect=[x, y, max(w, 300.0), h], textcolor=[0.6, 0.1, 0.1, 1.0])
+                          patching_rect=[bx, by, max(bw, 300.0), bh], textcolor=[0.6, 0.1, 0.1, 1.0])
             report["notes"].append(f"attrui on History '{b.attr}' removed")
             continue
         converted[b.id] = number_box(p, b, ctrl, gen, loadbang)
-    convert_presets(p, converted)
-    report["attrui"] = len(converted)
+    report["attrui"] += len(converted)
 
     # every other message to the DSP must name a control
     unknown = []
@@ -291,22 +336,38 @@ def convert(model: str, out_dir: Path) -> dict:
             continue
         if (model, sel) in IGNORED:
             p.remove_line(pl)
-            x, y = srcbox.patching_rect[0], srcbox.patching_rect[1]
-            p.add_comment(IGNORED[(model, sel)], patching_rect=[x, y + 24, 360, 20])
+            sx, sy = srcbox.patching_rect[0], srcbox.patching_rect[1]
+            p.add_comment(IGNORED[(model, sel)], patching_rect=[sx, sy + 24, 360, 20])
             report["notes"].append(IGNORED[(model, sel)])
             continue
         unknown.append(sel)
     if unknown:
         raise RuntimeError(f"{model}: messages without a Faust control: {sorted(set(unknown))}")
 
-    # a header
     p.add_comment(f"Faust version: gen~ @gen {model} replaced by {gen.text} running the Faust port "
                   f"(faust-gen-patches/dsp/{model}.dsp), double-click it to see the code. "
-                  f"Generated by max/convert_patches.py from GEN-patches/{model}.maxpat.",
-                  patching_rect=[gen.patching_rect[0], max(0.0, gen.patching_rect[1] - 48), 560, 34],
+                  f"Generated by max/convert_patches.py from GEN-patches/{report['patch']}.maxpat.",
+                  patching_rect=[x, max(0.0, y - (74 if mc and nin > 1 else 48)), 560, 34],
                   textcolor=[0.6, 0.1, 0.1, 1.0])
+    return converted
 
-    out = out_dir / f"{model}.maxpat"
+
+def convert(patch: str, out_dir: Path) -> dict:
+    """GEN-patches/<patch>.maxpat -> max/<patch>.maxpat, every gen~ of a ported
+    model replaced."""
+    src = GEN_PATCHES / f"{patch}.maxpat"
+    p = Patcher.from_file(src)
+    lent = lend_rect(p)
+    original_ids = {b.id for b in p._boxes}
+    gens = gen_boxes(p)
+    if not gens:
+        raise RuntimeError(f"{patch}: no gen~ of a ported model")
+    report = dict(patch=patch, boxes=[], attrui=0, notes=[])
+    converted = {}
+    for gen, model in gens:
+        converted.update(convert_gen(p, gen, model, report))
+    convert_presets(p, converted)
+    out = out_dir / f"{patch}.maxpat"
     for b in list(p._boxes):  # attrui replaced keep their ids: they are new boxes
         if b.id in converted:
             original_ids.discard(b.id)
@@ -368,18 +429,25 @@ def main():
     ap.add_argument("--check", action="store_true")
     ap.add_argument("--out", default=str(MAXDIR))
     a = ap.parse_args()
-    models = a.models or sorted(f.stem for f in GEN_PATCHES.glob("*.maxpat"))
+    patches = a.models or sorted(f.stem for f in GEN_PATCHES.glob("*.maxpat"))
     fails = 0
-    for m in models:
+    done = set()
+    for m in patches:
         try:
             if a.check:
-                line = check(m)
-                fails += line.startswith("FAIL")
-                print(line, flush=True)
+                for model in models_of(m):
+                    if model in done:
+                        continue
+                    done.add(model)
+                    line = check(model)
+                    fails += line.startswith("FAIL")
+                    print(line, flush=True)
             else:
                 r = convert(m, Path(a.out))
-                print(f"ok   {m:24s} {r['inputs']} in, {r['outputs']} out, {r['controls']} controls, "
-                      f"{r['attrui']} attrui replaced" + "".join(f"; {n}" for n in r["notes"]), flush=True)
+                desc = ", ".join(f"{b['model']} {b['inputs']} in {b['outputs']} out {b['controls']} controls"
+                                 for b in r["boxes"])
+                print(f"ok   {m:24s} {desc}, {r['attrui']} attrui replaced"
+                      + "".join(f"; {n}" for n in r["notes"]), flush=True)
         except Exception as e:  # noqa: BLE001 - report and go on with the others
             fails += 1
             print(f"FAIL {m}: {e}", flush=True)

@@ -17,9 +17,11 @@
 // q (0.1..50, def 10), reset (0..1, def 0: while > 0 the phase is held at its
 // first step and every sample is a grain start).
 //
-// gen~ detail kept: the resonator's gain b0 = 1 - r does not normalize its
-// peak, which is about 1/(2 sin(2 pi cf/sr)): +25.6 dB at 200 Hz, +45.6 dB at
-// 20 Hz, 0 dB at 4 kHz (q = 10, 48 kHz).
+// gen~ detail kept: the resonator is meant as a constant-peak band-pass,
+// y = (1 - r^2)/2 * (x[n] - x[n-2]) + c*y1 - r^2*y2, but its History x2 is
+// written with the current input each frame, so it holds x[n-1]: the zero
+// pair is (1 - z^-1), at DC only, and the peak is not exactly 0 dB (it
+// rises towards high centre frequencies).
 
 declare name "cswitch-tremolo";
 declare author "Max Bruckert (gen~), Faust port";
@@ -66,8 +68,8 @@ with {
     };
 };
 
-// 2-pole resonator: y = b0*x + c*y1 - r*r*y2
-_reso(b0, c, r, x) = (\(y1, y2).(((b0 * x) + (c * y1)) - ((r * r) * y2))) ~ (_ <: _, _');
+// 2-pole resonator: y = g_bp*(x - x2) + c*y1 - r*r*y2, x2 = x[n-1] (see above)
+_reso(g_bp, c, r, x) = (\(y1, y2).(((g_bp * (x - x')) + (c * y1)) - ((r * r) * y2))) ~ (_ <: _, _');
 
 chopper(in1, in2, nz_time, nz_pan, nz_filt) = out1, out2, trig, mod_envelope
 with {
@@ -92,9 +94,9 @@ with {
     bw = g.safediv(cf, q);
     r = exp(divsr((0 - ma.PI) * bw));
     c = (2 * r) * cos(divsr((2 * ma.PI) * cf));
-    b0 = 1 - r;
-    filtered_l = _reso(b0, c, r, in1);
-    filtered_r = _reso(b0, c, r, in2);
+    g_bp = (1 - (r * r)) * 0.5;
+    filtered_l = _reso(g_bp, c, r, in1);
+    filtered_r = _reso(g_bp, c, r, in2);
 
     effective_filter_depth = filter_depth * depth;
     audio_filtered_l = g.mix(in1, filtered_l, effective_filter_depth);

@@ -3,8 +3,9 @@
 //
 // A period phasor at f0; in each period, a pulsaret (a waveform of
 // `formant_f` Hz under a window) fills the first `duty_ratio` of the period,
-// silence the rest. At every new period (or while in1 > 0.5) a noise draw
-// decides whether the pulsar sounds (masking) and the pan alternates.
+// silence the rest. At every new period a noise draw decides whether the
+// pulsar sounds (masking) and the pan alternates. A rising edge of in1
+// through 0.5 resets the phase to 0 and starts a new period.
 //
 // in1: reset / sync trigger (> 0.5)    in2: formant frequency modulation (Hz)
 // out1, out2: pulsar audio L, R
@@ -12,8 +13,6 @@
 // wave_shape: 0 sine, 1 triangle, 2 chirp, 3 harmonics; win_type: 0 rectangle,
 // 1 Hann, 2 Gaussian, 3 exponential decay. Both are compared to integers by
 // gen (`== 0`, `== 1`, `== 2`): a fractional value falls to the last branch.
-// in1 does not reset the phase (the patch's "reset / sync" only redraws the
-// mask and flips the pan, at every sample while it is above 0.5).
 
 declare name "pulsar-synth";
 declare author "Max Bruckert (gen~), Faust port";
@@ -36,9 +35,9 @@ TWOPI = 6.2831853071795862;
 pulsar(nz, in1, in2) = sig * pan_L, sig * pan_R
 with {
     f0_step = g.safediv(g.clamp(0.05, 500, f0), ma.SR);
-    phase_f0 = (\(h).(g.wrap(0, 1, h + f0_step))) ~ _;
-    new_cycle = (phase_f0' + f0_step) >= 1;
-    trig = new_cycle | (in1 > 0.5);
+    trig_sync = (in1 > 0.5) & (in1' <= 0.5);
+    phase_f0 = (\(h).(select2(trig_sync, g.wrap(0, 1, h + f0_step), 0))) ~ _;
+    trig = ((phase_f0' + f0_step) >= 1) | trig_sync;
     h_pulsar_active = (\(a).(select2(trig, a, abs(nz) > masking))) ~ g.init(1);
     h_pulse_count = (\(c).(select2(trig, c, c + 1))) ~ _;
 

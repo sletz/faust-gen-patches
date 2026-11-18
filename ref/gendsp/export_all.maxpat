@@ -1,13 +1,6 @@
 {
  "patcher": {
   "fileversion": 1,
-  "appversion": {
-   "major": 9,
-   "minor": 2,
-   "revision": 1,
-   "architecture": "x64",
-   "modernui": 1
-  },
   "classnamespace": "box",
   "rect": [
    50,
@@ -15,6 +8,13 @@
    900,
    1000
   ],
+  "appversion": {
+   "major": 9,
+   "minor": 2,
+   "revision": 1,
+   "architecture": "x64",
+   "modernui": 1
+  },
   "boxes": [
    {
     "box": {
@@ -25,7 +25,7 @@
      "patching_rect": [
       20,
       20,
-      300,
+      600,
       22
      ],
      "text": "loadbang"
@@ -40,55 +40,10 @@
      "patching_rect": [
       20,
       60,
-      300,
+      600,
       22
      ],
      "text": "delay 3000"
-    }
-   },
-   {
-    "box": {
-     "id": "trig",
-     "maxclass": "newobj",
-     "numinlets": 1,
-     "numoutlets": 2,
-     "patching_rect": [
-      20,
-      100,
-      300,
-      22
-     ],
-     "text": "t b b"
-    }
-   },
-   {
-    "box": {
-     "id": "q",
-     "maxclass": "newobj",
-     "numinlets": 2,
-     "numoutlets": 1,
-     "patching_rect": [
-      400,
-      100,
-      300,
-      22
-     ],
-     "text": "delay 20000"
-    }
-   },
-   {
-    "box": {
-     "id": "quit",
-     "maxclass": "message",
-     "numinlets": 2,
-     "numoutlets": 1,
-     "patching_rect": [
-      400,
-      140,
-      300,
-      22
-     ],
-     "text": ";\rmax quit"
     }
    },
    {
@@ -99,8 +54,8 @@
      "numoutlets": 1,
      "patching_rect": [
       20,
-      140,
-      300,
+      100,
+      600,
       22
      ],
      "text": "exportcode"
@@ -114,11 +69,11 @@
      "numoutlets": 2,
      "patching_rect": [
       20,
-      200,
-      300,
+      160,
+      600,
       22
      ],
-     "text": "gen~ @gen aether-drift @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname aether_drift"
+     "text": "gen~ @gen adm_panner @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname adm_panner"
     }
    },
    {
@@ -129,11 +84,11 @@
      "numoutlets": 2,
      "patching_rect": [
       20,
-      230,
-      300,
+      190,
+      600,
       22
      ],
-     "text": "gen~ @gen aether-particle @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname aether_particle"
+     "text": "gen~ @gen aether-drift @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname aether_drift"
     }
    },
    {
@@ -144,11 +99,11 @@
      "numoutlets": 2,
      "patching_rect": [
       20,
-      260,
-      300,
+      220,
+      600,
       22
      ],
-     "text": "gen~ @gen bernoulli-gate @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname bernoulli_gate"
+     "text": "gen~ @gen aether-particle @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname aether_particle"
     }
    },
    {
@@ -159,11 +114,11 @@
      "numoutlets": 2,
      "patching_rect": [
       20,
-      290,
-      300,
+      250,
+      600,
       22
      ],
-     "text": "gen~ @gen cswitch-tremolo @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname cswitch_tremolo"
+     "text": "gen~ @gen bernoulli-gate @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname bernoulli_gate"
     }
    },
    {
@@ -174,11 +129,11 @@
      "numoutlets": 2,
      "patching_rect": [
       20,
-      320,
-      300,
+      280,
+      600,
       22
      ],
-     "text": "gen~ @gen curvature-shaper @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname curvature_shaper"
+     "text": "gen~ @gen cswitch-tremolo @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname cswitch_tremolo"
     }
    },
    {
@@ -189,11 +144,11 @@
      "numoutlets": 2,
      "patching_rect": [
       20,
-      350,
-      300,
+      310,
+      600,
       22
      ],
-     "text": "gen~ @gen delays-delays @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname delays_delays"
+     "text": "gen~ @gen curvature-shaper @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname curvature_shaper"
     }
    },
    {
@@ -204,11 +159,11 @@
      "numoutlets": 2,
      "patching_rect": [
       20,
-      380,
-      300,
+      340,
+      600,
       22
      ],
-     "text": "gen~ @gen erbeverb-clone @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname erbeverb_clone"
+     "text": "gen~ @gen delays-delays @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname delays_delays"
     }
    },
    {
@@ -219,11 +174,11 @@
      "numoutlets": 2,
      "patching_rect": [
       20,
-      410,
-      300,
+      370,
+      600,
       22
      ],
-     "text": "gen~ @gen frost-machine @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname frost_machine"
+     "text": "gen~ @gen driller @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname driller"
     }
    },
    {
@@ -234,11 +189,11 @@
      "numoutlets": 2,
      "patching_rect": [
       20,
-      440,
-      300,
+      400,
+      600,
       22
      ],
-     "text": "gen~ @gen householder-fdn-16 @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname householder_fdn_16"
+     "text": "gen~ @gen erbeverb-clone @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname erbeverb_clone"
     }
    },
    {
@@ -249,11 +204,11 @@
      "numoutlets": 2,
      "patching_rect": [
       20,
-      470,
-      300,
+      430,
+      600,
       22
      ],
-     "text": "gen~ @gen hp_butterworth @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname hp_butterworth"
+     "text": "gen~ @gen fdn_multireverb @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname fdn_multireverb"
     }
    },
    {
@@ -264,11 +219,11 @@
      "numoutlets": 2,
      "patching_rect": [
       20,
-      500,
-      300,
+      460,
+      600,
       22
      ],
-     "text": "gen~ @gen lorenz-rossler-chaos @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname lorenz_rossler_chaos"
+     "text": "gen~ @gen fhickup @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname fhickup"
     }
    },
    {
@@ -279,11 +234,11 @@
      "numoutlets": 2,
      "patching_rect": [
       20,
-      530,
-      300,
+      490,
+      600,
       22
      ],
-     "text": "gen~ @gen lp_butterworth @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname lp_butterworth"
+     "text": "gen~ @gen filterbank-8 @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname filterbank_8"
     }
    },
    {
@@ -294,11 +249,11 @@
      "numoutlets": 2,
      "patching_rect": [
       20,
-      560,
-      300,
+      520,
+      600,
       22
      ],
-     "text": "gen~ @gen offset-spline-random @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname offset_spline_random"
+     "text": "gen~ @gen fm-supermod @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname fm_supermod"
     }
    },
    {
@@ -309,11 +264,11 @@
      "numoutlets": 2,
      "patching_rect": [
       20,
-      590,
-      300,
+      550,
+      600,
       22
      ],
-     "text": "gen~ @gen poisson-cloud @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname poisson_cloud"
+     "text": "gen~ @gen frost-machine @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname frost_machine"
     }
    },
    {
@@ -324,11 +279,11 @@
      "numoutlets": 2,
      "patching_rect": [
       20,
-      620,
-      300,
+      580,
+      600,
       22
      ],
-     "text": "gen~ @gen precision-svf-48db @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname precision_svf_48db"
+     "text": "gen~ @gen grainer @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname grainer"
     }
    },
    {
@@ -339,11 +294,11 @@
      "numoutlets": 2,
      "patching_rect": [
       20,
-      650,
-      300,
+      610,
+      600,
       22
      ],
-     "text": "gen~ @gen pulsar-synth @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname pulsar_synth"
+     "text": "gen~ @gen householder-fdn-16 @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname householder_fdn_16"
     }
    },
    {
@@ -354,11 +309,11 @@
      "numoutlets": 2,
      "patching_rect": [
       20,
-      680,
-      300,
+      640,
+      600,
       22
      ],
-     "text": "gen~ @gen sature-delay @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname sature_delay"
+     "text": "gen~ @gen hp_butterworth @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname hp_butterworth"
     }
    },
    {
@@ -369,11 +324,11 @@
      "numoutlets": 2,
      "patching_rect": [
       20,
-      710,
-      300,
+      670,
+      600,
       22
      ],
-     "text": "gen~ @gen tape-hysteresis @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname tape_hysteresis"
+     "text": "gen~ @gen lorenz-rossler-chaos @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname lorenz_rossler_chaos"
     }
    },
    {
@@ -384,11 +339,11 @@
      "numoutlets": 2,
      "patching_rect": [
       20,
-      740,
-      300,
+      700,
+      600,
       22
      ],
-     "text": "gen~ @gen ufo @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname ufo"
+     "text": "gen~ @gen lp_butterworth @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname lp_butterworth"
     }
    },
    {
@@ -399,11 +354,11 @@
      "numoutlets": 2,
      "patching_rect": [
       20,
-      770,
-      300,
+      730,
+      600,
       22
      ],
-     "text": "gen~ @gen ufo-core @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname ufo_core"
+     "text": "gen~ @gen modeldrive @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname modeldrive"
     }
    },
    {
@@ -414,11 +369,11 @@
      "numoutlets": 2,
      "patching_rect": [
       20,
-      800,
-      300,
+      760,
+      600,
       22
      ],
-     "text": "gen~ @gen ufo-core-simple @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname ufo_core_simple"
+     "text": "gen~ @gen multiband-drive @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname multiband_drive"
     }
    },
    {
@@ -429,11 +384,11 @@
      "numoutlets": 2,
      "patching_rect": [
       20,
-      830,
-      300,
+      790,
+      600,
       22
      ],
-     "text": "gen~ @gen volt-drama @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname volt_drama"
+     "text": "gen~ @gen offset-spline-random @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname offset_spline_random"
     }
    },
    {
@@ -444,11 +399,11 @@
      "numoutlets": 2,
      "patching_rect": [
       20,
-      860,
-      300,
+      820,
+      600,
       22
      ],
-     "text": "gen~ @gen volt-syphon @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname volt_syphon"
+     "text": "gen~ @gen poisson-cloud @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname poisson_cloud"
     }
    },
    {
@@ -459,11 +414,11 @@
      "numoutlets": 2,
      "patching_rect": [
       20,
-      890,
-      300,
+      850,
+      600,
       22
      ],
-     "text": "gen~ @gen waveguide-string @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname waveguide_string"
+     "text": "gen~ @gen precision-svf-48db @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname precision_svf_48db"
     }
    },
    {
@@ -474,8 +429,158 @@
      "numoutlets": 2,
      "patching_rect": [
       20,
-      920,
-      300,
+      880,
+      600,
+      22
+     ],
+     "text": "gen~ @gen pulsar-synth @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname pulsar_synth"
+    }
+   },
+   {
+    "box": {
+     "id": "g25",
+     "maxclass": "newobj",
+     "numinlets": 2,
+     "numoutlets": 2,
+     "patching_rect": [
+      20,
+      910,
+      600,
+      22
+     ],
+     "text": "gen~ @gen rings @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname rings"
+    }
+   },
+   {
+    "box": {
+     "id": "g26",
+     "maxclass": "newobj",
+     "numinlets": 2,
+     "numoutlets": 2,
+     "patching_rect": [
+      20,
+      940,
+      600,
+      22
+     ],
+     "text": "gen~ @gen sature-delay @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname sature_delay"
+    }
+   },
+   {
+    "box": {
+     "id": "g27",
+     "maxclass": "newobj",
+     "numinlets": 2,
+     "numoutlets": 2,
+     "patching_rect": [
+      20,
+      970,
+      600,
+      22
+     ],
+     "text": "gen~ @gen skipper @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname skipper"
+    }
+   },
+   {
+    "box": {
+     "id": "g28",
+     "maxclass": "newobj",
+     "numinlets": 2,
+     "numoutlets": 2,
+     "patching_rect": [
+      20,
+      1000,
+      600,
+      22
+     ],
+     "text": "gen~ @gen spatial-dbap @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname spatial_dbap"
+    }
+   },
+   {
+    "box": {
+     "id": "g29",
+     "maxclass": "newobj",
+     "numinlets": 2,
+     "numoutlets": 2,
+     "patching_rect": [
+      20,
+      1030,
+      600,
+      22
+     ],
+     "text": "gen~ @gen tape-hysteresis @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname tape_hysteresis"
+    }
+   },
+   {
+    "box": {
+     "id": "g30",
+     "maxclass": "newobj",
+     "numinlets": 2,
+     "numoutlets": 2,
+     "patching_rect": [
+      20,
+      1060,
+      600,
+      22
+     ],
+     "text": "gen~ @gen ufo @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname ufo"
+    }
+   },
+   {
+    "box": {
+     "id": "g31",
+     "maxclass": "newobj",
+     "numinlets": 2,
+     "numoutlets": 2,
+     "patching_rect": [
+      20,
+      1090,
+      600,
+      22
+     ],
+     "text": "gen~ @gen volt-drama @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname volt_drama"
+    }
+   },
+   {
+    "box": {
+     "id": "g32",
+     "maxclass": "newobj",
+     "numinlets": 2,
+     "numoutlets": 2,
+     "patching_rect": [
+      20,
+      1120,
+      600,
+      22
+     ],
+     "text": "gen~ @gen volt-syphon @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname volt_syphon"
+    }
+   },
+   {
+    "box": {
+     "id": "g33",
+     "maxclass": "newobj",
+     "numinlets": 2,
+     "numoutlets": 2,
+     "patching_rect": [
+      20,
+      1150,
+      600,
+      22
+     ],
+     "text": "gen~ @gen waveguide-string @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname waveguide_string"
+    }
+   },
+   {
+    "box": {
+     "id": "g34",
+     "maxclass": "newobj",
+     "numinlets": 2,
+     "numoutlets": 2,
+     "patching_rect": [
+      20,
+      1180,
+      600,
       22
      ],
      "text": "gen~ @gen zdf-diode-ladder @exportfolder \"/Users/letz/Developpements/RUST/faust-gen-patches/ref/export/\" @exportname zdf_diode_ladder"
@@ -502,43 +607,7 @@
       0
      ],
      "destination": [
-      "trig",
-      0
-     ]
-    }
-   },
-   {
-    "patchline": {
-     "source": [
-      "trig",
-      1
-     ],
-     "destination": [
       "msg",
-      0
-     ]
-    }
-   },
-   {
-    "patchline": {
-     "source": [
-      "trig",
-      0
-     ],
-     "destination": [
-      "q",
-      0
-     ]
-    }
-   },
-   {
-    "patchline": {
-     "source": [
-      "q",
-      0
-     ],
-     "destination": [
-      "quit",
       0
      ]
     }
@@ -839,6 +908,126 @@
      ],
      "destination": [
       "g24",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "msg",
+      0
+     ],
+     "destination": [
+      "g25",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "msg",
+      0
+     ],
+     "destination": [
+      "g26",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "msg",
+      0
+     ],
+     "destination": [
+      "g27",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "msg",
+      0
+     ],
+     "destination": [
+      "g28",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "msg",
+      0
+     ],
+     "destination": [
+      "g29",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "msg",
+      0
+     ],
+     "destination": [
+      "g30",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "msg",
+      0
+     ],
+     "destination": [
+      "g31",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "msg",
+      0
+     ],
+     "destination": [
+      "g32",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "msg",
+      0
+     ],
+     "destination": [
+      "g33",
+      0
+     ]
+    }
+   },
+   {
+    "patchline": {
+     "source": [
+      "msg",
+      0
+     ],
+     "destination": [
+      "g34",
       0
      ]
     }

@@ -1,0 +1,243 @@
+{
+    "patcher": {
+        "fileversion": 1,
+        "appversion": {
+            "major": 9,
+            "minor": 2,
+            "revision": 1,
+            "architecture": "x64",
+            "modernui": 1
+        },
+        "classnamespace": "dsp.gen",
+        "rect": [
+            100.0,
+            100.0,
+            800.0,
+            750.0
+        ],
+        "default_fontname": "Lato",
+        "boxes": [
+            {
+                "box": {
+                    "id": "obj-1",
+                    "maxclass": "newobj",
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        50.0,
+                        40.0,
+                        175.0,
+                        22.0
+                    ],
+                    "text": "in 1 @comment \"Audio Left In\""
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-2",
+                    "maxclass": "newobj",
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        240.0,
+                        40.0,
+                        185.0,
+                        22.0
+                    ],
+                    "text": "in 2 @comment \"Audio Right In\""
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-3",
+                    "maxclass": "newobj",
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        440.0,
+                        40.0,
+                        195.0,
+                        22.0
+                    ],
+                    "text": "in 3 @comment \"Strum Trigger\""
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-4",
+                    "maxclass": "codebox",
+                    "numinlets": 3,
+                    "numoutlets": 4,
+                    "outlettype": [
+                        "",
+                        "",
+                        "",
+                        ""
+                    ],
+                    "patching_rect": [
+                        50.0,
+                        90.0,
+                        680.0,
+                        560.0
+                    ],
+                    "code": "/**\n * ============================================================================\n * @file rings.gendsp / rings.maxpat\n * @title RINGS (Mutable Instruments Rings Modal Resonator in GenExpr)\n * @author Max Bruckert\n *\n * @description\n * High-definition 24-mode physical modeling modal resonator based on \u00c9milie\n * Gillet's iconic Mutable Instruments Rings architecture (MIT License).\n *\n * Simulates vibrating acoustic structures (strings, bars, chimes, plates,\n * membranes) excited by external audio or the built-in acoustic hammer/pluck exciter:\n *   - 24 Parallel Zero-Delay Feedback (ZDF) 2nd-order State Variable Filters.\n *   - 'structure' interpolates material geometry & inharmonicity:\n *       < 0.25 : Subharmonic / hollow wooden pipes\n *       = 0.25 : Ideal harmonic string series (1, 2, 3, 4, 5...)\n *       0.25..0.85 : Stiff metallic bar, xylophone, chime, bell\n *       0.85..1.00 : Circular plate, drum membrane, gong\n *   - 'brightness' controls excitation filter cutoff & high-mode energy damping.\n *   - 'damping' governs ringing decay duration (exponential decades).\n *   - 'position' controls the strike / pluck point comb cancellation pattern.\n *   - 'internal_exciter' shapes a physical 2ms acoustic hammer pulse & pluck friction.\n *   - 'stereo_spread' spatializes odd modes (Left) and even modes (Right).\n *\n * @inlets\n *   in1 : Audio Left Input (Excitation source)\n *   in2 : Audio Right Input (Excitation source)\n *   in3 : Strum Trigger (CV / Gate / Impulse signal)\n *\n * @outlets\n *   out1 : Processed Audio Left (Dry/Wet)\n *   out2 : Processed Audio Right (Dry/Wet)\n *   out3 : Excitation Monitor Out\n *   out4 : Strum Envelope CV Out (0..1)\n * ============================================================================\n */\n\n// 1. PARAMETERS\nParam pitch(48, min=12, max=108);           // Fundamental pitch in MIDI note (48 = C3 = 130.8 Hz)\nParam structure(0.25, min=0.0, max=1.0);    // Inharmonicity / Material structure\nParam brightness(0.6, min=0.0, max=1.0);    // HF damping & excitation filter cutoff\nParam damping(0.6, min=0.0, max=1.0);       // Ringing decay duration (exponential decades)\nParam position(0.25, min=0.0, max=1.0);     // Pluck / strike comb position\nParam stereo_spread(80, min=0, max=100);    // Stereo separation between odd & even modes\nParam internal_exciter(80, min=0, max=100); // Internal acoustic strike exciter level\nParam drive(20, min=0, max=100);            // Pre-filter analog saturation drive\nParam gain(0, min=-24, max=12);             // Master makeup gain in dB\nParam mix(100, min=0, max=100);             // Master Dry / Wet mix\nParam strum(0, min=0, max=1);               // Manual strum trigger (0 or 1)\n\n// 2. STATE MEMORIES & BUFFERS (24 Modes)\nData s1(24);\nData s2(24);\n\n// Excitation filter state\nHistory h_exc_lp(0.0);\n\n// Strum trigger edge detector & envelope\nHistory h_prev_in3(0.0);\nHistory h_prev_strum(0.0);\nHistory h_strike_ph(-1.0);\nHistory h_noise_env(0.0);\nHistory h_strum_env(0.0);\n\n// DC Blockers\nHistory h_dc_x_L(0.0), h_dc_y_L(0.0);\nHistory h_dc_x_R(0.0), h_dc_y_R(0.0);\n\n// 3. STRUM TRIGGER & ACOUSTIC HAMMER EXCITER\ntrig_in3 = (in3 > 0.1 && h_prev_in3 <= 0.1);\nh_prev_in3 = (in3 > 0.1);\n\ntrig_param = (strum > 0.0 && h_prev_strum <= 0.0);\nh_prev_strum = (strum > 0.0);\n\nstrum_hit = trig_in3 || trig_param;\n\nif (strum_hit) {\n    h_strike_ph = 0.0;\n    h_noise_env = 1.0;\n    h_strum_env = 1.0;\n} else {\n    h_strum_env = fixdenorm(h_strum_env * 0.995);\n}\n\n// 2ms raised-cosine acoustic strike pulse (transfers physical momentum to resonators)\nstrike_pulse = 0.0;\nif (h_strike_ph >= 0.0) {\n    strike_samps = max(16.0, samplerate * 0.002);\n    strike_pulse = 0.5 - 0.5 * cos(TWOPI * (h_strike_ph / strike_samps));\n    h_strike_ph += 1.0;\n    if (h_strike_ph >= strike_samps) {\n        h_strike_ph = -1.0;\n    }\n}\n\n// Pluck friction noise burst (decays in ~15 ms)\nh_noise_env = fixdenorm(h_noise_env * 0.985);\npluck_noise = noise() * h_noise_env * 0.4;\n\nexc_level = clamp(internal_exciter * 0.01, 0.0, 1.0);\nacoustic_exciter = (strike_pulse * 1.6 + pluck_noise) * exc_level;\n\n// Combine external audio with internal acoustic strike\naudio_in = (in1 + in2) * 0.5;\nin_drive = 1.0 + (drive * 0.01) * 2.0;\nraw_exc = tanh(audio_in * in_drive) + acoustic_exciter;\n\n// Excitation Lowpass Filter (cutoff modulated by brightness)\neff_br = clamp(brightness, 0.01, 1.0);\nexc_cutoff = clamp(40.0 * pow(450.0, eff_br), 40.0, samplerate * 0.45);\nexc_g = tan(PI * exc_cutoff / samplerate);\nexc_alpha = exc_g / (1.0 + exc_g);\nexc_sig = h_exc_lp + exc_alpha * (raw_exc - h_exc_lp);\nh_exc_lp = exc_sig;\n\n// 4. STRUCTURE / STIFFNESS MAPPING (Rings lut_stiffness)\nstiff = 0.0;\nif (structure < 0.25) {\n    stiff = -(0.25 - structure) * 0.25;\n} else if (structure < 0.3) {\n    stiff = 0.0;\n} else if (structure < 0.9) {\n    g_s = (structure - 0.3) / 0.6;\n    stiff = 0.01 * pow(10.0, g_s * 2.005) - 0.01;\n} else {\n    g_s = (structure - 0.9) / 0.1;\n    stiff = 1.5 - cos(g_s * g_s * PI) * 0.5;\n}\n\n// Fundamental frequency\nf0 = 440.0 * pow(2.0, (pitch - 69.0) / 12.0) / samplerate;\nf0 = clamp(f0, 20.0 / samplerate, 0.45);\n\n// Damping / Q calculation (Rings lut_4_decades)\neff_damp = clamp(damping, 0.0, 1.0);\nq_base = 500.0 * pow(10.0, eff_damp * 3.5);\n\n// High frequency loss across modes\nbr_atten = 1.0 - structure;\nbr_atten = pow(br_atten, 8);\nbr = eff_br * (1.0 - 0.2 * br_atten);\nq_loss = br * (2.0 - br) * 0.85 + 0.15;\nq_loss_damping_rate = structure * (2.0 - structure) * 0.1;\n\n// 5. 24-MODE MODAL RESONATOR BANK (Canonical ZDF SVF)\nsum_odd = 0.0;\nsum_even = 0.0;\n\nharmonic = f0;\nstretch = 1.0;\ncur_stiff = stiff;\ncur_q = q_base;\ncur_qloss = q_loss;\n\nfor (i = 0; i < 24; i += 1) {\n    pf = clamp(harmonic * stretch, 10.0 / samplerate, 0.48);\n    res = 1.0 + pf * cur_q;\n    \n    // ZDF SVF Tuning Gains\n    g_m = tan(PI * pf);\n    r_m = 1.0 / res;\n    h_m = 1.0 / (1.0 + r_m * g_m + g_m * g_m);\n    \n    // Comb amplitude according to position\n    pos_angle = 2.0 * PI * i * position;\n    amp = 0.5 + 0.5 * cos(pos_angle);\n    \n    // Read integrator states\n    s1_val = peek(s1, i);\n    s2_val = peek(s2, i);\n    \n    // Exact Trapezoidal ZDF SVF Bandpass Step\n    hp = (exc_sig - (r_m + g_m) * s1_val - s2_val) * h_m;\n    v1 = g_m * hp;\n    bp = v1 + s1_val;\n    s1_next = 2.0 * v1 + s1_val;\n    v2 = g_m * bp;\n    s2_next = 2.0 * v2 + s2_val;\n    \n    poke(s1, fixdenorm(s1_next), i);\n    poke(s2, fixdenorm(s2_next), i);\n    \n    mode_out = bp * amp;\n    \n    if (i % 2 == 0) {\n        sum_odd += mode_out;\n    } else {\n        sum_even += mode_out;\n    }\n    \n    // Update stretch, harmonic and Q for next mode\n    stretch += cur_stiff;\n    if (cur_stiff < 0.0) {\n        cur_stiff *= 0.93;\n    } else {\n        cur_stiff *= 0.98;\n    }\n    cur_qloss += q_loss_damping_rate * (1.0 - cur_qloss);\n    harmonic += f0;\n    cur_q *= cur_qloss;\n}\n\n// 6. STEREO SPATIALIZATION (Odd -> Left, Even -> Right)\nsp = clamp(stereo_spread * 0.01, 0.0, 1.0);\npan_L = sum_odd * (1.0 + sp * 0.5) + sum_even * (1.0 - sp * 0.5);\npan_R = sum_even * (1.0 + sp * 0.5) + sum_odd * (1.0 - sp * 0.5);\n\n// 7. DC BLOCKERS\ndc_L = pan_L - h_dc_x_L + 0.995 * h_dc_y_L;\nh_dc_x_L = pan_L; h_dc_y_L = dc_L;\n\ndc_R = pan_R - h_dc_x_R + 0.995 * h_dc_y_R;\nh_dc_x_R = pan_R; h_dc_y_R = dc_R;\n\n// 8. MASTER SOFT LIMITER & MAKEUP GAIN\nmake_up = dbtoa(gain);\nlim_L = tanh(dc_L * 0.5) * 1.8 * make_up;\nlim_R = tanh(dc_R * 0.5) * 1.8 * make_up;\n\n// 9. MASTER DRY / WET & OUTPUTS\neff_mix = clamp(mix * 0.01, 0.0, 1.0);\nout1 = in1 * (1.0 - eff_mix) + lim_L * eff_mix;\nout2 = in2 * (1.0 - eff_mix) + lim_R * eff_mix;\nout3 = exc_sig;\nout4 = h_strum_env;\n"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-5",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        50.0,
+                        680.0,
+                        210.0,
+                        22.0
+                    ],
+                    "text": "out 1 @comment \"Processed Left Out\""
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-6",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        270.0,
+                        680.0,
+                        220.0,
+                        22.0
+                    ],
+                    "text": "out 2 @comment \"Processed Right Out\""
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-7",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        500.0,
+                        680.0,
+                        150.0,
+                        22.0
+                    ],
+                    "text": "out 3 @comment \"Excitation Out\""
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-8",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        660.0,
+                        680.0,
+                        150.0,
+                        22.0
+                    ],
+                    "text": "out 4 @comment \"Strum Env Out\""
+                }
+            }
+        ],
+        "lines": [
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-4",
+                        0
+                    ],
+                    "source": [
+                        "obj-1",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-4",
+                        1
+                    ],
+                    "source": [
+                        "obj-2",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-4",
+                        2
+                    ],
+                    "source": [
+                        "obj-3",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-5",
+                        0
+                    ],
+                    "source": [
+                        "obj-4",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-6",
+                        0
+                    ],
+                    "source": [
+                        "obj-4",
+                        1
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-7",
+                        0
+                    ],
+                    "source": [
+                        "obj-4",
+                        2
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-8",
+                        0
+                    ],
+                    "source": [
+                        "obj-4",
+                        3
+                    ]
+                }
+            }
+        ]
+    }
+}

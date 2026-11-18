@@ -68,29 +68,30 @@ static const int GENLIB_LOOPCOUNT_BAIL = 100000;
 // The State struct contains all the state and procedures for the gendsp kernel
 typedef struct State {
 	CommonState __commonstate;
-	Delta __m_delta_21;
-	Delta __m_delta_15;
-	Delta __m_delta_19;
-	Delta __m_delta_20;
+	Delta __m_delta_28;
+	Delta __m_delta_26;
+	Delta __m_delta_27;
 	int __exception;
 	int vectorsize;
-	PlusEquals __m_pluseq_16;
-	Sah __m_sah_18;
-	t_sample m_expc_3;
-	t_sample m_stepcounter_13;
-	t_sample m_increment_14;
-	t_sample samplerate;
-	t_sample m_dirflag_12;
 	t_sample m_exp1_2;
-	t_sample m_last_11;
+	t_sample m_h_sh_val_14;
+	t_sample m_h_prev_ph_13;
+	t_sample m_h_rs_last_15;
+	t_sample m_h_rs_dir_16;
+	t_sample m_h_rs_step_17;
+	t_sample m_h_prev_trig_12;
+	t_sample m_h_rs_inc_18;
 	t_sample m_lfosel_1;
-	t_sample m_oneshot_5;
-	t_sample m_shotnumbers_4;
+	t_sample m_h_phase_acc_11;
+	t_sample samplerate;
+	t_sample m_exp2_4;
+	t_sample m_expc_3;
 	t_sample m_unipolar_10;
-	t_sample m_gain_6;
-	t_sample m_invert_8;
-	t_sample m_offset_7;
-	t_sample m_exp2_9;
+	t_sample m_oneshot_5;
+	t_sample m_gain_7;
+	t_sample m_shotnumbers_6;
+	t_sample m_offset_8;
+	t_sample m_invert_9;
 	// re-initialize all member variables;
 	inline void reset(t_param __sr, int __vs) {
 		__exception = 0;
@@ -99,23 +100,24 @@ typedef struct State {
 		m_lfosel_1 = ((int)0);
 		m_exp1_2 = ((int)1);
 		m_expc_3 = ((int)1);
-		m_shotnumbers_4 = ((int)1);
+		m_exp2_4 = ((int)1);
 		m_oneshot_5 = ((int)0);
-		m_gain_6 = ((int)1);
-		m_offset_7 = ((int)0);
-		m_invert_8 = ((int)0);
-		m_exp2_9 = ((int)1);
+		m_shotnumbers_6 = ((int)1);
+		m_gain_7 = ((int)1);
+		m_offset_8 = ((int)0);
+		m_invert_9 = ((int)0);
 		m_unipolar_10 = ((int)0);
-		m_last_11 = ((int)0);
-		m_dirflag_12 = ((int)0);
-		m_stepcounter_13 = ((int)0);
-		m_increment_14 = ((int)0);
-		__m_delta_15.reset(0);
-		__m_pluseq_16.reset(0);
-		__m_sah_18.reset(0);
-		__m_delta_19.reset(0);
-		__m_delta_20.reset(0);
-		__m_delta_21.reset(0);
+		m_h_phase_acc_11 = ((int)0);
+		m_h_prev_trig_12 = ((int)0);
+		m_h_prev_ph_13 = ((int)0);
+		m_h_sh_val_14 = ((int)0);
+		m_h_rs_last_15 = ((int)0);
+		m_h_rs_dir_16 = ((int)0);
+		m_h_rs_step_17 = ((int)0);
+		m_h_rs_inc_18 = ((int)0);
+		__m_delta_26.reset(0);
+		__m_delta_27.reset(0);
+		__m_delta_28.reset(0);
 		genlib_reset_complete(this);
 		
 	};
@@ -133,108 +135,112 @@ typedef struct State {
 			return __exception;
 			
 		};
-		t_sample tmp_add_388 = (m_unipolar_10 + ((int)1));
-		t_sample tmp_add_390 = (m_invert_8 + ((int)1));
-		t_sample tmp_add_391 = (m_oneshot_5 + ((int)1));
-		t_sample tmp_div_387 = (m_offset_7 * ((t_sample)0.01));
-		t_sample tmp_rsub_385 = (((int)0) - tmp_div_387);
-		t_sample choice_17 = int(tmp_add_391);
-		t_sample tmp_add_415 = (m_lfosel_1 + ((int)1));
-		t_sample choice_22 = int(tmp_add_415);
-		int min_23 = (-1);
-		t_sample choice_24 = int(tmp_add_390);
-		t_sample choice_25 = int(tmp_add_388);
+		int cond_19 = (m_oneshot_5 > ((t_sample)0.5));
+		int cond_29 = (m_lfosel_1 < ((t_sample)0.5));
+		int cond_30 = (m_lfosel_1 < ((t_sample)1.5));
+		int cond_31 = (m_lfosel_1 < ((t_sample)2.5));
+		int cond_32 = (m_lfosel_1 < ((t_sample)3.5));
+		int cond_33 = (m_lfosel_1 < ((t_sample)4.5));
+		int cond_39 = (m_invert_9 > ((t_sample)0.5));
+		int cond_41 = (m_unipolar_10 > ((t_sample)0.5));
 		// the main sample loop;
 		while ((__n--)) {
 			const t_sample in1 = (*(__in1++));
 			const t_sample in2 = (*(__in2++));
-			t_sample tmp_clamp_437 = ((in1 <= ((t_sample)0.0001)) ? ((t_sample)0.0001) : ((in1 >= ((int)1000)) ? ((int)1000) : in1));
-			t_sample tmp_div_436 = safediv(tmp_clamp_437, samplerate);
-			int tmp_gt_402 = (in2 > ((t_sample)0.5));
-			int tmp_delta_401 = __m_delta_15(tmp_gt_402);
-			int tmp_clamp_400 = ((tmp_delta_401 <= ((int)0)) ? ((int)0) : ((tmp_delta_401 >= ((int)1)) ? ((int)1) : tmp_delta_401));
-			t_sample tmp_plusequals_435 = __m_pluseq_16.post(tmp_div_436, tmp_clamp_400, 0);
-			t_sample tmp_clamp_429 = ((tmp_plusequals_435 <= ((int)0)) ? ((int)0) : ((tmp_plusequals_435 >= m_shotnumbers_4) ? m_shotnumbers_4 : tmp_plusequals_435));
-			t_sample tmp_rsub_386 = (((int)0) - tmp_clamp_429);
-			t_sample tmp_selector_430 = ((choice_17 >= 2) ? tmp_rsub_386 : ((choice_17 >= 1) ? tmp_plusequals_435 : 0));
-			t_sample tmp_wrap_432 = wrap(tmp_selector_430, ((int)0), ((int)1));
-			t_sample tmp_mul_431 = (tmp_wrap_432 * m_expc_3);
-			t_sample tmp_pow_433 = safepow(tmp_mul_431, m_exp1_2);
-			t_sample tmp_wrap_434 = wrap(tmp_pow_433, ((int)0), ((int)1));
-			t_sample tmp_expr_422 = safediv((((int)1) * samplerate), ((tmp_clamp_437 < ((t_sample)0.0001)) ? ((t_sample)0.0001) : tmp_clamp_437));
-			t_sample tmp_noise_408 = noise();
-			t_sample tmp_wrap_417 = wrap(tmp_wrap_434, ((int)0), ((int)1));
-			t_sample tmp_expr_425 = ((tmp_wrap_417 * ((int)2)) - ((int)1));
-			t_sample tmp_triangle_419 = triangle(tmp_wrap_434, ((t_sample)0.5));
-			t_sample tmp_expr_426 = ((tmp_triangle_419 * ((int)2)) - ((int)1));
-			t_sample tmp_wrap_409 = wrap(tmp_wrap_434, ((int)0), ((int)1));
-			t_sample tmp_sah_410 = __m_sah_18(tmp_noise_408, tmp_wrap_409, ((t_sample)0.5));
-			t_sample insig = tmp_sah_410;
-			t_sample rampup = ((tmp_expr_422 < ((int)1)) ? ((int)1) : tmp_expr_422);
-			t_sample rampdown = ((tmp_expr_422 < ((int)1)) ? ((int)1) : tmp_expr_422);
-			t_sample outsig = m_last_11;
-			if ((((__m_delta_19(insig) == ((int)0)) && (__m_delta_20(rampup) == ((int)0))) && (__m_delta_21(rampdown) == ((int)0)))) {
-				if ((m_dirflag_12 > ((int)0))) {
-					if ((m_stepcounter_13 < rampup)) {
-						outsig = (outsig + m_increment_14);
-						m_stepcounter_13 = (m_stepcounter_13 + ((int)1));
+			t_sample fc = ((in1 <= ((t_sample)0.0001)) ? ((t_sample)0.0001) : ((in1 >= ((int)1000)) ? ((int)1000) : in1));
+			int trig_high = (in2 > ((t_sample)0.5));
+			int is_trig = (trig_high && (!m_h_prev_trig_12));
+			m_h_prev_trig_12 = trig_high;
+			if (is_trig) {
+				m_h_phase_acc_11 = ((int)0);
+				
+			} else {
+				m_h_phase_acc_11 = (m_h_phase_acc_11 + safediv(fc, samplerate));
+				
+			};
+			t_sample iftrue_20 = (((int)0) - ((m_h_phase_acc_11 <= ((int)0)) ? ((int)0) : ((m_h_phase_acc_11 >= m_shotnumbers_6) ? m_shotnumbers_6 : m_h_phase_acc_11)));
+			t_sample raw_acc = (cond_19 ? iftrue_20 : m_h_phase_acc_11);
+			t_sample w_base = wrap(raw_acc, ((int)0), ((int)1));
+			t_sample ph_scaled = (w_base * m_expc_3);
+			t_sample ph_curv = safepow(ph_scaled, m_exp1_2);
+			t_sample ph = wrap(ph_curv, ((int)0), ((int)1));
+			t_sample cos_out = cos((ph * ((t_sample)6.2831853071795862)));
+			int cond_21 = (ph < ((t_sample)0.5));
+			t_sample iftrue_22 = ((ph * ((int)4)) - ((int)1));
+			t_sample iffalse_23 = (((int)3) - (ph * ((int)4)));
+			t_sample tri_out = (cond_21 ? iftrue_22 : iffalse_23);
+			t_sample saw_out = ((ph * ((int)2)) - ((int)1));
+			int cond_24 = (ph < ((t_sample)0.5));
+			int sq_out = (cond_24 ? ((int)1) : ((int)-1));
+			int is_sh_cross = ((ph >= ((t_sample)0.5)) && (m_h_prev_ph_13 < ((t_sample)0.5)));
+			m_h_prev_ph_13 = ph;
+			if (is_sh_cross) {
+				m_h_sh_val_14 = noise();
+				
+			};
+			t_sample sh_out = m_h_sh_val_14;
+			t_sample maxb_25 = safediv(samplerate, ((fc < ((t_sample)0.0001)) ? ((t_sample)0.0001) : fc));
+			t_sample ramp_samps = ((((int)1) < maxb_25) ? maxb_25 : ((int)1));
+			t_sample rampup = ramp_samps;
+			t_sample rampdown = ramp_samps;
+			t_sample rs_out = m_h_rs_last_15;
+			if ((((__m_delta_26(sh_out) == ((int)0)) && (__m_delta_27(rampup) == ((int)0))) && (__m_delta_28(rampdown) == ((int)0)))) {
+				if ((m_h_rs_dir_16 > ((int)0))) {
+					if ((m_h_rs_step_17 < rampup)) {
+						rs_out = (rs_out + m_h_rs_inc_18);
+						m_h_rs_step_17 = (m_h_rs_step_17 + ((int)1));
 						
 					} else {
-						outsig = insig;
+						rs_out = sh_out;
 						
 					};
 					
 				} else {
-					if ((m_stepcounter_13 < rampdown)) {
-						outsig = (outsig + m_increment_14);
-						m_stepcounter_13 = (m_stepcounter_13 + ((int)1));
+					if ((m_h_rs_step_17 < rampdown)) {
+						rs_out = (rs_out + m_h_rs_inc_18);
+						m_h_rs_step_17 = (m_h_rs_step_17 + ((int)1));
 						
 					} else {
-						outsig = insig;
+						rs_out = sh_out;
 						
 					};
 					
 				};
 				
 			} else {
-				t_sample deltavar = (insig - outsig);
+				t_sample deltavar = (sh_out - rs_out);
 				if ((deltavar > ((int)0))) {
-					m_increment_14 = safediv(deltavar, rampup);
-					outsig = (outsig + m_increment_14);
-					m_stepcounter_13 = ((int)1);
-					m_dirflag_12 = ((int)1);
+					m_h_rs_inc_18 = safediv(deltavar, rampup);
+					rs_out = (rs_out + m_h_rs_inc_18);
+					m_h_rs_step_17 = ((int)1);
+					m_h_rs_dir_16 = ((int)1);
 					
 				} else {
-					m_increment_14 = safediv(deltavar, rampdown);
-					outsig = (outsig + m_increment_14);
-					m_stepcounter_13 = ((int)1);
-					m_dirflag_12 = ((int)-1);
+					m_h_rs_inc_18 = safediv(deltavar, rampdown);
+					rs_out = (rs_out + m_h_rs_inc_18);
+					m_h_rs_step_17 = ((int)1);
+					m_h_rs_dir_16 = ((int)-1);
 					
 				};
 				
 			};
-			m_last_11 = outsig;
-			t_sample tmp_expr_423 = outsig;
-			t_sample tmp_wrap_413 = wrap(tmp_wrap_434, ((int)0), ((int)1));
-			int tmp_lt_412 = (tmp_wrap_413 < ((t_sample)0.5));
-			int tmp_expr_424 = ((tmp_lt_412 * ((int)2)) - ((int)1));
-			t_sample tmp_mul_420 = (tmp_wrap_434 * ((t_sample)6.2831853071795862));
-			t_sample tmp_cos_421 = cos(tmp_mul_420);
-			t_sample tmp_selector_416 = ((choice_22 >= 6) ? tmp_expr_423 : ((choice_22 >= 5) ? tmp_sah_410 : ((choice_22 >= 4) ? tmp_expr_424 : ((choice_22 >= 3) ? tmp_expr_425 : ((choice_22 >= 2) ? tmp_expr_426 : ((choice_22 >= 1) ? tmp_cos_421 : 0))))));
-			t_sample tmp_gen_427 = tmp_selector_416;
-			t_sample tmp_mul_395 = (tmp_gen_427 * ((t_sample)0.5));
-			t_sample tmp_add_394 = (tmp_mul_395 + ((t_sample)0.5));
-			t_sample tmp_pow_393 = safepow(tmp_add_394, m_exp2_9);
-			t_sample tmp_expr_438 = ((tmp_pow_393 * ((int)2)) - ((int)1));
-			t_sample tmp_mul_405 = (tmp_expr_438 * m_gain_6);
-			t_sample tmp_add_404 = (tmp_mul_405 + tmp_rsub_385);
-			t_sample tmp_clamp_403 = ((tmp_add_404 <= min_23) ? min_23 : ((tmp_add_404 >= ((int)1)) ? ((int)1) : tmp_add_404));
-			t_sample tmp_rsub_399 = (((int)0) - tmp_clamp_403);
-			t_sample tmp_selector_398 = ((choice_24 >= 2) ? tmp_rsub_399 : ((choice_24 >= 1) ? tmp_clamp_403 : 0));
-			t_sample tmp_mul_397 = (tmp_selector_398 * ((t_sample)0.5));
-			t_sample tmp_add_396 = (tmp_mul_397 + ((t_sample)0.5));
-			t_sample tmp_selector_389 = ((choice_25 >= 2) ? tmp_add_396 : ((choice_25 >= 1) ? tmp_selector_398 : 0));
-			t_sample out1 = tmp_selector_389;
+			m_h_rs_last_15 = rs_out;
+			t_sample iffalse_34 = (cond_33 ? sh_out : rs_out);
+			t_sample iffalse_35 = (cond_32 ? sq_out : iffalse_34);
+			t_sample iffalse_36 = (cond_31 ? saw_out : iffalse_35);
+			t_sample iffalse_37 = (cond_30 ? tri_out : iffalse_36);
+			t_sample raw_lfo = (cond_29 ? cos_out : iffalse_37);
+			t_sample v_38 = ((raw_lfo * ((t_sample)0.5)) + ((t_sample)0.5));
+			t_sample u_norm = ((v_38 <= ((int)0)) ? ((int)0) : ((v_38 >= ((int)1)) ? ((int)1) : v_38));
+			t_sample u_curv = safepow(u_norm, m_exp2_4);
+			t_sample b_curv = ((u_curv * ((int)2)) - ((int)1));
+			t_sample b_scaled = ((b_curv * m_gain_7) - (m_offset_8 * ((t_sample)0.01)));
+			t_sample b_clipped = ((b_scaled <= ((int)-1)) ? ((int)-1) : ((b_scaled >= ((int)1)) ? ((int)1) : b_scaled));
+			t_sample iftrue_40 = (((int)0) - b_clipped);
+			t_sample b_inv = (cond_39 ? iftrue_40 : b_clipped);
+			t_sample iftrue_42 = ((b_inv * ((t_sample)0.5)) + ((t_sample)0.5));
+			t_sample tmp_expr_558 = (cond_41 ? iftrue_42 : b_inv);
+			t_sample out1 = tmp_expr_558;
 			// assign results to output buffer;
 			(*(__out1++)) = out1;
 			
@@ -243,31 +249,31 @@ typedef struct State {
 		
 	};
 	inline void set_lfosel(t_param _value) {
-		m_lfosel_1 = (_value < 0 ? 0 : (_value > 1 ? 1 : _value));
+		m_lfosel_1 = (_value < 0 ? 0 : (_value > 5 ? 5 : _value));
 	};
 	inline void set_exp1(t_param _value) {
-		m_exp1_2 = (_value < 0 ? 0 : (_value > 1 ? 1 : _value));
+		m_exp1_2 = (_value < 0.050000000000000003 ? 0.050000000000000003 : (_value > 20 ? 20 : _value));
 	};
 	inline void set_expc(t_param _value) {
-		m_expc_3 = (_value < 0 ? 0 : (_value > 1 ? 1 : _value));
+		m_expc_3 = (_value < 0 ? 0 : (_value > 8 ? 8 : _value));
 	};
-	inline void set_shotnumbers(t_param _value) {
-		m_shotnumbers_4 = (_value < 0 ? 0 : (_value > 1 ? 1 : _value));
+	inline void set_exp2(t_param _value) {
+		m_exp2_4 = (_value < 0.050000000000000003 ? 0.050000000000000003 : (_value > 20 ? 20 : _value));
 	};
 	inline void set_oneshot(t_param _value) {
 		m_oneshot_5 = (_value < 0 ? 0 : (_value > 1 ? 1 : _value));
 	};
+	inline void set_shotnumbers(t_param _value) {
+		m_shotnumbers_6 = (_value < 0 ? 0 : (_value > 128 ? 128 : _value));
+	};
 	inline void set_gain(t_param _value) {
-		m_gain_6 = (_value < 0 ? 0 : (_value > 1 ? 1 : _value));
+		m_gain_7 = (_value < 0 ? 0 : (_value > 10 ? 10 : _value));
 	};
 	inline void set_offset(t_param _value) {
-		m_offset_7 = (_value < 0 ? 0 : (_value > 1 ? 1 : _value));
+		m_offset_8 = (_value < -100 ? -100 : (_value > 100 ? 100 : _value));
 	};
 	inline void set_invert(t_param _value) {
-		m_invert_8 = (_value < 0 ? 0 : (_value > 1 ? 1 : _value));
-	};
-	inline void set_exp2(t_param _value) {
-		m_exp2_9 = (_value < 0 ? 0 : (_value > 1 ? 1 : _value));
+		m_invert_9 = (_value < 0 ? 0 : (_value > 1 ? 1 : _value));
 	};
 	inline void set_unipolar(t_param _value) {
 		m_unipolar_10 = (_value < 0 ? 0 : (_value > 1 ? 1 : _value));
@@ -291,8 +297,8 @@ int num_params() { return 10; }
 
 /// Assistive lables for the signal inputs and outputs
 
-const char *gen_kernel_innames[] = { "frequency in Hz (0.0001.. 1000)", "Trigg IN (audio) : reset or restart cycle in mode one shoot" };
-const char *gen_kernel_outnames[] = { "bipolar" };
+const char *gen_kernel_innames[] = { "frequency in Hz (0.0001..1000)", "Trigger / Reset (audio)" };
+const char *gen_kernel_outnames[] = { "LFO Output" };
 
 /// Invoke the signal process of a State object
 
@@ -334,14 +340,14 @@ void getparameter(CommonState *cself, long index, t_param *value) {
 	State *self = (State *)cself;
 	switch (index) {
 		case 0: *value = self->m_exp1_2; break;
-		case 1: *value = self->m_exp2_9; break;
+		case 1: *value = self->m_exp2_4; break;
 		case 2: *value = self->m_expc_3; break;
-		case 3: *value = self->m_gain_6; break;
-		case 4: *value = self->m_invert_8; break;
+		case 3: *value = self->m_gain_7; break;
+		case 4: *value = self->m_invert_9; break;
 		case 5: *value = self->m_lfosel_1; break;
-		case 6: *value = self->m_offset_7; break;
+		case 6: *value = self->m_offset_8; break;
 		case 7: *value = self->m_oneshot_5; break;
-		case 8: *value = self->m_shotnumbers_4; break;
+		case 8: *value = self->m_shotnumbers_6; break;
 		case 9: *value = self->m_unipolar_10; break;
 		
 		default: break;
@@ -435,22 +441,22 @@ void *create(t_param sr, long vs) {
 	pi->inputmin = 0;
 	pi->inputmax = 1;
 	pi->hasminmax = true;
-	pi->outputmin = 0;
-	pi->outputmax = 1;
+	pi->outputmin = 0.050000000000000003;
+	pi->outputmax = 20;
 	pi->exp = 0;
 	pi->units = "";		// no units defined
-	// initialize parameter 1 ("m_exp2_9")
+	// initialize parameter 1 ("m_exp2_4")
 	pi = self->__commonstate.params + 1;
 	pi->name = "exp2";
 	pi->paramtype = GENLIB_PARAMTYPE_FLOAT;
-	pi->defaultvalue = self->m_exp2_9;
+	pi->defaultvalue = self->m_exp2_4;
 	pi->defaultref = 0;
 	pi->hasinputminmax = false;
 	pi->inputmin = 0;
 	pi->inputmax = 1;
 	pi->hasminmax = true;
-	pi->outputmin = 0;
-	pi->outputmax = 1;
+	pi->outputmin = 0.050000000000000003;
+	pi->outputmax = 20;
 	pi->exp = 0;
 	pi->units = "";		// no units defined
 	// initialize parameter 2 ("m_expc_3")
@@ -464,28 +470,28 @@ void *create(t_param sr, long vs) {
 	pi->inputmax = 1;
 	pi->hasminmax = true;
 	pi->outputmin = 0;
-	pi->outputmax = 1;
+	pi->outputmax = 8;
 	pi->exp = 0;
 	pi->units = "";		// no units defined
-	// initialize parameter 3 ("m_gain_6")
+	// initialize parameter 3 ("m_gain_7")
 	pi = self->__commonstate.params + 3;
 	pi->name = "gain";
 	pi->paramtype = GENLIB_PARAMTYPE_FLOAT;
-	pi->defaultvalue = self->m_gain_6;
+	pi->defaultvalue = self->m_gain_7;
 	pi->defaultref = 0;
 	pi->hasinputminmax = false;
 	pi->inputmin = 0;
 	pi->inputmax = 1;
 	pi->hasminmax = true;
 	pi->outputmin = 0;
-	pi->outputmax = 1;
+	pi->outputmax = 10;
 	pi->exp = 0;
 	pi->units = "";		// no units defined
-	// initialize parameter 4 ("m_invert_8")
+	// initialize parameter 4 ("m_invert_9")
 	pi = self->__commonstate.params + 4;
 	pi->name = "invert";
 	pi->paramtype = GENLIB_PARAMTYPE_FLOAT;
-	pi->defaultvalue = self->m_invert_8;
+	pi->defaultvalue = self->m_invert_9;
 	pi->defaultref = 0;
 	pi->hasinputminmax = false;
 	pi->inputmin = 0;
@@ -506,21 +512,21 @@ void *create(t_param sr, long vs) {
 	pi->inputmax = 1;
 	pi->hasminmax = true;
 	pi->outputmin = 0;
-	pi->outputmax = 1;
+	pi->outputmax = 5;
 	pi->exp = 0;
 	pi->units = "";		// no units defined
-	// initialize parameter 6 ("m_offset_7")
+	// initialize parameter 6 ("m_offset_8")
 	pi = self->__commonstate.params + 6;
 	pi->name = "offset";
 	pi->paramtype = GENLIB_PARAMTYPE_FLOAT;
-	pi->defaultvalue = self->m_offset_7;
+	pi->defaultvalue = self->m_offset_8;
 	pi->defaultref = 0;
 	pi->hasinputminmax = false;
 	pi->inputmin = 0;
 	pi->inputmax = 1;
 	pi->hasminmax = true;
-	pi->outputmin = 0;
-	pi->outputmax = 1;
+	pi->outputmin = -100;
+	pi->outputmax = 100;
 	pi->exp = 0;
 	pi->units = "";		// no units defined
 	// initialize parameter 7 ("m_oneshot_5")
@@ -537,18 +543,18 @@ void *create(t_param sr, long vs) {
 	pi->outputmax = 1;
 	pi->exp = 0;
 	pi->units = "";		// no units defined
-	// initialize parameter 8 ("m_shotnumbers_4")
+	// initialize parameter 8 ("m_shotnumbers_6")
 	pi = self->__commonstate.params + 8;
 	pi->name = "shotnumbers";
 	pi->paramtype = GENLIB_PARAMTYPE_FLOAT;
-	pi->defaultvalue = self->m_shotnumbers_4;
+	pi->defaultvalue = self->m_shotnumbers_6;
 	pi->defaultref = 0;
 	pi->hasinputminmax = false;
 	pi->inputmin = 0;
 	pi->inputmax = 1;
 	pi->hasminmax = true;
 	pi->outputmin = 0;
-	pi->outputmax = 1;
+	pi->outputmax = 128;
 	pi->exp = 0;
 	pi->units = "";		// no units defined
 	// initialize parameter 9 ("m_unipolar_10")

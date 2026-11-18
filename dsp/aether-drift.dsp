@@ -14,10 +14,9 @@
 // del_time (0..100 % of 2000 ms), del_fb, del_damp, del_to_rev (0..100 %),
 // rev_vol (-60..6 dB), rev_size (0..99 %), rev_diff, rev_damp, rev_mod (0..100 %).
 //
-// Quirk kept from gen~: the modulated tank reads d2.read(4217 + lfo1) and
-// d4.read(4845 + lfo2) on Delays whose maximum is exactly 4217 and 4845, so
-// gen clamps every positive LFO excursion: the modulation only shortens the
-// delays (half-wave).
+// The tank's Delays d1..d4 have maxima 5000, 6000, 4000, 6000: the modulated
+// reads d2.read(4217 + lfo1) and d4.read(4845 + lfo2) (|lfo| <= 600) stay
+// within them, and the modulation swings both ways.
 
 declare name "aether-drift";
 declare author "Max Bruckert (gen~), Faust port";
@@ -85,8 +84,8 @@ with {
     with {
         d1r = y1d @ 4452;           // = d2 written this frame
         d3r = y3d @ 3162;           // = d4 written this frame
-        s_d2 = g.rd_linear(4217, 4217, 1, d1r, 4217 + lfo1);
-        s_d4 = g.rd_linear(4845, 4845, 1, d3r, 4845 + lfo2);
+        s_d2 = g.rd_linear(6000, 6000, 1, d1r, 4217 + lfo1);
+        s_d4 = g.rd_linear(6000, 6000, 1, d3r, 4845 + lfo2);
         h_rev_lp1 = lp1(damp, s_d2);
         h_rev_lp2 = lp1(damp, s_d4);
         fbL = diffused_in + h_rev_lp2 * dec;

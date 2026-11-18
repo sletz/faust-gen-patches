@@ -9,7 +9,12 @@
             "modernui": 1
         },
         "classnamespace": "dsp.gen",
-        "rect": [ 405.0, 102.0, 832.0, 929.0 ],
+        "rect": [
+            405.0,
+            102.0,
+            832.0,
+            929.0
+        ],
         "boxes": [
             {
                 "box": {
@@ -17,7 +22,12 @@
                     "maxclass": "newobj",
                     "numinlets": 1,
                     "numoutlets": 0,
-                    "patching_rect": [ 741.0, 858.0, 35.0, 22.0 ],
+                    "patching_rect": [
+                        741.0,
+                        858.0,
+                        35.0,
+                        22.0
+                    ],
                     "text": "out 2"
                 }
             },
@@ -27,8 +37,15 @@
                     "maxclass": "newobj",
                     "numinlets": 0,
                     "numoutlets": 1,
-                    "outlettype": [ "" ],
-                    "patching_rect": [ 28.0, 24.0, 28.0, 22.0 ],
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        28.0,
+                        24.0,
+                        28.0,
+                        22.0
+                    ],
                     "text": "in 1"
                 }
             },
@@ -38,14 +55,21 @@
                     "maxclass": "newobj",
                     "numinlets": 0,
                     "numoutlets": 1,
-                    "outlettype": [ "" ],
-                    "patching_rect": [ 741.0, 24.0, 28.0, 22.0 ],
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        741.0,
+                        24.0,
+                        28.0,
+                        22.0
+                    ],
                     "text": "in 2"
                 }
             },
             {
                 "box": {
-                    "code": "/**\n * ============================================================================\n * @file erbeverb-clone.gendsp / erbverb-clone.maxpat\n * @title ERBEVERB CLONE (Tom Erbe Inspired 4x4 Unitary FDN Reverb)\n * @author Max Bruckert (assisted by Gemini)\n *\n * @description\n * Loose gen~ implementation of the Make Noise / Tom Erbe Erbe-Verb algorithm.\n * Employs 4 mutually prime delay lines (Erbe prime sets), a normalized unitary\n * Hadamard feedback matrix, soft tanh saturation, sine-wave chorus modulation,\n * predelay, and high-absorption / spectral-tilt tone control.\n *\n * @inlets\n *   in1 : Audio Left Input\n *   in2 : Audio Right Input\n *\n * @outlets\n *   out1 : Wet Audio Left\n *   out2 : Wet Audio Right\n *\n * @parameters\n *   size     (0.5..100 %, def: 50) : Room physical scale factor\n *   decay    (0..110 %, def: 60)   : Decay time (100 = infinite sustain)\n *   absorb   (0..100 %, def: 40)   : Wall absorption / high damping\n *   tilt     (-1..1, def: 0)       : Spectral tilt (-1: Dark Low Boost / +1: Bright High Boost)\n *   predelay (0..100 ms, def: 10)  : Pre-delay reflection offset\n *   speed    (0.1..10 Hz, def: 1)  : Modulation LFO rate\n *   depth    (0..20, def: 2)       : Modulation LFO depth\n *   mix      (0..100 %, def: 50)   : Dry / Wet blend\n * ============================================================================\n */\nParam size(50, min=0.5, max=100);      \nParam decay(60, min=0, max=110);      // 100 = Point d'équilibre infini\nParam absorb(40, min=0, max=100);     // Absorption (Damping)\nParam tilt(0, min=-1, max=1);         \nParam predelay(10, min=0, max=100);   \nParam speed(1, min=0.1, max=10);      \nParam depth(2, min=0, max=20);        \nParam mix_rev(50, name=\"mix\", min=0, max=100);\n\n// --- Mémoires ---\nDelay d1(15000), d2(15000), d3(15000), d4(15000);\nDelay ap1(2000), ap2(2000), pre_dly(9600);\nHistory h1(0), h2(0), h3(0), h4(0); \nHistory h_lpL(0), h_lpR(0), h_ph(0);\n\n// ------------------------------------------------------------------------------------------\n// 1. GÉOMÉTRIE ET MODULATIONS\n// ------------------------------------------------------------------------------------------\ns_size = slide(size / 100, 2000, 2000); \nh_ph = wrap(h_ph + speed / samplerate, 0, 1);\nlfo = sin(h_ph * TWOPI) * (depth * 5);\n\n// Temps de délais (Nombres premiers Erbe)\nt1 = clamp(1531 * s_size + lfo, 10, 14000);\nt2 = clamp(2237 * s_size - lfo, 10, 14000);\nt3 = clamp(3163 * s_size + lfo, 10, 14000);\nt4 = clamp(4453 * s_size - lfo, 10, 14000);\n\n// ------------------------------------------------------------------------------------------\n// 2. INPUT & DIFFUSION\n// ------------------------------------------------------------------------------------------\nsig_in = (in1 + in2) * 0.5;\np_sig = pre_dly.read(mstosamps(predelay));\npre_dly.write(sig_in);\n\n// All-pass d'entrée (Diffusion)\nv_ap1 = p_sig - ap1.read(400 * s_size) * 0.6; ap1.write(v_ap1); df1 = ap1.read(400 * s_size) + v_ap1 * 0.6;\nv_ap2 = df1 - ap2.read(600 * s_size) * 0.6; ap2.write(v_ap2); diff_in = ap2.read(600 * s_size) + v_ap2 * 0.6;\n\n// ------------------------------------------------------------------------------------------\n// 3. LE TANK (FDN MATRIX AVEC NORMALISATION)\n// ------------------------------------------------------------------------------------------\n// Courbe de decay : on divise par 100 pour avoir 1.0 à 100%\n// On utilise une petite courbe pour plus de précision dans les hautes valeurs\nfb_amount = (decay / 100); \ndamp = absorb / 100;\n\n// Lecture des délais\nr1 = d1.read(t1); r2 = d2.read(t2); r3 = d3.read(t3); r4 = d4.read(t4);\n\n// MATRICE DE HADAMARD (Mélange)\n// On multiplie par 0.5 (1/sqrt(4)) pour maintenir un gain unitaire (G=1)\nj1 = (r1 + r2 + r3 + r4) * 0.5;\nj2 = (r1 - r2 + r3 - r4) * 0.5;\nj3 = (r1 + r2 - r3 - r4) * 0.5;\nj4 = (r1 - r2 - r3 + r4) * 0.5;\n\n// Absorption (Low-pass de boucle)\nh1 = mix(j1, h1, damp);\nh2 = mix(j2, h2, damp);\nh3 = mix(j3, h3, damp);\nh4 = mix(j4, h4, damp);\n\n// Écriture + SATURATION INTERNE\n// On utilise tanh() à l'intérieur de la boucle pour que l'auto-oscillation \n// s'écrase musicalement au lieu de saturer le processeur.\nd1.write(fixdenorm(dcblock(diff_in + tanh(h1 * fb_amount))));\nd2.write(fixdenorm(dcblock(diff_in + tanh(h2 * fb_amount))));\nd3.write(fixdenorm(dcblock(diff_in + tanh(h3 * fb_amount))));\nd4.write(fixdenorm(dcblock(diff_in + tanh(h4 * fb_amount))));\n\n// ------------------------------------------------------------------------------------------\n// 4. TILT & OUTPUT\n// ------------------------------------------------------------------------------------------\nraw_L = (r1 + r3) * 0.5;\nraw_R = (r2 + r4) * 0.5;\n\n// Filtre Tilt\nt_lp_L = mix(raw_L, h_lpL, 0.1); h_lpL = t_lp_L;\nt_lp_R = mix(raw_R, h_lpR, 0.1); h_lpR = t_lp_R;\n\nres_L = (tilt < 0) ? mix(raw_L, t_lp_L, abs(tilt)) : mix(raw_L, raw_L - t_lp_L, tilt);\nres_R = (tilt < 0) ? mix(raw_R, t_lp_R, abs(tilt)) : mix(raw_R, raw_R - t_lp_R, tilt);\n\nout1 = tanh(mix(in1, res_L, mix_rev / 100));\nout2 = tanh(mix(in2, res_R, mix_rev / 100));",
+                    "code": "/**\n * ============================================================================\n * @file erbeverb-clone.gendsp / erbverb-clone.maxpat\n * @title ERBEVERB CLONE (Tom Erbe Inspired 4x4 Unitary FDN Reverb)\n * @author Max Bruckert (assisted by Gemini)\n *\n * @description\n * Loose gen~ implementation of the Make Noise / Tom Erbe Erbe-Verb algorithm.\n * Employs 4 mutually prime delay lines (Erbe prime sets), a normalized unitary\n * Hadamard feedback matrix, soft tanh saturation, sine-wave chorus modulation,\n * predelay, and high-absorption / spectral-tilt tone control.\n *\n * @inlets\n *   in1 : Audio Left Input\n *   in2 : Audio Right Input\n *\n * @outlets\n *   out1 : Wet Audio Left\n *   out2 : Wet Audio Right\n *\n * @parameters\n *   size     (0.5..100 %, def: 50) : Room physical scale factor\n *   decay    (0..110 %, def: 60)   : Decay time (100 = infinite sustain)\n *   absorb   (0..100 %, def: 40)   : Wall absorption / high damping\n *   tilt     (-1..1, def: 0)       : Spectral tilt (-1: Dark Low Boost / +1: Bright High Boost)\n *   predelay (0..100 ms, def: 10)  : Pre-delay reflection offset\n *   speed    (0.1..10 Hz, def: 1)  : Modulation LFO rate\n *   depth    (0..20, def: 2)       : Modulation LFO depth\n *   mix      (0..100 %, def: 50)   : Dry / Wet blend\n * ============================================================================\n */\nParam size(50, min=0.5, max=100);      \nParam decay(60, min=0, max=110);      // 100 = Point d'\u00e9quilibre infini\nParam absorb(40, min=0, max=100);     // Absorption (Damping)\nParam tilt(0, min=-1, max=1);         \nParam predelay(10, min=0, max=100);   \nParam speed(1, min=0.1, max=10);      \nParam depth(2, min=0, max=20);        \nParam mix_rev(50, name=\"mix\", min=0, max=100);\n\n// --- M\u00e9moires ---\nDelay d1(15000), d2(15000), d3(15000), d4(15000);\nDelay ap1(2000), ap2(2000), pre_dly(9600);\nHistory h1(0), h2(0), h3(0), h4(0); \nHistory h_lpL(0), h_lpR(0), h_ph(0);\n\n// ------------------------------------------------------------------------------------------\n// 1. G\u00c9OM\u00c9TRIE ET MODULATIONS\n// ------------------------------------------------------------------------------------------\ns_size = slide(size / 100, 2000, 2000); \nh_ph = wrap(h_ph + speed / samplerate, 0, 1);\nlfo = sin(h_ph * TWOPI) * (depth * 5);\n\n// Temps de d\u00e9lais (Nombres premiers Erbe)\nt1 = clamp(1531 * s_size + lfo, 10, 14000);\nt2 = clamp(2237 * s_size - lfo, 10, 14000);\nt3 = clamp(3163 * s_size + lfo, 10, 14000);\nt4 = clamp(4453 * s_size - lfo, 10, 14000);\n\n// ------------------------------------------------------------------------------------------\n// 2. INPUT & DIFFUSION\n// ------------------------------------------------------------------------------------------\nsig_in = (in1 + in2) * 0.5;\np_sig = pre_dly.read(mstosamps(predelay));\npre_dly.write(sig_in);\n\n// All-pass d'entr\u00e9e (Diffusion)\nv_ap1 = p_sig - ap1.read(400 * s_size) * 0.6; ap1.write(v_ap1); df1 = ap1.read(400 * s_size) + v_ap1 * 0.6;\nv_ap2 = df1 - ap2.read(600 * s_size) * 0.6; ap2.write(v_ap2); diff_in = ap2.read(600 * s_size) + v_ap2 * 0.6;\n\n// ------------------------------------------------------------------------------------------\n// 3. LE TANK (FDN MATRIX AVEC NORMALISATION)\n// ------------------------------------------------------------------------------------------\n// Courbe de decay : on divise par 100 pour avoir 1.0 \u00e0 100%\n// On utilise une petite courbe pour plus de pr\u00e9cision dans les hautes valeurs\nfb_amount = (decay / 100); \ndamp = absorb / 100;\n\n// Lecture des d\u00e9lais\nr1 = d1.read(t1); r2 = d2.read(t2); r3 = d3.read(t3); r4 = d4.read(t4);\n\n// MATRICE DE HADAMARD (M\u00e9lange)\n// On multiplie par 0.5 (1/sqrt(4)) pour maintenir un gain unitaire (G=1)\nj1 = (r1 + r2 + r3 + r4) * 0.5;\nj2 = (r1 - r2 + r3 - r4) * 0.5;\nj3 = (r1 + r2 - r3 - r4) * 0.5;\nj4 = (r1 - r2 - r3 + r4) * 0.5;\n\n// Absorption (Low-pass de boucle)\nh1 = mix(j1, h1, damp);\nh2 = mix(j2, h2, damp);\nh3 = mix(j3, h3, damp);\nh4 = mix(j4, h4, damp);\n\n// \u00c9criture + SATURATION INTERNE\n// On utilise tanh() \u00e0 l'int\u00e9rieur de la boucle pour que l'auto-oscillation \n// s'\u00e9crase musicalement au lieu de saturer le processeur.\nd1.write(fixdenorm(dcblock(diff_in + tanh(h1 * fb_amount))));\nd2.write(fixdenorm(dcblock(diff_in + tanh(h2 * fb_amount))));\nd3.write(fixdenorm(dcblock(diff_in + tanh(h3 * fb_amount))));\nd4.write(fixdenorm(dcblock(diff_in + tanh(h4 * fb_amount))));\n\n// ------------------------------------------------------------------------------------------\n// 4. TILT & OUTPUT\n// ------------------------------------------------------------------------------------------\nraw_L = (r1 + r3) * 0.5;\nraw_R = (r2 + r4) * 0.5;\n\n// Tilt Filter\nt_lp_L = mix(raw_L, h_lpL, 0.1); h_lpL = t_lp_L;\nt_lp_R = mix(raw_R, h_lpR, 0.1); h_lpR = t_lp_R;\n\nres_L = (tilt < 0) ? mix(raw_L, t_lp_L, abs(tilt)) : mix(raw_L, raw_L - t_lp_L, tilt);\nres_R = (tilt < 0) ? mix(raw_R, t_lp_R, abs(tilt)) : mix(raw_R, raw_R - t_lp_R, tilt);\n\nout1 = tanh(mix(in1, res_L, mix_rev / 100));\nout2 = tanh(mix(in2, res_R, mix_rev / 100));",
                     "fontface": 0,
                     "fontname": "<Monospaced>",
                     "fontsize": 12.0,
@@ -53,8 +77,16 @@
                     "maxclass": "codebox",
                     "numinlets": 2,
                     "numoutlets": 2,
-                    "outlettype": [ "", "" ],
-                    "patching_rect": [ 28.0, 53.0, 732.0, 774.0 ]
+                    "outlettype": [
+                        "",
+                        ""
+                    ],
+                    "patching_rect": [
+                        28.0,
+                        53.0,
+                        732.0,
+                        774.0
+                    ]
                 }
             },
             {
@@ -63,7 +95,12 @@
                     "maxclass": "newobj",
                     "numinlets": 1,
                     "numoutlets": 0,
-                    "patching_rect": [ 28.0, 858.0, 35.0, 22.0 ],
+                    "patching_rect": [
+                        28.0,
+                        858.0,
+                        35.0,
+                        22.0
+                    ],
                     "text": "out 1"
                 }
             }
@@ -71,26 +108,50 @@
         "lines": [
             {
                 "patchline": {
-                    "destination": [ "obj-3", 0 ],
-                    "source": [ "obj-1", 0 ]
+                    "destination": [
+                        "obj-3",
+                        0
+                    ],
+                    "source": [
+                        "obj-1",
+                        0
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-3", 1 ],
-                    "source": [ "obj-2", 0 ]
+                    "destination": [
+                        "obj-3",
+                        1
+                    ],
+                    "source": [
+                        "obj-2",
+                        0
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-4", 0 ],
-                    "source": [ "obj-3", 0 ]
+                    "destination": [
+                        "obj-4",
+                        0
+                    ],
+                    "source": [
+                        "obj-3",
+                        0
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-5", 0 ],
-                    "source": [ "obj-3", 1 ]
+                    "destination": [
+                        "obj-5",
+                        0
+                    ],
+                    "source": [
+                        "obj-3",
+                        1
+                    ]
                 }
             }
         ]

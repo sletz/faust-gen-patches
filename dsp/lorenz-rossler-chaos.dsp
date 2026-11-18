@@ -5,21 +5,19 @@
 // rho = param_rho, beta = 8/3) or of the Rössler system (a = b = 0.2,
 // c = param_rho mapped 10..60 -> 4..9), dt = min(1.2*speed'/sr, 0.024) with
 // speed' = clamp(speed + 200*in2, 0.01, 1000). in1*inject*0.2 perturbs the x
-// fed to the derivatives (not the integrated x). The state restarts at
-// (0.1, 0.1, 0.1) when a coordinate leaves [-100, 100].
+// fed to the derivatives (not the integrated x). The state starts at
+// (4, 0, 0.2), on the Rössler attractor, and restarts there when a coordinate
+// leaves [-300, 300] or is NaN.
 //
 // in1: audio injection on x    in2: speed CV (+200 per unit)
-// out1, out2, out3: x, y, z scaled to [-1, 1] (clamped)
+// out1, out2: x, y scaled to [-1, 1] (clamped)
+// out3: z centred and scaled to [-1, 1] (clamped): Lorenz (z - (rho - 1))*0.055,
+//       Rössler (z - 2.5)*0.1
 // out4: trigger on the upward zero crossing of out1
 //
-// Parameters: system (0..1, def 0: < 0.5 Lorenz, else Rössler),
-// speed (0.01..1000, def 150), drive (0..2, def 1: Lorenz sigma),
-// param_rho (10..60, def 28), inject (0..1, def 0).
-//
-// gen~ behaviour kept: in Lorenz mode with param_rho above about 51-55 (drive
-// 1), the first excursion from (0.1, 0.1, 0.1) leaves [-100, 100], so the
-// state restarts there forever: a periodic burst (every 75 samples at speed 150 and rho 60,
-// 104 at rho 55) instead of the attractor.
+// Parameters: system (0..1, def 1: < 0.5 Lorenz, else Rössler),
+// speed (0.01..1000, def 2), drive (0..2, def 1: Lorenz sigma),
+// param_rho (10..60, def 30), inject (0..1, def 0).
 
 declare name "lorenz-rossler-chaos";
 declare author "Max Bruckert (gen~), Faust port";
@@ -28,18 +26,18 @@ declare license "MIT";
 ma = library("maths.lib");
 g = library("genops.lib");
 
-system = hslider("system", 0, 0, 1, 1);
-speed = hslider("speed", 150, 0.01, 1000, 0.01);
+system = hslider("system", 1, 0, 1, 1);
+speed = hslider("speed", 2, 0.01, 1000, 0.01);
 drive = hslider("drive", 1, 0, 2, 0.001);
-param_rho = hslider("param_rho", 28, 10, 60, 0.01);
+param_rho = hslider("param_rho", 30, 10, 60, 0.01);
 inject = hslider("inject", 0, 0, 1, 0.001);
 
 // Faust's normalizer reorders this arithmetic (it distributes sigma over
 // (py - px), merges dt*1/6 with the parameters, factors the RK4 sums), and a
 // chaotic system turns each ulp of difference into a different trajectory
 // within a few thousand samples. Every operation goes through K, an identity
-// the normalizer does not see through (for finite x, which the reset to 0.1
-// above |100| ensures), so that the program computes gen's expressions in
+// the normalizer does not see through (for finite x, which the reset above
+// |300| ensures), so that the program computes gen's expressions in
 // gen's order.
 K = g.keep;
 add(a, b) = K(a + b);
@@ -102,20 +100,22 @@ with {
         xs = select2(lor, (rx : _, !, !), (lx : _, !, !));
         ys = select2(lor, (rx : !, _, !), (lx : !, _, !));
         zs = select2(lor, (rx : !, !, _), (lx : !, !, _));
-        blow = (abs(xs) > 100) | (abs(ys) > 100) | (abs(zs) > 100);
-        xr = select2(blow, xs, 0.1);
-        yr = select2(blow, ys, 0.1);
-        zr = select2(blow, zs, 0.1);
+        blow = (abs(xs) > 300) | (abs(ys) > 300) | (abs(zs) > 300)
+             | ma.isnan(xs) | ma.isnan(ys) | ma.isnan(zs);
+        xr = select2(blow, xs, 4.0);
+        yr = select2(blow, ys, 0.0);
+        zr = select2(blow, zs, 0.2);
     };
-    // History x(0.1), y(0.1), z(0.1)
-    st = step ~ (g.init(0.1), g.init(0.1), g.init(0.1));
+    // History x(4.0), y(0.0), z(0.2)
+    st = step ~ (g.init(4.0), g.init(0.0), g.init(0.2));
     xo = st : _, !, !;
     yo = st : !, _, !;
     zo = st : !, !, _;
 
     norm_x = g.clamp(-1, 1, select2(lor, xo * 0.08, xo * 0.05));
     norm_y = g.clamp(-1, 1, select2(lor, yo * 0.08, yo * 0.04));
-    norm_z = g.clamp(-1, 1, select2(lor, (zo - 5.0) * 0.15, (zo - 25.0) * 0.04));
+    norm_z = select2(lor, g.clamp(-1, 1, mul(sub(zo, 2.5), 0.1)),
+                          g.clamp(-1, 1, mul(sub(zo, sub(param_rho, 1.0)), 0.055)));
     trig_pulse = (norm_x > 0) & (norm_x' <= 0);
 };
 

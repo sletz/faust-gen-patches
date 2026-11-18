@@ -1,0 +1,106 @@
+{
+	"name": "adm_panner",
+	"filename": "adm_panner.dsp",
+	"version": "0.9.6",
+	"compile_options": "-lang wasm -double",
+	"library_list": ["dsp/genops.lib","/usr/local/share/faust/maths.lib","/usr/local/share/faust/platform.lib"],
+	"include_pathnames": ["dsp","/Users/letz/Developpements/RUST/faust-gen-patches/../faust-rs/target/share/faust","/usr/local/share/faust","/usr/share/faust"],
+	"size": 80,
+	"inputs": 3,
+	"outputs": 8,
+	"sr_index": 0,
+	"meta": [ 
+		{ "/Users/letz/Developpements/RUST/faust-gen-patches/dsp/genops.lib/license": "MIT" },
+		{ "/Users/letz/Developpements/RUST/faust-gen-patches/dsp/genops.lib/name": "genops" },
+		{ "/Users/letz/Developpements/RUST/faust-gen-patches/dsp/genops.lib/version": "1.0.0" },
+		{ "/usr/local/share/faust/maths.lib/author": "GRAME" },
+		{ "/usr/local/share/faust/maths.lib/copyright": "GRAME" },
+		{ "/usr/local/share/faust/maths.lib/license": "LicenseRef-LGPL-2.1-or-later-with-Faust-exception" },
+		{ "/usr/local/share/faust/maths.lib/name": "Faust Math Library" },
+		{ "/usr/local/share/faust/maths.lib/version": "2.9.3" },
+		{ "/usr/local/share/faust/platform.lib/name": "Generic Platform Library" },
+		{ "/usr/local/share/faust/platform.lib/version": "1.3.1" },
+		{ "author": "Max Bruckert (gen~), Faust port" },
+		{ "compile_options": "-lang wasm -double" },
+		{ "filename": "adm_panner.dsp" },
+		{ "license": "MIT" },
+		{ "name": "adm_panner" }
+	],
+	"ui": [ 
+		{
+			"type": "vgroup",
+			"label": "adm_panner",
+			"items": [ 
+				{
+					"type": "hslider",
+					"label": "air_damp",
+					"varname": "fHslider2",
+					"shortname": "air_damp",
+					"address": "/adm_panner/air_damp",
+					"index": 32,
+					"init": 0.65,
+					"min": 0,
+					"max": 1,
+					"step": 0.001
+				},
+				{
+					"type": "hslider",
+					"label": "mode",
+					"varname": "fHslider0",
+					"shortname": "mode",
+					"address": "/adm_panner/mode",
+					"index": 8,
+					"meta": [
+						{ "style": "menu{'circular':0;'linear':1}" }
+					],
+					"init": 0,
+					"min": 0,
+					"max": 1,
+					"step": 1
+				},
+				{
+					"type": "hslider",
+					"label": "sharpness",
+					"varname": "fHslider4",
+					"shortname": "sharpness",
+					"address": "/adm_panner/sharpness",
+					"index": 16,
+					"init": 2.5,
+					"min": 1,
+					"max": 8,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "smooth",
+					"varname": "fHslider1",
+					"shortname": "smooth",
+					"address": "/adm_panner/smooth",
+					"index": 24,
+					"meta": [
+						{ "unit": "samples" }
+					],
+					"init": 240,
+					"min": 1,
+					"max": 4800,
+					"step": 1
+				},
+				{
+					"type": "hslider",
+					"label": "width",
+					"varname": "fHslider3",
+					"shortname": "width",
+					"address": "/adm_panner/width",
+					"index": 48,
+					"meta": [
+						{ "unit": "%" }
+					],
+					"init": 100,
+					"min": 1,
+					"max": 200,
+					"step": 0.01
+				}
+			]
+		}
+	]
+}

@@ -1,0 +1,188 @@
+{
+	"name": "rings",
+	"filename": "rings.dsp",
+	"version": "0.9.6",
+	"compile_options": "-lang wasm -double",
+	"library_list": ["dsp/genops.lib","/usr/local/share/faust/noises.lib","/usr/local/share/faust/basics.lib","/usr/local/share/faust/maths.lib","/usr/local/share/faust/platform.lib"],
+	"include_pathnames": ["dsp","/Users/letz/Developpements/RUST/faust-gen-patches/../faust-rs/target/share/faust","/usr/local/share/faust","/usr/share/faust"],
+	"size": 1496,
+	"inputs": 3,
+	"outputs": 4,
+	"sr_index": 0,
+	"meta": [ 
+		{ "/Users/letz/Developpements/RUST/faust-gen-patches/dsp/genops.lib/license": "MIT" },
+		{ "/Users/letz/Developpements/RUST/faust-gen-patches/dsp/genops.lib/name": "genops" },
+		{ "/Users/letz/Developpements/RUST/faust-gen-patches/dsp/genops.lib/version": "1.0.0" },
+		{ "/usr/local/share/faust/basics.lib/name": "Faust Basic Element Library" },
+		{ "/usr/local/share/faust/basics.lib/version": "1.23.6" },
+		{ "/usr/local/share/faust/maths.lib/author": "GRAME" },
+		{ "/usr/local/share/faust/maths.lib/copyright": "GRAME" },
+		{ "/usr/local/share/faust/maths.lib/license": "LicenseRef-LGPL-2.1-or-later-with-Faust-exception" },
+		{ "/usr/local/share/faust/maths.lib/name": "Faust Math Library" },
+		{ "/usr/local/share/faust/maths.lib/version": "2.9.3" },
+		{ "/usr/local/share/faust/noises.lib/name": "Faust Noise Generator Library" },
+		{ "/usr/local/share/faust/noises.lib/version": "1.9.0" },
+		{ "/usr/local/share/faust/platform.lib/name": "Generic Platform Library" },
+		{ "/usr/local/share/faust/platform.lib/version": "1.3.1" },
+		{ "author": "Max Bruckert (gen~), Faust port" },
+		{ "compile_options": "-lang wasm -double" },
+		{ "filename": "rings.dsp" },
+		{ "license": "MIT" },
+		{ "name": "rings" }
+	],
+	"ui": [ 
+		{
+			"type": "vgroup",
+			"label": "rings",
+			"items": [ 
+				{
+					"type": "hslider",
+					"label": "brightness",
+					"varname": "fHslider2",
+					"shortname": "brightness",
+					"address": "/rings/brightness",
+					"index": 40,
+					"init": 0.6,
+					"min": 0,
+					"max": 1,
+					"step": 0.001
+				},
+				{
+					"type": "hslider",
+					"label": "damping",
+					"varname": "fHslider6",
+					"shortname": "damping",
+					"address": "/rings/damping",
+					"index": 120,
+					"init": 0.6,
+					"min": 0,
+					"max": 1,
+					"step": 0.001
+				},
+				{
+					"type": "hslider",
+					"label": "drive",
+					"varname": "fHslider3",
+					"shortname": "drive",
+					"address": "/rings/drive",
+					"index": 56,
+					"meta": [
+						{ "unit": "%" }
+					],
+					"init": 20,
+					"min": 0,
+					"max": 100,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "gain",
+					"varname": "fHslider10",
+					"shortname": "gain",
+					"address": "/rings/gain",
+					"index": 88,
+					"meta": [
+						{ "unit": "dB" }
+					],
+					"init": 0,
+					"min": -24,
+					"max": 12,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "internal_exciter",
+					"varname": "fHslider5",
+					"shortname": "internal_exciter",
+					"address": "/rings/internal_exciter",
+					"index": 64,
+					"meta": [
+						{ "unit": "%" }
+					],
+					"init": 80,
+					"min": 0,
+					"max": 100,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "mix",
+					"varname": "fHslider0",
+					"shortname": "mix",
+					"address": "/rings/mix",
+					"index": 32,
+					"meta": [
+						{ "unit": "%" }
+					],
+					"init": 100,
+					"min": 0,
+					"max": 100,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "pitch",
+					"varname": "fHslider1",
+					"shortname": "pitch",
+					"address": "/rings/pitch",
+					"index": 96,
+					"init": 48,
+					"min": 12,
+					"max": 108,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "position",
+					"varname": "fHslider7",
+					"shortname": "position",
+					"address": "/rings/position",
+					"index": 72,
+					"init": 0.25,
+					"min": 0,
+					"max": 1,
+					"step": 0.001
+				},
+				{
+					"type": "hslider",
+					"label": "stereo_spread",
+					"varname": "fHslider9",
+					"shortname": "stereo_spread",
+					"address": "/rings/stereo_spread",
+					"index": 80,
+					"meta": [
+						{ "unit": "%" }
+					],
+					"init": 80,
+					"min": 0,
+					"max": 100,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "structure",
+					"varname": "fHslider8",
+					"shortname": "structure",
+					"address": "/rings/structure",
+					"index": 128,
+					"init": 0.25,
+					"min": 0,
+					"max": 1,
+					"step": 0.001
+				},
+				{
+					"type": "hslider",
+					"label": "strum",
+					"varname": "fHslider4",
+					"shortname": "strum",
+					"address": "/rings/strum",
+					"index": 8,
+					"init": 0,
+					"min": 0,
+					"max": 1,
+					"step": 1
+				}
+			]
+		}
+	]
+}

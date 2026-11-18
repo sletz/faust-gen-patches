@@ -106,30 +106,37 @@ atodb(x) = select2(x <= 0, 20 * log10(x), -999);
 mstosamps(ms) = ms * (ma.SR * 0.001);  // as the exports inline it
 mtof(m) = 440 * exp(0.057762265 * (m - 69));
 
-// genlib's interpolators (the delay readers below use them)
-linear_interp(a, x, y) = x + a * (y - x);
-cubic_interp(a, w, x, y, z) = w * fw + x * fx + y * fy + z * fz
+// genlib's interpolators (the delay readers below use them), in genlib's
+// order of operations: every intermediate goes through keep() (below), so
+// that the normalizer neither factors nor folds them (it rewrote
+// x + a*(y - x) and regrouped cubic_interp's coefficient products, a few
+// ulps off genlib's)
+linear_interp(a, x, y) = x + keep(a * keep(y - x));
+cubic_interp(a, w, x, y, z) = keep(keep(keep(keep(w * fw) + keep(x * fx)) + keep(y * fy)) + keep(z * fz))
 with {
-    a1 = 1 + a; aa = a * a1; b = 1 - a; b1 = 2 - a; bb = b * b1;
-    fw = -0.1666667 * bb * a; fx = 0.5 * bb * a1; fy = 0.5 * aa * b1; fz = -0.1666667 * aa * b;
+    a1 = keep(1 + a); aa = keep(a * a1); b = keep(1 - a); b1 = keep(2 - a); bb = keep(b * b1);
+    fw = keep(keep(-0.1666667 * bb) * a); fx = keep(keep(0.5 * bb) * a1);
+    fy = keep(keep(0.5 * aa) * b1); fz = keep(keep(-0.1666667 * aa) * b);
 };
-spline_interp(a, w, x, y, z) = ((c3 * a + c2) * a + c1) * a + c0
+spline_interp(a, w, x, y, z) = keep(keep(keep(keep(keep(keep(c3 * a) + c2) * a) + c1) * a) + c0)
 with {
     c0 = x;
-    c1 = 0.5 * (y - w);
-    c2 = w - 2.5 * x + y + y - 0.5 * z;
-    c3 = 0.5 * (z - w) + 1.5 * (x - y);
+    c1 = keep(0.5 * keep(y - w));
+    c2 = keep(keep(keep(keep(w - keep(2.5 * x)) + y) + y) - keep(0.5 * z));
+    c3 = keep(keep(0.5 * keep(z - w)) + keep(1.5 * keep(x - y)));
 };
-spline6_interp(a, y0, y1, y2, y3, y4, y5) = ((((c5*a+c4)*a+c3)*a+c2)*a+c1)*a+c0
+spline6_interp(a, y0, y1, y2, y3, y4, y5) = h(h(h(h(h(c5, c4), c3), c2), c1), c0)
 with {
-    ym2py2 = y0+y4; ym1py1 = y1+y3; y2mym2 = y4-y0; y1mym1 = y3-y1;
-    sixthym1py1 = 1/6.0*ym1py1;
-    c0 = 1/120.0*ym2py2 + 13/60.0*ym1py1 + 11/20.0*y2;
-    c1 = 1/24.0*y2mym2 + 5/12.0*y1mym1;
-    c2 = 1/12.0*ym2py2 + sixthym1py1 - 1/2.0*y2;
-    c3 = 1/12.0*y2mym2 - 1/6.0*y1mym1;
-    c4 = 1/24.0*ym2py2 - sixthym1py1 + 1/4.0*y2;
-    c5 = 1/120.0*(y5-y0) + 1/24.0*(y1-y4) + 1/12.0*(y3-y2);
+    h(p, c) = keep(keep(p * a) + c);
+    m(k, v) = keep(k * v);
+    ym2py2 = keep(y0+y4); ym1py1 = keep(y1+y3); y2mym2 = keep(y4-y0); y1mym1 = keep(y3-y1);
+    sixthym1py1 = m(1/6.0, ym1py1);
+    c0 = keep(keep(m(1/120.0, ym2py2) + m(13/60.0, ym1py1)) + m(11/20.0, y2));
+    c1 = keep(m(1/24.0, y2mym2) + m(5/12.0, y1mym1));
+    c2 = keep(keep(m(1/12.0, ym2py2) + sixthym1py1) - m(1/2.0, y2));
+    c3 = keep(m(1/12.0, y2mym2) - m(1/6.0, y1mym1));
+    c4 = keep(keep(m(1/24.0, ym2py2) - sixthym1py1) + m(1/4.0, y2));
+    c5 = keep(keep(m(1/120.0, keep(y5-y0)) + m(1/24.0, keep(y1-y4))) + m(1/12.0, keep(y3-y2)));
 };
 
 //---------------------------------------------------------------- evaluation order
@@ -139,9 +146,14 @@ with {
 // becomes (a+b)*x, constants are folded across products. Where the port must
 // follow the export's order (a chaotic system, a filter near self-oscillation
 // that amplifies the last bit), these keep it:
-//   divsr(x): a true division by the sample rate (x finite, |x| < 1e300)
-//   keep(x):  an identity the normalizer does not see through (x finite)
+//   divsr(x):   a true division by the sample rate (x finite, |x| < 1e300)
+//   tdiv(n, d): a true division by any d > 0 (gen's safediv(n, d) then):
+//               Faust neither turns n / d into n * (1/d) for a d that only
+//               changes with the controls, nor pulls a constant factor of n
+//               out of the quotient (n finite, |n| < 1e300 * d)
+//   keep(x):    an identity the normalizer does not see through (x finite)
 divsr(x) = x / max(ma.SR, abs(x) * 1e-300);
+tdiv(n0, d) = n / max(d, abs(n) * 1e-300) with { n = keep(n0); };
 keep(x) = max(x, -1e308);
 
 //---------------------------------------------------------------- stateful operators
@@ -179,7 +191,9 @@ accum(incr, reset) = (\(c).(select2(reset != 0, c + incr, 0))) ~ _;
 // for a read before the write of the frame, 0 after (linear, step), plus 1 for
 // the 4- and 6-point readers. `rd_*(MAXD, maxd, mind, x, d)` reads signal x
 // through that arithmetic: r = size + reader - clamp(d), r1 = int(r),
-// a = r - r1, so the interpolation fraction is the very double genlib computes.
+// a = r - r1, so the interpolation fraction is the very double genlib computes
+// (r and a go through keep(): the normalizer would otherwise fold the delay
+// into the integer part, size + rd - (d + r1), an ulp off).
 // Signal x is the signal written: x@k is memory[(reader - k) & wrap].
 // MAXD is a compile-time bound of maxdelay (Faust sizes its own line by it).
 //
@@ -201,14 +215,14 @@ _ring(MAXD, size, mind, x, k) = x @ max(0, min(2 * MAXD + 2, ((k - mind + size) 
 rd_step(MAXD, maxd, mind, x, d) = _ring(MAXD, size, mind, x, size + rd - int(r))
 with {
     size = int(npow2(maxd)); rd = _reader(size);
-    r = float(size + rd) - clamp(mind, maxd, d - 0.5);
+    r = keep(float(size + rd) - clamp(mind, maxd, d - 0.5));
 };
 
 rd_linear(MAXD, maxd, mind, x, d) = linear_interp(a, tp(k1), tp(k1 - 1))
 with {
     size = int(npow2(maxd)); rd = _reader(size);
-    r = float(size + rd) - clamp(mind, maxd, d);
-    r1 = int(r); a = r - float(r1);
+    r = keep(float(size + rd) - clamp(mind, maxd, d));
+    r1 = int(r); a = keep(r - float(r1));
     k1 = size + rd - r1;
     tp(k) = _ring(MAXD, size, mind, x, k);
 };
@@ -216,8 +230,8 @@ with {
 _rd4(MAXD, maxd, mind, x, d, interp) = interp(a, tp(k1), tp(k1 - 1), tp(k1 - 2), tp(k1 - 3))
 with {
     size = int(npow2(maxd)); rd = _reader(size);
-    r = float(size + rd) - clamp(1 + mind, maxd, d);
-    r1 = int(r); a = r - float(r1);
+    r = keep(float(size + rd) - clamp(1 + mind, maxd, d));
+    r1 = int(r); a = keep(r - float(r1));
     k1 = size + rd - r1;
     tp(k) = _ring(MAXD, size, mind, x, k);
 };
@@ -227,8 +241,8 @@ rd_spline(MAXD, maxd, mind, x, d) = _rd4(MAXD, maxd, mind, x, d, spline_interp);
 rd_spline6(MAXD, maxd, mind, x, d) = spline6_interp(a, tp(k0), tp(k0 - 1), tp(k0 - 2), tp(k0 - 3), tp(k0 - 4), tp(k0 - 5))
 with {
     size = int(npow2(maxd)); rd = _reader(size);
-    r = float(size + rd) - clamp(1 + mind, maxd, d);
-    r0 = int(r); a = r - float(r0);
+    r = keep(float(size + rd) - clamp(1 + mind, maxd, d));
+    r0 = int(r); a = keep(r - float(r0));
     k0 = size + rd - r0;
     tp(k) = _ring(MAXD, size, mind, x, k);
 };
@@ -239,21 +253,21 @@ _ringfb(MAXD, size, xd, k) = xd @ max(0, min(2 * MAXD + 2, (k - 1 + size) % size
 rd_step_fb(MAXD, maxd, xd, d) = _ringfb(MAXD, size, xd, size + rd - int(r))
 with {
     size = int(npow2(maxd)); rd = _reader(size);
-    r = float(size + rd) - clamp(1, maxd, d - 0.5);
+    r = keep(float(size + rd) - clamp(1, maxd, d - 0.5));
 };
 rd_linear_fb(MAXD, maxd, xd, d) = linear_interp(a, tp(k1), tp(k1 - 1))
 with {
     size = int(npow2(maxd)); rd = _reader(size);
-    r = float(size + rd) - clamp(1, maxd, d);
-    r1 = int(r); a = r - float(r1);
+    r = keep(float(size + rd) - clamp(1, maxd, d));
+    r1 = int(r); a = keep(r - float(r1));
     k1 = size + rd - r1;
     tp(k) = _ringfb(MAXD, size, xd, k);
 };
 _rd4_fb(MAXD, maxd, xd, d, interp) = interp(a, tp(k1), tp(k1 - 1), tp(k1 - 2), tp(k1 - 3))
 with {
     size = int(npow2(maxd)); rd = _reader(size);
-    r = float(size + rd) - clamp(2, maxd, d);
-    r1 = int(r); a = r - float(r1);
+    r = keep(float(size + rd) - clamp(2, maxd, d));
+    r1 = int(r); a = keep(r - float(r1));
     k1 = size + rd - r1;
     tp(k) = _ringfb(MAXD, size, xd, k);
 };

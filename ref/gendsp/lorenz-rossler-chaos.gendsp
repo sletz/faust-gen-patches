@@ -3,38 +3,23 @@
         "fileversion": 1,
         "appversion": {
             "major": 9,
-            "minor": 1,
-            "revision": 5,
+            "minor": 2,
+            "revision": 1,
             "architecture": "x64",
             "modernui": 1
         },
         "classnamespace": "dsp.gen",
         "rect": [
-            84.0,
-            100.0,
-            850.0,
-            800.0
+            563.0,
+            176.0,
+            1002.0,
+            908.0
         ],
-        "bglocked": 0,
-        "openinpresentation": 0,
-        "default_fontsize": 12.0,
-        "default_fontface": 0,
-        "default_fontname": "Arial",
-        "gridonopen": 1,
-        "gridsize": [
-            15.0,
-            15.0
-        ],
-        "gridsnaponopen": 1,
-        "objectsnaponopen": 1,
-        "statusbarvisible": 2,
-        "toolbarvisible": 1,
         "boxes": [
             {
                 "box": {
                     "id": "obj-in1",
                     "maxclass": "newobj",
-                    "text": "in 1",
                     "numinlets": 0,
                     "numoutlets": 1,
                     "outlettype": [
@@ -42,35 +27,39 @@
                     ],
                     "patching_rect": [
                         40.0,
-                        20.0,
-                        30.0,
+                        14.0,
+                        301.0,
                         22.0
-                    ]
+                    ],
+                    "text": "in 1 @comment \"Audio / Cross-Modulation Injection In\""
                 }
             },
             {
                 "box": {
                     "id": "obj-in2",
                     "maxclass": "newobj",
-                    "text": "in 2",
                     "numinlets": 0,
                     "numoutlets": 1,
                     "outlettype": [
                         ""
                     ],
                     "patching_rect": [
-                        120.0,
-                        20.0,
-                        30.0,
+                        612.0,
+                        14.0,
+                        255.0,
                         22.0
-                    ]
+                    ],
+                    "text": "in 2 @comment \"Speed FM Modulation CV In\""
                 }
             },
             {
                 "box": {
+                    "code": "/**\n * ============================================================================\n * @file lorenz-rossler-chaos.gendsp / lorenz-rossler-chaos.maxpat\n * @title LORENZ & R\u00d6SSLER STRANGE ATTRACTORS (RK4 Chaotic 3D Spatial Engine)\n * @author Max Bruckert (assisted by Gemini)\n *\n * @description\n * Continuous 3D chaotic attractor engine integrated via 4th-Order Runge-Kutta\n * (RK4) numerical integration in sample-accurate GenExpr.\n *\n * Provides two distinct continuous non-linear dynamical systems:\n *   1. LORENZ ATTRACTOR (system = 0):\n *      The classic atmospheric convection model (Edward Lorenz, 1963).\n *      Dual unstable focal lobes ('butterfly wings'), ap\u00e9riodic orbit.\n *      ODEs:\n *        dx/dt = sigma * (y - x)\n *        dy/dt = x * (rho - z) - y\n *        dz/dt = x * y - beta * z\n *\n *   2. R\u00d6SSLER ATTRACTOR (system = 1, default):\n *      The chemical kinetics model (Otto R\u00f6ssler, 1976).\n *      Quasi-circular horizontal disk with ap\u00e9riodic vertical folding.\n *      ODEs:\n *        dx/dt = -y - z\n *        dy/dt = x + a * y\n *        dz/dt = b + z * (x - c)\n *\n * @spatialization_mapping (Cartesian X, Y, Z in [-1, 1]):\n *   - out1 (X) in [-1, 1] : Left (-1) to Right (+1), Center = 0\n *   - out2 (Y) in [-1, 1] : Back (-1) to Front (+1), Center = 0\n *   - out3 (Z) in [-1, 1] : Floor (-1) to Listener Ear Level (0) to Ceiling (+1)\n *   - out4 (Trig)         : Sample-accurate trigger pulse at Poincar\u00e9 crossings\n *\n * @inlets\n *   in1 : Audio / Perturbation Injection (entrainment & chaotic cross-modulation)\n *   in2 : Speed FM Modulation CV (adds to speed parameter)\n *\n * @outlets\n *   out1 : X Axis Signal (-1..1 audio or CV)\n *   out2 : Y Axis Signal (-1..1 audio or CV)\n *   out3 : Z Axis Signal (-1..1 spatial height: 0=ear level, -1=floor, +1=ceiling)\n *   out4 : Chaotic Trigger Impulse (Poincar\u00e9 section zero-crossing)\n * ============================================================================\n */\n\n// Helper ODE derivative functions (must precede Param / History / statements)\n// Lorenz: dx = sigma*(y-x), dy = x*(rho-z) - y, dz = x*y - beta*z\nlorenz_dx(px, py, pz, sigm) { return sigm * (py - px); }\nlorenz_dy(px, py, pz, r_val) { return px * (r_val - pz) - py; }\nlorenz_dz(px, py, pz, bet) { return (px * py) - (bet * pz); }\n\n// R\u00f6ssler: dx = -y - z, dy = x + a*y, dz = b + z*(x - c)\nrossler_dx(px, py, pz) { return -py - pz; }\nrossler_dy(px, py, pz, a_val) { return px + (a_val * py); }\nrossler_dz(px, py, pz, b_val, c_val) { return b_val + pz * (px - c_val); }\n\n// Parameters (Default to R\u00f6ssler 3D spatial LFO rate)\nParam system(1, min=0, max=1);        // 0 = Lorenz Attractor, 1 = R\u00f6ssler Attractor (default)\nParam speed(2.0, min=0.01, max=1000); // Evolution rate: 0.1..10 = 3D Spatial LFO, > 50 = Audio Osc\nParam drive(1.0, min=0, max=2.0);     // Lorenz sigma scaling / non-linear coupling strength\nParam param_rho(30, min=10, max=60);  // Lorenz Rayleigh number (rho) / R\u00f6ssler folding threshold (c)\nParam inject(0, min=0, max=1);        // External perturbation depth (audio injection on X)\n\n// State coordinates initialized directly on attractor manifold (instant startup)\nHistory x(4.0), y(0.0), z(0.2);\nHistory h_last_x(0);\n\n// Time step calculation (audio-rate safe RK4 integration step <= 0.024 to prevent blowout)\neff_speed = clamp(speed + (in2 * 200), 0.01, 1000);\ndt = min((eff_speed / samplerate) * 1.2, 0.024);\n\n// Audio injection perturbation on X coordinate\nx_in = x + (in1 * inject * 0.2);\n\n// Attractor coefficient setup\nsig_param = 10.0 * max(drive, 0.05);\nrho_param = param_rho;\nbeta_param = 8.0 / 3.0;\n\na_param = 0.2;\nb_param = 0.2;\nc_param = scale(param_rho, 10, 60, 4.0, 9.0);\n\nif (system < 0.5) {\n    // ========================================================================\n    // LORENZ RK4 4th-ORDER RUNGE-KUTTA SOLVER\n    // ========================================================================\n    k1x = lorenz_dx(x_in, y, z, sig_param);\n    k1y = lorenz_dy(x_in, y, z, rho_param);\n    k1z = lorenz_dz(x_in, y, z, beta_param);\n\n    k2x = lorenz_dx(x_in + 0.5 * dt * k1x, y + 0.5 * dt * k1y, z + 0.5 * dt * k1z, sig_param);\n    k2y = lorenz_dy(x_in + 0.5 * dt * k1x, y + 0.5 * dt * k1y, z + 0.5 * dt * k1z, rho_param);\n    k2z = lorenz_dz(x_in + 0.5 * dt * k1x, y + 0.5 * dt * k1y, z + 0.5 * dt * k1z, beta_param);\n\n    k3x = lorenz_dx(x_in + 0.5 * dt * k2x, y + 0.5 * dt * k2y, z + 0.5 * dt * k2z, sig_param);\n    k3y = lorenz_dy(x_in + 0.5 * dt * k2x, y + 0.5 * dt * k2y, z + 0.5 * dt * k2z, rho_param);\n    k3z = lorenz_dz(x_in + 0.5 * dt * k2x, y + 0.5 * dt * k2y, z + 0.5 * dt * k2z, beta_param);\n\n    k4x = lorenz_dx(x_in + dt * k3x, y + dt * k3y, z + dt * k3z, sig_param);\n    k4y = lorenz_dy(x_in + dt * k3x, y + dt * k3y, z + dt * k3z, rho_param);\n    k4z = lorenz_dz(x_in + dt * k3x, y + dt * k3y, z + dt * k3z, beta_param);\n\n    x = x + (dt / 6.0) * (k1x + 2.0 * k2x + 2.0 * k3x + k4x);\n    y = y + (dt / 6.0) * (k1y + 2.0 * k2y + 2.0 * k3y + k4y);\n    z = z + (dt / 6.0) * (k1z + 2.0 * k2z + 2.0 * k3z + k4z);\n} else {\n    // ========================================================================\n    // R\u00d6SSLER RK4 4th-ORDER RUNGE-KUTTA SOLVER\n    // ========================================================================\n    k1x = rossler_dx(x_in, y, z);\n    k1y = rossler_dy(x_in, y, z, a_param);\n    k1z = rossler_dz(x_in, y, z, b_param, c_param);\n\n    k2x = rossler_dx(x_in + 0.5 * dt * k1x, y + 0.5 * dt * k1y, z + 0.5 * dt * k1z);\n    k2y = rossler_dy(x_in + 0.5 * dt * k1x, y + 0.5 * dt * k1y, z + 0.5 * dt * k1z, a_param);\n    k2z = rossler_dz(x_in + 0.5 * dt * k1x, y + 0.5 * dt * k1y, z + 0.5 * dt * k1z, b_param, c_param);\n\n    k3x = rossler_dx(x_in + 0.5 * dt * k2x, y + 0.5 * dt * k2y, z + 0.5 * dt * k2z);\n    k3y = rossler_dy(x_in + 0.5 * dt * k2x, y + 0.5 * dt * k2y, z + 0.5 * dt * k2z, a_param);\n    k3z = rossler_dz(x_in + 0.5 * dt * k2x, y + 0.5 * dt * k2y, z + 0.5 * dt * k2z, b_param, c_param);\n\n    k4x = rossler_dx(x_in + dt * k3x, y + dt * k3y, z + dt * k3z);\n    k4y = rossler_dy(x_in + dt * k3x, y + dt * k3y, z + dt * k3z, a_param);\n    k4z = rossler_dz(x_in + dt * k3x, y + dt * k3y, z + dt * k3z, b_param, c_param);\n\n    x = x + (dt / 6.0) * (k1x + 2.0 * k2x + 2.0 * k3x + k4x);\n    y = y + (dt / 6.0) * (k1y + 2.0 * k2y + 2.0 * k3y + k4y);\n    z = z + (dt / 6.0) * (k1z + 2.0 * k2z + 2.0 * k3z + k4z);\n}\n\n// Anti-explosion / numerical NaN safety recovery\nif (abs(x) > 300 || abs(y) > 300 || abs(z) > 300 || isnan(x) || isnan(y) || isnan(z)) {\n    x = 4.0; y = 0.0; z = 0.2;\n}\n\n// ----------------------------------------------------------------------------\n// OUTPUT NORMALIZATION FOR 3D SPATIALIZATION (Cartesian X, Y, Z in [-1, 1])\n// ----------------------------------------------------------------------------\n// X: Left (-1) to Right (+1), Center = 0\nnorm_x = clamp((system < 0.5) ? (x * 0.05) : (x * 0.08), -1.0, 1.0);\n\n// Y: Back (-1) to Front (+1), Center = 0\nnorm_y = clamp((system < 0.5) ? (y * 0.04) : (y * 0.08), -1.0, 1.0);\n\n// Z: Floor (-1) to Listener Ear Level (0) to Ceiling (+1)\n// Lorenz: Lobes center at (rho - 1), symmetric vertical excursion [-1, 1]\n// R\u00f6ssler: Baseline disk near ear level (0), chaotic bursts flaring to ceiling (+1)\nnorm_z = (system < 0.5) \n         ? clamp((z - (param_rho - 1.0)) * 0.055, -1.0, 1.0) \n         : clamp((z - 2.5) * 0.1, -1.0, 1.0);\n\n// Zero-crossing trigger detector on X axis (Poincar\u00e9 section)\ntrig_pulse = (norm_x > 0) && (h_last_x <= 0);\nh_last_x = norm_x;\n\nout1 = norm_x;       // X Coordinate: [-1, 1] Left / Right\nout2 = norm_y;       // Y Coordinate: [-1, 1] Back / Front\nout3 = norm_z;       // Z Coordinate: [-1, 1] Floor (-1) / Ear (0) / Ceiling (+1)\nout4 = trig_pulse;   // Aperiodic trigger pulse\n",
+                    "fontface": 0,
+                    "fontname": "<Monospaced>",
+                    "fontsize": 12.0,
                     "id": "obj-codebox",
                     "maxclass": "codebox",
-                    "text": "",
                     "numinlets": 2,
                     "numoutlets": 4,
                     "outlettype": [
@@ -82,142 +71,145 @@
                     "patching_rect": [
                         40.0,
                         60.0,
-                        750.0,
-                        650.0
-                    ],
-                    "code": "/**\n * ============================================================================\n * @file lorenz-rossler-chaos.gendsp / lorenz-rossler-chaos.maxpat\n * @title LORENZ & R\u00d6SSLER STRANGE ATTRACTORS (RK4 Chaotic Audio Engine)\n * @author Max Bruckert (assisted by Gemini)\n *\n * @description\n * Non-linear 3D chaotic attractor engine integrated via 4th-Order Runge-Kutta\n * (RK4) numerical integration in sample-accurate GenExpr.\n *\n * @inlets\n *   in1 : External Audio In / Cross-Modulation Injection\n *   in2 : Speed Audio CV (FM Rate)\n *\n * @outlets\n *   out1 : X Axis Signal (-1..1 audio or CV)\n *   out2 : Y Axis Signal (-1..1 audio or CV)\n *   out3 : Z Axis Signal (Unipolar / normalized -1..1 CV)\n *   out4 : Chaotic Trigger Impulse (Poincar\u00e9 section crossing)\n * ============================================================================\n */\n\n// Helper ODE derivative functions (must precede Param / History / statements)\n// Lorenz: dx = sigma*(y-x), dy = x*(rho-z) - y, dz = x*y - beta*z\nlorenz_dx(px, py, pz, sigm) { return sigm * (py - px); }\nlorenz_dy(px, py, pz, r_val) { return px * (r_val - pz) - py; }\nlorenz_dz(px, py, pz, bet) { return (px * py) - (bet * pz); }\n\n// R\u00f6ssler: dx = -y - z, dy = x + a*y, dz = b + z*(x - c)\nrossler_dx(px, py, pz) { return -py - pz; }\nrossler_dy(px, py, pz, a_val) { return px + (a_val * py); }\nrossler_dz(px, py, pz, b_val, c_val) { return b_val + pz * (px - c_val); }\n\nParam system(0, min=0, max=1);\nParam speed(150, min=0.01, max=1000);\nParam drive(1.0, min=0, max=2.0);\nParam param_rho(28, min=10, max=60);\nParam inject(0, min=0, max=1);\n\n// State coordinates\nHistory x(0.1), y(0.1), z(0.1);\nHistory h_last_x(0);\n\n// Time step calculation (audio-rate safe RK4 integration step <= 0.024)\neff_speed = clamp(speed + (in2 * 200), 0.01, 1000);\ndt = min((eff_speed / samplerate) * 1.2, 0.024);\n\n// Audio injection perturbation on X coordinate\nx_in = x + (in1 * inject * 0.2);\n\nif (system < 0.5) {\n    // --- LORENZ RK4 SOLVER ---\n    sig_param = 10.0 * max(drive, 0.05);\n    rho_param = param_rho;\n    beta_param = 8.0 / 3.0;\n\n    // k1\n    k1x = lorenz_dx(x_in, y, z, sig_param);\n    k1y = lorenz_dy(x_in, y, z, rho_param);\n    k1z = lorenz_dz(x_in, y, z, beta_param);\n\n    // k2\n    k2x = lorenz_dx(x_in + 0.5 * dt * k1x, y + 0.5 * dt * k1y, z + 0.5 * dt * k1z, sig_param);\n    k2y = lorenz_dy(x_in + 0.5 * dt * k1x, y + 0.5 * dt * k1y, z + 0.5 * dt * k1z, rho_param);\n    k2z = lorenz_dz(x_in + 0.5 * dt * k1x, y + 0.5 * dt * k1y, z + 0.5 * dt * k1z, beta_param);\n\n    // k3\n    k3x = lorenz_dx(x_in + 0.5 * dt * k2x, y + 0.5 * dt * k2y, z + 0.5 * dt * k2z, sig_param);\n    k3y = lorenz_dy(x_in + 0.5 * dt * k2x, y + 0.5 * dt * k2y, z + 0.5 * dt * k2z, rho_param);\n    k3z = lorenz_dz(x_in + 0.5 * dt * k2x, y + 0.5 * dt * k2y, z + 0.5 * dt * k2z, beta_param);\n\n    // k4\n    k4x = lorenz_dx(x_in + dt * k3x, y + dt * k3y, z + dt * k3z, sig_param);\n    k4y = lorenz_dy(x_in + dt * k3x, y + dt * k3y, z + dt * k3z, rho_param);\n    k4z = lorenz_dz(x_in + dt * k3x, y + dt * k3y, z + dt * k3z, beta_param);\n\n    x = x + (dt / 6.0) * (k1x + 2.0 * k2x + 2.0 * k3x + k4x);\n    y = y + (dt / 6.0) * (k1y + 2.0 * k2y + 2.0 * k3y + k4y);\n    z = z + (dt / 6.0) * (k1z + 2.0 * k2z + 2.0 * k3z + k4z);\n} else {\n    // --- R\u00d6SSLER RK4 SOLVER ---\n    a_param = 0.2;\n    b_param = 0.2;\n    c_param = scale(param_rho, 10, 60, 4.0, 9.0);\n\n    // k1\n    k1x = rossler_dx(x_in, y, z);\n    k1y = rossler_dy(x_in, y, z, a_param);\n    k1z = rossler_dz(x_in, y, z, b_param, c_param);\n\n    // k2\n    k2x = rossler_dx(x_in + 0.5 * dt * k1x, y + 0.5 * dt * k1y, z + 0.5 * dt * k1z);\n    k2y = rossler_dy(x_in + 0.5 * dt * k1x, y + 0.5 * dt * k1y, z + 0.5 * dt * k1z, a_param);\n    k2z = rossler_dz(x_in + 0.5 * dt * k1x, y + 0.5 * dt * k1y, z + 0.5 * dt * k1z, b_param, c_param);\n\n    // k3\n    k3x = rossler_dx(x_in + 0.5 * dt * k2x, y + 0.5 * dt * k2y, z + 0.5 * dt * k2z);\n    k3y = rossler_dy(x_in + 0.5 * dt * k2x, y + 0.5 * dt * k2y, z + 0.5 * dt * k2z, a_param);\n    k3z = rossler_dz(x_in + 0.5 * dt * k2x, y + 0.5 * dt * k2y, z + 0.5 * dt * k2z, b_param, c_param);\n\n    // k4\n    k4x = rossler_dx(x_in + dt * k3x, y + dt * k3y, z + dt * k3z);\n    k4y = rossler_dy(x_in + dt * k3x, y + dt * k3y, z + dt * k3z, a_param);\n    k4z = rossler_dz(x_in + dt * k3x, y + dt * k3y, z + dt * k3z, b_param, c_param);\n\n    x = x + (dt / 6.0) * (k1x + 2.0 * k2x + 2.0 * k3x + k4x);\n    y = y + (dt / 6.0) * (k1y + 2.0 * k2y + 2.0 * k3y + k4y);\n    z = z + (dt / 6.0) * (k1z + 2.0 * k2z + 2.0 * k3z + k4z);\n}\n\n// Anti-explosion / numerical NaN safety\nif (abs(x) > 100 || abs(y) > 100 || abs(z) > 100) {\n    x = 0.1; y = 0.1; z = 0.1;\n}\n\n// Scaling outputs to normalized range [-1, 1]\nnorm_x = clamp((system < 0.5) ? (x * 0.05) : (x * 0.08), -1, 1);\nnorm_y = clamp((system < 0.5) ? (y * 0.04) : (y * 0.08), -1, 1);\nnorm_z = clamp((system < 0.5) ? ((z - 25.0) * 0.04) : ((z - 5.0) * 0.15), -1, 1);\n\n// Zero-crossing trigger detector on X axis\ntrig_pulse = (norm_x > 0) && (h_last_x <= 0);\nh_last_x = norm_x;\n\nout1 = norm_x;\nout2 = norm_y;\nout3 = norm_z;\nout4 = trig_pulse;\n"
+                        827.0,
+                        722.0
+                    ]
                 }
             },
             {
                 "box": {
                     "id": "obj-out1",
+                    "linecount": 5,
                     "maxclass": "newobj",
-                    "text": "out 1",
                     "numinlets": 1,
                     "numoutlets": 0,
                     "patching_rect": [
                         40.0,
-                        730.0,
-                        35.0,
-                        22.0
-                    ]
+                        804.0,
+                        93.0,
+                        76.0
+                    ],
+                    "text": "out 1 @comment \"X Coordinate (-1..1 audio / CV azimuth)\""
                 }
             },
             {
                 "box": {
                     "id": "obj-out2",
+                    "linecount": 5,
                     "maxclass": "newobj",
-                    "text": "out 2",
                     "numinlets": 1,
                     "numoutlets": 0,
                     "patching_rect": [
-                        120.0,
-                        730.0,
-                        35.0,
-                        22.0
-                    ]
+                        309.3333333333333,
+                        804.0,
+                        99.0,
+                        76.0
+                    ],
+                    "text": "out 2 @comment \"Y Coordinate (-1..1 audio / CV elevation)\""
                 }
             },
             {
                 "box": {
                     "id": "obj-out3",
+                    "linecount": 4,
                     "maxclass": "newobj",
-                    "text": "out 3",
                     "numinlets": 1,
                     "numoutlets": 0,
                     "patching_rect": [
-                        200.0,
-                        730.0,
-                        35.0,
-                        22.0
-                    ]
+                        578.6666666666666,
+                        804.0,
+                        130.0,
+                        62.0
+                    ],
+                    "text": "out 3 @comment \"Z Coordinate (-1..1 spatial height: 0=ear level, -1=floor, +1=ceiling)\""
                 }
             },
             {
                 "box": {
                     "id": "obj-out4",
+                    "linecount": 4,
                     "maxclass": "newobj",
-                    "text": "out 4",
                     "numinlets": 1,
                     "numoutlets": 0,
                     "patching_rect": [
-                        280.0,
-                        730.0,
-                        35.0,
-                        22.0
-                    ]
+                        848.0,
+                        804.0,
+                        114.0,
+                        62.0
+                    ],
+                    "text": "out 4 @comment \"Trigger Impulse (Poincar\u00e9 section crossing)\""
                 }
             }
         ],
         "lines": [
             {
                 "patchline": {
-                    "source": [
-                        "obj-in1",
-                        0
-                    ],
-                    "destination": [
-                        "obj-codebox",
-                        0
-                    ]
-                }
-            },
-            {
-                "patchline": {
-                    "source": [
-                        "obj-in2",
-                        0
-                    ],
-                    "destination": [
-                        "obj-codebox",
-                        1
-                    ]
-                }
-            },
-            {
-                "patchline": {
-                    "source": [
-                        "obj-codebox",
-                        0
-                    ],
                     "destination": [
                         "obj-out1",
                         0
+                    ],
+                    "source": [
+                        "obj-codebox",
+                        0
                     ]
                 }
             },
             {
                 "patchline": {
-                    "source": [
-                        "obj-codebox",
-                        1
-                    ],
                     "destination": [
                         "obj-out2",
                         0
+                    ],
+                    "source": [
+                        "obj-codebox",
+                        1
                     ]
                 }
             },
             {
                 "patchline": {
+                    "destination": [
+                        "obj-out3",
+                        0
+                    ],
                     "source": [
                         "obj-codebox",
                         2
-                    ],
+                    ]
+                }
+            },
+            {
+                "patchline": {
                     "destination": [
-                        "obj-out3",
+                        "obj-out4",
+                        0
+                    ],
+                    "source": [
+                        "obj-codebox",
+                        3
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-codebox",
+                        0
+                    ],
+                    "source": [
+                        "obj-in1",
                         0
                     ]
                 }
             },
             {
                 "patchline": {
-                    "source": [
-                        "obj-codebox",
-                        3
-                    ],
                     "destination": [
-                        "obj-out4",
+                        "obj-codebox",
+                        1
+                    ],
+                    "source": [
+                        "obj-in2",
                         0
                     ]
                 }

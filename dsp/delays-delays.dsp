@@ -20,9 +20,10 @@
 // trigger (4800 samples), out18: tap hit pulse, out19: index of the last tap
 // hit, out20: its amplitude
 //
-// Parameters (gen Params without min/max: ranges from the gendsp comment):
-// mix, mc_mode, gain, spread, offset, ducking, smooth_time, clear, feedback,
-// f_mix, f_type, f_start, f_end, f_direction, res.
+// Parameters: mix (0..1), mc_mode (0/1), gain (0..5), spread (-100..100),
+// offset (0..1), ducking (0..1), smooth_time (0..0.999), clear (0/1),
+// f_type (0..2), f_start, f_end (20..20000 Hz, used within 20..16000),
+// f_direction (0..3), feedback, f_mix, res (0..100).
 //
 // The buffer: in GEN-patches/delays-delays.maxpat, `buffer~ ---buf_taps @samps
 // 32 @chans 2` is filled by the v8ui tap_manager.js from its parameters (max
@@ -34,15 +35,19 @@
 // buffer the glissando (smooth_ms) is the identity: c_ms = t_target from the
 // first frame; it is kept as gen computes it.
 //
+// Each of the 16 output channels has its own DC blocker (y = x - x1 +
+// 0.995*y1), and the taps are spread on a ring of 16 positions.
+//
 // Quirks kept from gen~:
-// - the 16 output channels share ONE dcblock (a single DCBlock object called
-//   16 times per frame): its state runs through out1..out16 and on to the next
-//   frame;
-// - pos = wrap(..., 0, 15) never reaches 15 and idx2 = wrap(idx + 1, 0, 15):
-//   output 16 (bus 15) never receives a tap;
-// - the comments' "f_on" toggle does not exist in the GenExpr, and the doc's
-//   ranges for f_mix, feedback, res (0..100) and f_start/f_end (Hz) are those
-//   of gen~ in Max: the C++ export clamps these min/max-less Params to [0, 1].
+// - the DC blockers' loop assigns `prev_in = peek(dc_in, n)`, and prev_in is
+//   the History of the onset trigger: after the loop it holds dc_in[15] as it
+//   was before this frame's poke, i.e. tanh(bus 15 / 4) two frames back, and
+//   the trigger tests that value == 0 instead of the previous input
+//   threshold. While bus 16 is silent (the default tap table puts only its
+//   last tap, of amplitude 0, there) the trigger is no longer an onset
+//   detector: it fires again every 100 ms as long as the input is above the
+//   threshold; once taps reach bus 16 (spread, offset) it no longer fires;
+// - the comments' "f_on" toggle does not exist in the GenExpr.
 
 declare name "delays-delays";
 declare author "Max Bruckert (gen~), Faust port";
@@ -58,11 +63,11 @@ gain = hslider("gain", 1, 0, 5, 0.001);
 spread = hslider("spread", 0, -100, 100, 0.01);
 offset = hslider("offset", 0, 0, 1, 0.001);
 ducking = hslider("ducking", 0, 0, 1, 0.001);
-smooth_time = hslider("smooth_time", 0.9, 0, 1, 0.001);
+smooth_time = hslider("smooth_time", 0.9, 0, 0.999, 0.001);
 clear = hslider("clear", 0, 0, 1, 1);
 f_type = hslider("f_type", 0, 0, 2, 0.001);
-f_start = hslider("f_start [unit:Hz]", 16000, 20, 16000, 1);
-f_end = hslider("f_end [unit:Hz]", 800, 20, 16000, 1);
+f_start = hslider("f_start [unit:Hz]", 16000, 20, 20000, 1);
+f_end = hslider("f_end [unit:Hz]", 800, 20, 20000, 1);
 f_direction = hslider("f_direction [style:menu{'desc':0;'asc':1;'random':2;'amplitude':3}]", 0, 0, 3, 1);
 feedback = hslider("feedback", 0, 0, 100, 0.01);
 f_mix = hslider("f_mix", 0, 0, 100, 0.01);
@@ -92,9 +97,10 @@ with {
     in2_c = g.dcblock(in2);
     in_abs = (abs(in1_c) + abs(in2_c)) * 0.5;
 
-    // master UI trigger, 100 ms lockout
+    // master UI trigger, 100 ms lockout; prev_in: dc_in[15] of the previous
+    // frame before its poke (see the quirk above)
     above = in_abs > 0.005;
-    prev_in = above';
+    prev_in = mcx(NC - 1)'';
     arm(tp) = select2(above & (prev_in == 0) & (tp == 0), tp, 4800);
     trig_timer = (\(tp).(max(0, arm(tp) - 1))) ~ _;
     ui_master_trig = arm(trig_timer') > 0;
@@ -167,10 +173,10 @@ with {
 
     // MC spatialisation
     mono(i) = (fL(i) + fR(i)) * 0.5;
-    pos(i) = g.wrap(0, 15, (s_off * 15) + (i * mc_step));
+    pos(i) = g.wrap(0, 16, (s_off * 16) + (i * mc_step));
     idx(i) = floor(pos(i));
     fr(i) = g.fract(pos(i));
-    idx2(i) = g.wrap(0, 15, idx(i) + 1);
+    idx2(i) = g.wrap(0, 16, idx(i) + 1);
     // mc_bus[c] after taps 0..n, in gen's order (idx written, then idx2)
     bus(c, 0) = bstep(c, 0, 0);
     bus(c, n) = bstep(c, n, bus(c, n - 1));
@@ -198,15 +204,9 @@ with {
     s_L = (in1 * dry) + g.dcblock(ma.tanh(sumL * 0.1)) * gn;
     s_R = (in2 * dry) + g.dcblock(ma.tanh(sumR * 0.1)) * gn;
 
-    // one DCBlock for the 16 channels: y_n = x_n - x_{n-1} + 0.9997*y_{n-1},
-    // across channels and frames
+    // a DC blocker per channel: y = x - x1 + 0.995*y1 (Data dc_in, dc_out)
     mcx(n) = ma.tanh(bus(n, NT - 1) * 0.25);
-    dcstep(xp, yp) = mcx(NC - 1), y(NC - 1), par(n, NC, y(n))
-    with {
-        y(0) = (mcx(0) - xp) + yp * 0.9997;
-        y(n) = (mcx(n) - mcx(n - 1)) + y(n - 1) * 0.9997;
-    };
-    dcy = dcstep ~ (_, _) : !, !, par(n, NC, _);
+    dcy = par(n, NC, (mcx(n) - mcx(n)') : (+ ~ *(0.995)));
     chan(n, y) = g.mix(select2(n == 0, select2(n == 1, 0, s_R), s_L), mc, s_mode)
     with { mc = y * gn + select2(n < 2, 0, select2(n == 0, in2, in1) * dry); };
     outs = dcy : par(n, NC, chan(n));

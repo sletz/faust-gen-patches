@@ -1,0 +1,220 @@
+{
+    "patcher": {
+        "fileversion": 1,
+        "appversion": {
+            "major": 9,
+            "minor": 2,
+            "revision": 1,
+            "architecture": "x64",
+            "modernui": 1
+        },
+        "classnamespace": "dsp.gen",
+        "rect": [
+            100.0,
+            100.0,
+            900.0,
+            950.0
+        ],
+        "default_fontsize": 11.0,
+        "gridsize": [
+            8.0,
+            8.0
+        ],
+        "boxes": [
+            {
+                "box": {
+                    "id": "obj-1",
+                    "maxclass": "newobj",
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        20.0,
+                        20.0,
+                        180.0,
+                        21.0
+                    ],
+                    "text": "in 1 @comment Audio Left In"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-2",
+                    "maxclass": "newobj",
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        220.0,
+                        20.0,
+                        180.0,
+                        21.0
+                    ],
+                    "text": "in 2 @comment Audio Right In"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-3",
+                    "maxclass": "codebox",
+                    "numinlets": 2,
+                    "numoutlets": 4,
+                    "outlettype": [
+                        "",
+                        "",
+                        "",
+                        ""
+                    ],
+                    "patching_rect": [
+                        20.0,
+                        60.0,
+                        840.0,
+                        820.0
+                    ],
+                    "fontface": 0,
+                    "fontname": "<Monospaced>",
+                    "fontsize": 11.0,
+                    "code": "/**\n * ============================================================================\n * @file skipper.gendsp / skipper.maxpat\n * @title SKIPPER (Stochastic CD Glitch, Variable-Speed Looper & Stutter Delay)\n * @author Max Bruckert\n *\n * @description\n * Sample-accurate GenExpr port of the RNBO 'skipper' processor.\n * Emulates the sonic behavior of a skipping, scratched CD player with\n * dual-buffer ping-pong continuous capture and variable-speed looping playhead\n * (including reverse playback), stochastic skip duration and interval generation,\n * digital decimation (downsampling), random equal-power stereo panning,\n * random volume fluctuations, and irregular amplitude dropouts (hickups).\n *\n * ARCHITECTURE & BEHAVIOR:\n * - Ping-Pong Buffers: Two 6-second buffers (b0 and b1). When a capture is active,\n *   incoming audio is recorded into the alternate buffer while the previous\n *   buffer continues playing seamlessly.\n * - Trigger Mode:\n *   - Auto (triggermode = 1): A stochastic metro triggers new captures.\n *     Interval between captures is randomly bounded by automode_speedmin and\n *     automode_speedmax (in ms).\n *     Duration of each capture is randomly bounded by automode_grainmin and\n *     automode_grainmax (in ms).\n *   - Manual (triggermode = 0): Manual capture gate via trigger param.\n *     While trigger = 1, audio is captured into the alternate buffer.\n *     When trigger transitions to 0, that duration defines the grain length,\n *     and the new buffer immediately loops at speed.\n * - Freeze (automode_on = 0): Halts new capture generation in auto mode,\n *   freezing the active buffer to loop indefinitely.\n * - Varispeed (speed): Playback speed of the active grain (-4..+4x, negative = reverse).\n *\n * @inlets\n *   in1 : Audio Left Input\n *   in2 : Audio Right Input\n *\n * @outlets\n *   out1 : Processed Audio Left (Dry/Wet)\n *   out2 : Processed Audio Right (Dry/Wet)\n *   out3 : Active Grain Duration CV in ms\n *   out4 : Active Reading Speed CV (-4..+4)\n * ============================================================================\n */\n\n// 1. PARAMETERS\nParam automode_speedmin(250, min=2, max=10000); // Min interval between auto captures in ms\nParam automode_speedmax(1000, min=2, max=10000);// Max interval between auto captures in ms\nParam automode_grainmin(40, min=2, max=6000);   // Min capture grain length in ms\nParam automode_grainmax(800, min=2, max=6000);  // Max capture grain length in ms\nParam automode_on(1, min=0, max=1);             // 1: Auto active, 0: Freeze current buffer\nParam triggermode(1, min=0, max=1);             // 0: Manual (trigger param), 1: Auto (stochastic metro)\nParam trigger(0, min=0, max=1);                 // Manual capture gate (1: capture incoming audio, 0: loop buffer)\nParam speed(1.0, min=-4, max=4);                // Reading speed rate (negative = reverse)\nParam downsample(0, min=0, max=100);            // Lo-fi digital sample-rate decimation\nParam volume_percentage(20, min=0, max=100);    // Stochastic volume drop range per capture\nParam hickup_percentage(20, min=0, max=100);    // Stochastic amplitude dropout probability\nParam pan_percentage(80, min=0, max=100);       // Random equal-power stereo spatialization width\nParam kill_capture(0, min=0, max=1);            // Purge and silence buffers\nParam mix(80, min=0, max=100);                  // Master Dry / Wet blend ratio\n\n// 2. DUAL PING-PONG BUFFERS (6 seconds at 48kHz = 288000 samples)\nData b0_L(288000), b0_R(288000);\nData b1_L(288000), b1_R(288000);\n\n// Buffer & Playback State Histories\nHistory h_play_buf(0);         // 0: playing b0, recording b1; 1: playing b1, recording b0\nHistory h_has_data(0);         // 1 if a buffer has valid captured audio\nHistory h_play_ph(0.0);        // Playback phase [0.0, 1.0)\nHistory h_loop_len(4800);      // Loop length in samples\nHistory h_loop_ms(100.0);      // Loop length in ms\n\n// Auto-metro & Duration Histories\nHistory h_metro_timer(0);\nHistory h_metro_interval(24000);// Next capture trigger time in samples\nHistory h_auto_capturing(0);    // 1 during auto capture pulse\nHistory h_auto_cap_timer(0);    // Timer during auto capture pulse\nHistory h_target_grain_samps(4800);\n\n// Manual Trigger Histories\nHistory h_prev_manual_trig(0);\nHistory h_man_rec_count(0);\nHistory h_prev_kill(0);\n\n// Modulation Histories\nHistory h_pan_cur(0.0);\nHistory h_vol_scale(1.0);\nHistory h_is_hickup(0);\nHistory h_hickup_gate(1.0);\n\n// Downsample Decimation Histories\nHistory h_down_count(0);\nHistory h_hold_L(0.0), h_hold_R(0.0);\n\n// 3. KILL / PURGE EVALUATION\nkill_hit = (kill_capture > 0.5 && !h_prev_kill);\nh_prev_kill = (kill_capture > 0.5);\nif (kill_hit) {\n    h_has_data = 0;\n    h_play_ph = 0.0;\n    h_auto_capturing = 0;\n    h_man_rec_count = 0;\n}\n\n// 4. CAPTURE LOGIC (AUTO vs MANUAL)\nrec_buf = 1 - h_play_buf; // Always record into the alternate buffer\njust_finished_capture = 0;\ncaptured_samps = 0;\n\nif (triggermode > 0.5) {\n    // --- MODE AUTOMATIQUE ---\n    if (automode_on > 0.5) {\n        // Metro timing between captures\n        if (!h_auto_capturing) {\n            h_metro_timer += 1;\n            if (h_metro_timer >= h_metro_interval) {\n                h_metro_timer = 0;\n                // Schedule next interval between captures (speedmin..speedmax)\n                r_int = noise() * 0.5 + 0.5;\n                min_i = min(automode_speedmin, automode_speedmax);\n                max_i = max(automode_speedmin, automode_speedmax);\n                h_metro_interval = max(64, mstosamps(min_i + r_int * (max_i - min_i)));\n                \n                // Choose grain duration for this capture (grainmin..grainmax)\n                r_dur = noise() * 0.5 + 0.5;\n                min_d = min(automode_grainmin, automode_grainmax);\n                max_d = max(automode_grainmin, automode_grainmax);\n                h_target_grain_samps = max(64, min(mstosamps(min_d + r_dur * (max_d - min_d)), 288000));\n                \n                // Start capturing into alternate buffer\n                h_auto_capturing = 1;\n                h_auto_cap_timer = 0;\n            }\n        }\n        \n        // While capturing in auto mode\n        if (h_auto_capturing) {\n            if (h_auto_cap_timer < 288000) {\n                if (rec_buf == 0) {\n                    poke(b0_L, in1, h_auto_cap_timer);\n                    poke(b0_R, in2, h_auto_cap_timer);\n                } else {\n                    poke(b1_L, in1, h_auto_cap_timer);\n                    poke(b1_R, in2, h_auto_cap_timer);\n                }\n            }\n            h_auto_cap_timer += 1;\n            if (h_auto_cap_timer >= h_target_grain_samps) {\n                h_auto_capturing = 0;\n                just_finished_capture = 1;\n                captured_samps = h_target_grain_samps;\n            }\n        }\n    } else {\n        // automode_on == 0: FREEZE! Halts any ongoing capture, active buffer continues looping\n        h_auto_capturing = 0;\n        h_metro_timer = 0;\n    }\n} else {\n    // --- MODE MANUEL ---\n    man_trig_now = (trigger > 0.5);\n    \n    // While trigger is 1, capture into alternate buffer\n    if (man_trig_now) {\n        if (h_man_rec_count < 288000) {\n            if (rec_buf == 0) {\n                poke(b0_L, in1, h_man_rec_count);\n                poke(b0_R, in2, h_man_rec_count);\n            } else {\n                poke(b1_L, in1, h_man_rec_count);\n                poke(b1_R, in2, h_man_rec_count);\n            }\n            h_man_rec_count += 1;\n        }\n    }\n    \n    // When trigger transitions 1 -> 0: capture completes!\n    if (!man_trig_now && h_prev_manual_trig) {\n        just_finished_capture = 1;\n        captured_samps = max(64, h_man_rec_count);\n        h_man_rec_count = 0;\n    }\n    h_prev_manual_trig = man_trig_now;\n}\n\n// 5. ON CAPTURE COMPLETION: SWITCH PING-PONG BUFFERS\nif (just_finished_capture) {\n    h_play_buf = rec_buf; // The newly captured buffer becomes active!\n    h_loop_len = max(64, min(captured_samps, 288000));\n    h_loop_ms = sampstoms(h_loop_len);\n    h_has_data = 1;\n    \n    // Playhead phase reset: forward starts at 0, reverse starts at 1\n    h_play_ph = (speed >= 0.0) ? 0.0 : 1.0;\n    \n    // New random spatial panning\n    r_pan = noise(); // [-1, 1]\n    h_pan_cur = r_pan * clamp(pan_percentage * 0.01, 0.0, 1.0);\n    \n    // New random volume drop\n    r_vol = noise() * 0.5 + 0.5; // [0, 1]\n    h_vol_scale = 1.0 - r_vol * clamp(volume_percentage * 0.01 * 0.8, 0.0, 0.8);\n    \n    // Stochastic amplitude hickup\n    r_hick = (noise() * 0.5 + 0.5) * 100.0;\n    h_is_hickup = (r_hick < hickup_percentage);\n}\n\n// 6. VARIABLE-SPEED PLAYHEAD READING (FORWARD & REVERSE)\nwet_clean_L = 0.0;\nwet_clean_R = 0.0;\n\nif (h_has_data > 0.5 && h_loop_len > 1) {\n    // Current sample index inside active buffer\n    curr_idx = clamp(h_play_ph * h_loop_len, 0.0, h_loop_len - 1.0);\n    \n    // Micro-fade raised cosine (1.5ms) at loop boundaries\n    fade_len = min(mstosamps(1.5), floor(h_loop_len * 0.25));\n    fade_gain = 1.0;\n    if (fade_len > 1.0) {\n        if (curr_idx < fade_len) {\n            fade_gain = 0.5 - 0.5 * cos((curr_idx / fade_len) * PI);\n        } else if (curr_idx > (h_loop_len - fade_len)) {\n            d_end = h_loop_len - curr_idx;\n            fade_gain = 0.5 - 0.5 * cos((d_end / fade_len) * PI);\n        }\n    }\n    \n    // Linear interpolated sample lookup\n    i0 = floor(curr_idx);\n    i1 = min(i0 + 1, h_loop_len - 1);\n    fr = curr_idx - i0;\n    \n    raw_L = 0.0;\n    raw_R = 0.0;\n    if (h_play_buf == 0) {\n        raw_L = mix(peek(b0_L, i0), peek(b0_L, i1), fr);\n        raw_R = mix(peek(b0_R, i0), peek(b0_R, i1), fr);\n    } else {\n        raw_L = mix(peek(b1_L, i0), peek(b1_L, i1), fr);\n        raw_R = mix(peek(b1_R, i0), peek(b1_R, i1), fr);\n    }\n    \n    // Slew-smoothed hickup gate\n    target_gate = h_is_hickup ? 0.0 : 1.0;\n    h_hickup_gate = fixdenorm(h_hickup_gate + (target_gate - h_hickup_gate) * 0.02);\n    \n    grain_sig_L = raw_L * fade_gain * h_vol_scale * h_hickup_gate;\n    grain_sig_R = raw_R * fade_gain * h_vol_scale * h_hickup_gate;\n    \n    // Equal-Power Stereo Panning\n    theta = (clamp(h_pan_cur, -1.0, 1.0) + 1.0) * (PI * 0.25);\n    wet_clean_L = grain_sig_L * cos(theta) * 1.41421356;\n    wet_clean_R = grain_sig_R * sin(theta) * 1.41421356;\n    \n    // Advance playhead phase with wrapping\n    safe_speed = (abs(speed) < 0.001) ? 0.0 : speed;\n    ph_inc = safe_speed / max(1.0, h_loop_len);\n    h_play_ph = wrap(h_play_ph + ph_inc, 0.0, 1.0);\n}\n\n// 7. DIGITAL DECIMATION / DOWNSAMPLING\ndown_factor = floor(1.0 + clamp(downsample * 0.01, 0.0, 1.0) * 24.0); // 1..25\nh_down_count += 1;\nif (h_down_count >= down_factor) {\n    h_hold_L = wet_clean_L;\n    h_hold_R = wet_clean_R;\n    h_down_count = 0;\n}\n\nds_wet_L = (downsample > 0.5) ? h_hold_L : wet_clean_L;\nds_wet_R = (downsample > 0.5) ? h_hold_R : wet_clean_R;\n\n// 8. WARM SOFT LIMITER & MASTER DRY/WET MIX\nlim_wet_L = tanh(ds_wet_L * 1.15) * 0.95;\nlim_wet_R = tanh(ds_wet_R * 1.15) * 0.95;\n\neff_mix = clamp(mix * 0.01, 0.0, 1.0);\nout1 = mix(in1, lim_wet_L, eff_mix);\nout2 = mix(in2, lim_wet_R, eff_mix);\nout3 = h_loop_ms;\nout4 = speed;\n"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-4",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        20.0,
+                        900.0,
+                        180.0,
+                        21.0
+                    ],
+                    "text": "out 1 @comment Processed Left"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-5",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        220.0,
+                        900.0,
+                        180.0,
+                        21.0
+                    ],
+                    "text": "out 2 @comment Processed Right"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-6",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        420.0,
+                        900.0,
+                        180.0,
+                        21.0
+                    ],
+                    "text": "out 3 @comment Duration ms CV"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-7",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        620.0,
+                        900.0,
+                        180.0,
+                        21.0
+                    ],
+                    "text": "out 4 @comment Speed CV"
+                }
+            }
+        ],
+        "lines": [
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-3",
+                        0
+                    ],
+                    "source": [
+                        "obj-1",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-3",
+                        1
+                    ],
+                    "source": [
+                        "obj-2",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-4",
+                        0
+                    ],
+                    "source": [
+                        "obj-3",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-5",
+                        0
+                    ],
+                    "source": [
+                        "obj-3",
+                        1
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-6",
+                        0
+                    ],
+                    "source": [
+                        "obj-3",
+                        2
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-7",
+                        0
+                    ],
+                    "source": [
+                        "obj-3",
+                        3
+                    ]
+                }
+            }
+        ]
+    }
+}

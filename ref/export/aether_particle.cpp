@@ -70,12 +70,12 @@ typedef struct State {
 	CommonState __commonstate;
 	Data m_g_bufferR_56;
 	Data m_g_bufferL_57;
-	DCBlock __m_dcblock_136;
+	DCBlock __m_dcblock_132;
+	DCBlock __m_dcblock_82;
+	DCBlock __m_dcblock_131;
+	DCBlock __m_dcblock_129;
 	DCBlock __m_dcblock_83;
-	DCBlock __m_dcblock_135;
-	DCBlock __m_dcblock_133;
-	DCBlock __m_dcblock_86;
-	DCBlock __m_dcblock_134;
+	DCBlock __m_dcblock_130;
 	Delay m_rd4_15;
 	Delay m_rap1_14;
 	Delay m_rd3_16;
@@ -110,7 +110,7 @@ typedef struct State {
 	t_sample m_clear_79;
 	t_sample m_h_dc_inR_1;
 	t_sample samplerate;
-	t_sample __m_slide_125;
+	t_sample __m_slide_121;
 	t_sample m_g_pitch_69;
 	t_sample m_freeze_78;
 	t_sample m_g_prob_76;
@@ -243,13 +243,13 @@ typedef struct State {
 		m_freeze_78 = ((int)0);
 		m_clear_79 = ((int)0);
 		m_gainout_80 = ((int)0);
+		__m_dcblock_82.reset();
 		__m_dcblock_83.reset();
-		__m_dcblock_86.reset();
-		__m_slide_125 = 0;
-		__m_dcblock_133.reset();
-		__m_dcblock_134.reset();
-		__m_dcblock_135.reset();
-		__m_dcblock_136.reset();
+		__m_slide_121 = 0;
+		__m_dcblock_129.reset();
+		__m_dcblock_130.reset();
+		__m_dcblock_131.reset();
+		__m_dcblock_132.reset();
 		genlib_reset_complete(this);
 		
 	};
@@ -268,28 +268,23 @@ typedef struct State {
 			return __exception;
 			
 		};
+		int is_frozen = (m_freeze_78 > ((t_sample)0.5));
 		int is_clearing = (m_clear_79 > ((t_sample)0.5));
 		t_sample iffalse_81 = (m_g_regen_66 * ((t_sample)0.01));
 		t_sample fb_g = (is_clearing ? ((int)0) : iffalse_81);
-		int cond_82 = ((m_freeze_78 > ((t_sample)0.5)) || is_clearing);
-		int cond_85 = ((m_freeze_78 > ((t_sample)0.5)) || is_clearing);
-		int g_bufferL_dim = m_g_bufferL_57.dim;
-		int g_bufferL_channels = m_g_bufferL_57.channels;
-		int g_bufferR_dim = m_g_bufferR_56.dim;
-		int g_bufferR_channels = m_g_bufferR_56.channels;
-		t_sample slide_input_126 = (m_r_size_63 * ((t_sample)0.01));
-		t_sample iup_127 = (1 / maximum(1, fabs(((int)2000))));
-		t_sample idown_128 = (1 / maximum(1, fabs(((int)2000))));
+		t_sample slide_input_122 = (m_r_size_63 * ((t_sample)0.01));
+		t_sample iup_123 = (1 / maximum(1, fabs(((int)2000))));
+		t_sample idown_124 = (1 / maximum(1, fabs(((int)2000))));
 		t_sample rfb = (m_r_decay_62 * ((t_sample)0.01));
 		t_sample rdamp = (m_r_absorb_61 * ((t_sample)0.01));
-		t_sample tmp_abs_1086 = fabs(m_r_tilt_60);
-		int cond_137 = (m_r_tilt_60 < ((int)0));
-		t_sample tmp_abs_1090 = fabs(m_r_tilt_60);
-		int cond_138 = (m_r_tilt_60 < ((int)0));
-		t_sample tmp_div_1094 = (m_g_mix_77 * ((t_sample)0.01));
-		t_sample tmp_div_1096 = (m_r_mix_64 * ((t_sample)0.01));
-		t_sample tmp_div_1098 = (m_g_mix_77 * ((t_sample)0.01));
-		t_sample tmp_div_1100 = (m_r_mix_64 * ((t_sample)0.01));
+		t_sample tmp_abs_914 = fabs(m_r_tilt_60);
+		int cond_133 = (m_r_tilt_60 < ((int)0));
+		t_sample tmp_abs_918 = fabs(m_r_tilt_60);
+		int cond_134 = (m_r_tilt_60 < ((int)0));
+		t_sample tmp_div_922 = (m_g_mix_77 * ((t_sample)0.01));
+		t_sample tmp_div_924 = (m_r_mix_64 * ((t_sample)0.01));
+		t_sample tmp_div_926 = (m_g_mix_77 * ((t_sample)0.01));
+		t_sample tmp_div_928 = (m_r_mix_64 * ((t_sample)0.01));
 		// the main sample loop;
 		while ((__n--)) {
 			const t_sample in1 = (*(__in1++));
@@ -302,52 +297,59 @@ typedef struct State {
 			t_sample o3R = ((int)0);
 			t_sample o4L = ((int)0);
 			t_sample o4R = ((int)0);
-			t_sample iffalse_84 = __m_dcblock_83((in1 + tanh((m_h_g_fbL_54 * fb_g))));
-			t_sample in_effL = (cond_82 ? ((int)0) : iffalse_84);
-			t_sample iffalse_87 = __m_dcblock_86((in2 + tanh((m_h_g_fbR_53 * fb_g))));
-			t_sample in_effR = (cond_85 ? ((int)0) : iffalse_87);
-			int index_trunc_88 = fixnan(floor(m_h_g_write_55));
-			bool index_ignore_89 = ((index_trunc_88 >= g_bufferL_dim) || (index_trunc_88 < 0));
-			if ((!index_ignore_89)) {
-				m_g_bufferL_57.write(in_effL, index_trunc_88, 0);
+			t_sample in_effL = __m_dcblock_82((in1 + tanh((m_h_g_fbL_54 * fb_g))));
+			t_sample in_effR = __m_dcblock_83((in2 + tanh((m_h_g_fbR_53 * fb_g))));
+			if ((!is_frozen)) {
+				int g_bufferL_dim = m_g_bufferL_57.dim;
+				int g_bufferL_channels = m_g_bufferL_57.channels;
+				int index_trunc_84 = fixnan(floor(m_h_g_write_55));
+				bool index_ignore_85 = ((index_trunc_84 >= g_bufferL_dim) || (index_trunc_84 < 0));
+				if ((!index_ignore_85)) {
+					m_g_bufferL_57.write((is_clearing ? ((int)0) : in_effL), index_trunc_84, 0);
+					
+				};
+				int g_bufferR_dim = m_g_bufferR_56.dim;
+				int g_bufferR_channels = m_g_bufferR_56.channels;
+				int index_trunc_86 = fixnan(floor(m_h_g_write_55));
+				bool index_ignore_87 = ((index_trunc_86 >= g_bufferR_dim) || (index_trunc_86 < 0));
+				if ((!index_ignore_87)) {
+					m_g_bufferR_56.write((is_clearing ? ((int)0) : in_effR), index_trunc_86, 0);
+					
+				};
+				m_h_g_write_55 = wrap((m_h_g_write_55 + ((int)1)), ((int)0), g_bufferL_dim);
 				
 			};
-			int index_trunc_90 = fixnan(floor(m_h_g_write_55));
-			bool index_ignore_91 = ((index_trunc_90 >= g_bufferR_dim) || (index_trunc_90 < 0));
-			if ((!index_ignore_91)) {
-				m_g_bufferR_56.write(in_effR, index_trunc_90, 0);
-				
-			};
-			m_h_g_write_55 = wrap((m_h_g_write_55 + ((int)1)), ((int)0), g_bufferL_dim);
 			m_h_g_clock_52 = (m_h_g_clock_52 + ((int)1));
 			if ((m_h_g_clock_52 >= m_h_g_next_51)) {
 				m_h_g_clock_52 = ((int)0);
 				t_sample bp = safediv(samplerate, ((m_g_density_75 < ((t_sample)0.001)) ? ((t_sample)0.001) : m_g_density_75));
 				t_sample jt = (((int)1) + (box_muller_() * (m_g_std_density_74 * ((t_sample)0.01))));
-				t_sample v_93 = (bp * jt);
-				int max_94 = (samplerate * ((int)5));
-				m_h_g_next_51 = ((v_93 <= ((int)40)) ? ((int)40) : ((v_93 >= max_94) ? max_94 : v_93));
+				t_sample v_89 = (bp * jt);
+				int max_90 = (samplerate * ((int)5));
+				m_h_g_next_51 = ((v_89 <= ((int)40)) ? ((int)40) : ((v_89 >= max_90) ? max_90 : v_89));
 				if ((((noise() * ((t_sample)0.5)) + ((t_sample)0.5)) < (m_g_prob_76 * ((t_sample)0.01)))) {
-					int cond_95 = (m_v1_tmr_50 >= m_v1_dur_49);
-					int cond_96 = (m_v2_tmr_42 >= m_v2_dur_41);
-					int cond_97 = (m_v3_tmr_34 >= m_v3_dur_33);
-					int cond_98 = (m_v4_tmr_26 >= m_v4_dur_25);
-					int iffalse_99 = (cond_98 ? ((int)4) : ((int)0));
-					int iffalse_100 = (cond_97 ? ((int)3) : iffalse_99);
-					int iffalse_101 = (cond_96 ? ((int)2) : iffalse_100);
-					int v_idx = (cond_95 ? ((int)1) : iffalse_101);
+					int cond_91 = (m_v1_tmr_50 >= m_v1_dur_49);
+					int cond_92 = (m_v2_tmr_42 >= m_v2_dur_41);
+					int cond_93 = (m_v3_tmr_34 >= m_v3_dur_33);
+					int cond_94 = (m_v4_tmr_26 >= m_v4_dur_25);
+					int iffalse_95 = (cond_94 ? ((int)4) : ((int)0));
+					int iffalse_96 = (cond_93 ? ((int)3) : iffalse_95);
+					int iffalse_97 = (cond_92 ? ((int)2) : iffalse_96);
+					int v_idx = (cond_91 ? ((int)1) : iffalse_97);
 					if ((v_idx > ((int)0))) {
 						t_sample gauss = box_muller_();
-						t_sample maxa_102 = (m_g_size_71 + (gauss * m_g_std_size_70));
-						t_sample d = (((maxa_102 < ((int)1)) ? ((int)1) : maxa_102) * (samplerate * 0.001));
+						t_sample maxa_98 = (m_g_size_71 + (gauss * m_g_std_size_70));
+						t_sample d = (((maxa_98 < ((int)1)) ? ((int)1) : maxa_98) * (samplerate * 0.001));
+						int g_bufferL_dim = m_g_bufferL_57.dim;
+						int g_bufferL_channels = m_g_bufferL_57.channels;
 						int ms = g_bufferL_dim;
-						t_sample v_103 = (((m_g_pos_73 * ((t_sample)0.01)) * ms) + (((gauss * (m_g_std_pos_72 * ((t_sample)0.01))) * ms) * ((t_sample)0.20000000000000001)));
-						t_sample max_104 = ((ms - d) - ((int)100));
-						t_sample off = ((v_103 <= ((int)10)) ? ((int)10) : ((v_103 >= max_104) ? max_104 : v_103));
+						t_sample v_99 = (((m_g_pos_73 * ((t_sample)0.01)) * ms) + (((gauss * (m_g_std_pos_72 * ((t_sample)0.01))) * ms) * ((t_sample)0.20000000000000001)));
+						t_sample max_100 = ((ms - d) - ((int)100));
+						t_sample off = ((v_99 <= ((int)10)) ? ((int)10) : ((v_99 >= max_100) ? max_100 : v_99));
 						t_sample skw = ((safepow((m_g_skew_65 * ((t_sample)0.01)), ((int)3)) * ((int)1000)) * (samplerate * 0.001));
-						int cond_105 = (((noise() * ((t_sample)0.5)) + ((t_sample)0.5)) < (m_g_crush_67 * ((t_sample)0.01)));
-						t_sample iftrue_106 = (floor((fabs(noise()) * ((int)80))) + ((int)2));
-						t_sample cr = (cond_105 ? iftrue_106 : ((int)1));
+						int cond_101 = (((noise() * ((t_sample)0.5)) + ((t_sample)0.5)) < (m_g_crush_67 * ((t_sample)0.01)));
+						t_sample iftrue_102 = (floor((fabs(noise()) * ((int)80))) + ((int)2));
+						t_sample cr = (cond_101 ? iftrue_102 : ((int)1));
 						t_sample p_st = wrap((m_h_g_write_55 - off), ((int)0), ms);
 						if ((v_idx == ((int)1))) {
 							m_v1_tmr_50 = ((int)0);
@@ -392,17 +394,21 @@ typedef struct State {
 				
 			};
 			if ((m_v1_tmr_50 < m_v1_dur_49)) {
+				int g_bufferL_dim = m_g_bufferL_57.dim;
+				int g_bufferL_channels = m_g_bufferL_57.channels;
 				m_v1_ptr_48 = wrap((m_v1_ptr_48 + m_g_pitch_69), ((int)0), g_bufferL_dim);
 				m_v1_c_cnt_44 = (m_v1_c_cnt_44 + ((int)1));
 				if ((m_v1_c_cnt_44 >= m_v1_crsh_47)) {
-					int index_trunc_107 = fixnan(floor(m_v1_ptr_48));
-					bool index_ignore_108 = ((index_trunc_107 >= g_bufferL_dim) || (index_trunc_107 < 0));
+					int index_trunc_103 = fixnan(floor(m_v1_ptr_48));
+					bool index_ignore_104 = ((index_trunc_103 >= g_bufferL_dim) || (index_trunc_103 < 0));
 					// samples g_bufferL channel 1;
-					m_v1_sL_46 = (index_ignore_108 ? 0 : m_g_bufferL_57.read(index_trunc_107, 0));
-					int index_trunc_109 = fixnan(floor(wrap((m_v1_ptr_48 - m_v1_sk_43), ((int)0), g_bufferL_dim)));
-					bool index_ignore_110 = ((index_trunc_109 >= g_bufferR_dim) || (index_trunc_109 < 0));
+					m_v1_sL_46 = (index_ignore_104 ? 0 : m_g_bufferL_57.read(index_trunc_103, 0));
+					int g_bufferR_dim = m_g_bufferR_56.dim;
+					int g_bufferR_channels = m_g_bufferR_56.channels;
+					int index_trunc_105 = fixnan(floor(wrap((m_v1_ptr_48 - m_v1_sk_43), ((int)0), g_bufferL_dim)));
+					bool index_ignore_106 = ((index_trunc_105 >= g_bufferR_dim) || (index_trunc_105 < 0));
 					// samples g_bufferR channel 1;
-					m_v1_sR_45 = (index_ignore_110 ? 0 : m_g_bufferR_56.read(index_trunc_109, 0));
+					m_v1_sR_45 = (index_ignore_106 ? 0 : m_g_bufferR_56.read(index_trunc_105, 0));
 					m_v1_c_cnt_44 = ((int)0);
 					
 				};
@@ -413,17 +419,21 @@ typedef struct State {
 				
 			};
 			if ((m_v2_tmr_42 < m_v2_dur_41)) {
+				int g_bufferL_dim = m_g_bufferL_57.dim;
+				int g_bufferL_channels = m_g_bufferL_57.channels;
 				m_v2_ptr_40 = wrap((m_v2_ptr_40 + m_g_pitch_69), ((int)0), g_bufferL_dim);
 				m_v2_c_cnt_36 = (m_v2_c_cnt_36 + ((int)1));
 				if ((m_v2_c_cnt_36 >= m_v2_crsh_39)) {
-					int index_trunc_113 = fixnan(floor(m_v2_ptr_40));
-					bool index_ignore_114 = ((index_trunc_113 >= g_bufferL_dim) || (index_trunc_113 < 0));
+					int index_trunc_109 = fixnan(floor(m_v2_ptr_40));
+					bool index_ignore_110 = ((index_trunc_109 >= g_bufferL_dim) || (index_trunc_109 < 0));
 					// samples g_bufferL channel 1;
-					m_v2_sL_38 = (index_ignore_114 ? 0 : m_g_bufferL_57.read(index_trunc_113, 0));
-					int index_trunc_115 = fixnan(floor(wrap((m_v2_ptr_40 - m_v2_sk_35), ((int)0), g_bufferL_dim)));
-					bool index_ignore_116 = ((index_trunc_115 >= g_bufferR_dim) || (index_trunc_115 < 0));
+					m_v2_sL_38 = (index_ignore_110 ? 0 : m_g_bufferL_57.read(index_trunc_109, 0));
+					int g_bufferR_dim = m_g_bufferR_56.dim;
+					int g_bufferR_channels = m_g_bufferR_56.channels;
+					int index_trunc_111 = fixnan(floor(wrap((m_v2_ptr_40 - m_v2_sk_35), ((int)0), g_bufferL_dim)));
+					bool index_ignore_112 = ((index_trunc_111 >= g_bufferR_dim) || (index_trunc_111 < 0));
 					// samples g_bufferR channel 1;
-					m_v2_sR_37 = (index_ignore_116 ? 0 : m_g_bufferR_56.read(index_trunc_115, 0));
+					m_v2_sR_37 = (index_ignore_112 ? 0 : m_g_bufferR_56.read(index_trunc_111, 0));
 					m_v2_c_cnt_36 = ((int)0);
 					
 				};
@@ -434,17 +444,21 @@ typedef struct State {
 				
 			};
 			if ((m_v3_tmr_34 < m_v3_dur_33)) {
+				int g_bufferL_dim = m_g_bufferL_57.dim;
+				int g_bufferL_channels = m_g_bufferL_57.channels;
 				m_v3_ptr_32 = wrap((m_v3_ptr_32 + m_g_pitch_69), ((int)0), g_bufferL_dim);
 				m_v3_c_cnt_28 = (m_v3_c_cnt_28 + ((int)1));
 				if ((m_v3_c_cnt_28 >= m_v3_crsh_31)) {
-					int index_trunc_117 = fixnan(floor(m_v3_ptr_32));
-					bool index_ignore_118 = ((index_trunc_117 >= g_bufferL_dim) || (index_trunc_117 < 0));
+					int index_trunc_113 = fixnan(floor(m_v3_ptr_32));
+					bool index_ignore_114 = ((index_trunc_113 >= g_bufferL_dim) || (index_trunc_113 < 0));
 					// samples g_bufferL channel 1;
-					m_v3_sL_30 = (index_ignore_118 ? 0 : m_g_bufferL_57.read(index_trunc_117, 0));
-					int index_trunc_119 = fixnan(floor(wrap((m_v3_ptr_32 - m_v3_sk_27), ((int)0), g_bufferL_dim)));
-					bool index_ignore_120 = ((index_trunc_119 >= g_bufferR_dim) || (index_trunc_119 < 0));
+					m_v3_sL_30 = (index_ignore_114 ? 0 : m_g_bufferL_57.read(index_trunc_113, 0));
+					int g_bufferR_dim = m_g_bufferR_56.dim;
+					int g_bufferR_channels = m_g_bufferR_56.channels;
+					int index_trunc_115 = fixnan(floor(wrap((m_v3_ptr_32 - m_v3_sk_27), ((int)0), g_bufferL_dim)));
+					bool index_ignore_116 = ((index_trunc_115 >= g_bufferR_dim) || (index_trunc_115 < 0));
 					// samples g_bufferR channel 1;
-					m_v3_sR_29 = (index_ignore_120 ? 0 : m_g_bufferR_56.read(index_trunc_119, 0));
+					m_v3_sR_29 = (index_ignore_116 ? 0 : m_g_bufferR_56.read(index_trunc_115, 0));
 					m_v3_c_cnt_28 = ((int)0);
 					
 				};
@@ -455,17 +469,21 @@ typedef struct State {
 				
 			};
 			if ((m_v4_tmr_26 < m_v4_dur_25)) {
+				int g_bufferL_dim = m_g_bufferL_57.dim;
+				int g_bufferL_channels = m_g_bufferL_57.channels;
 				m_v4_ptr_24 = wrap((m_v4_ptr_24 + m_g_pitch_69), ((int)0), g_bufferL_dim);
 				m_v4_c_cnt_20 = (m_v4_c_cnt_20 + ((int)1));
 				if ((m_v4_c_cnt_20 >= m_v4_crsh_23)) {
-					int index_trunc_121 = fixnan(floor(m_v4_ptr_24));
-					bool index_ignore_122 = ((index_trunc_121 >= g_bufferL_dim) || (index_trunc_121 < 0));
+					int index_trunc_117 = fixnan(floor(m_v4_ptr_24));
+					bool index_ignore_118 = ((index_trunc_117 >= g_bufferL_dim) || (index_trunc_117 < 0));
 					// samples g_bufferL channel 1;
-					m_v4_sL_22 = (index_ignore_122 ? 0 : m_g_bufferL_57.read(index_trunc_121, 0));
-					int index_trunc_123 = fixnan(floor(wrap((m_v4_ptr_24 - m_v4_sk_19), ((int)0), g_bufferL_dim)));
-					bool index_ignore_124 = ((index_trunc_123 >= g_bufferR_dim) || (index_trunc_123 < 0));
+					m_v4_sL_22 = (index_ignore_118 ? 0 : m_g_bufferL_57.read(index_trunc_117, 0));
+					int g_bufferR_dim = m_g_bufferR_56.dim;
+					int g_bufferR_channels = m_g_bufferR_56.channels;
+					int index_trunc_119 = fixnan(floor(wrap((m_v4_ptr_24 - m_v4_sk_19), ((int)0), g_bufferL_dim)));
+					bool index_ignore_120 = ((index_trunc_119 >= g_bufferR_dim) || (index_trunc_119 < 0));
 					// samples g_bufferR channel 1;
-					m_v4_sR_21 = (index_ignore_124 ? 0 : m_g_bufferR_56.read(index_trunc_123, 0));
+					m_v4_sR_21 = (index_ignore_120 ? 0 : m_g_bufferR_56.read(index_trunc_119, 0));
 					m_v4_c_cnt_20 = ((int)0);
 					
 				};
@@ -479,18 +497,18 @@ typedef struct State {
 			t_sample wet_granR = ((((o1R + o2R) + o3R) + o4R) * ((t_sample)0.5));
 			m_h_g_fbL_54 = fixdenorm(wet_granL);
 			m_h_g_fbR_53 = fixdenorm(wet_granR);
-			__m_slide_125 = fixdenorm((__m_slide_125 + (((slide_input_126 > __m_slide_125) ? iup_127 : idown_128) * (slide_input_126 - __m_slide_125))));
-			t_sample rs_size = __m_slide_125;
+			__m_slide_121 = fixdenorm((__m_slide_121 + (((slide_input_122 > __m_slide_121) ? iup_123 : idown_124) * (slide_input_122 - __m_slide_121))));
+			t_sample rs_size = __m_slide_121;
 			m_rh_ph_5 = wrap((m_rh_ph_5 + safediv(m_r_speed_59, samplerate)), ((int)0), ((int)1));
 			t_sample rlfo = (sin((m_rh_ph_5 * ((t_sample)6.2831853071795862))) * (m_r_depth_58 * ((int)5)));
-			t_sample v_129 = ((((int)1531) * rs_size) + rlfo);
-			t_sample rt1 = ((v_129 <= ((int)10)) ? ((int)10) : ((v_129 >= ((int)14000)) ? ((int)14000) : v_129));
-			t_sample v_130 = ((((int)2237) * rs_size) - rlfo);
-			t_sample rt2 = ((v_130 <= ((int)10)) ? ((int)10) : ((v_130 >= ((int)14000)) ? ((int)14000) : v_130));
-			t_sample v_131 = ((((int)3163) * rs_size) + rlfo);
-			t_sample rt3 = ((v_131 <= ((int)10)) ? ((int)10) : ((v_131 >= ((int)14000)) ? ((int)14000) : v_131));
-			t_sample v_132 = ((((int)4453) * rs_size) - rlfo);
-			t_sample rt4 = ((v_132 <= ((int)10)) ? ((int)10) : ((v_132 >= ((int)14000)) ? ((int)14000) : v_132));
+			t_sample v_125 = ((((int)1531) * rs_size) + rlfo);
+			t_sample rt1 = ((v_125 <= ((int)10)) ? ((int)10) : ((v_125 >= ((int)14000)) ? ((int)14000) : v_125));
+			t_sample v_126 = ((((int)2237) * rs_size) - rlfo);
+			t_sample rt2 = ((v_126 <= ((int)10)) ? ((int)10) : ((v_126 >= ((int)14000)) ? ((int)14000) : v_126));
+			t_sample v_127 = ((((int)3163) * rs_size) + rlfo);
+			t_sample rt3 = ((v_127 <= ((int)10)) ? ((int)10) : ((v_127 >= ((int)14000)) ? ((int)14000) : v_127));
+			t_sample v_128 = ((((int)4453) * rs_size) - rlfo);
+			t_sample rt4 = ((v_128 <= ((int)10)) ? ((int)10) : ((v_128 >= ((int)14000)) ? ((int)14000) : v_128));
 			t_sample r_in = ((wet_granL + wet_granR) * ((t_sample)0.5));
 			t_sample r_pre = m_rpre_dly_12.read_linear((((int)10) * (samplerate * 0.001)));
 			m_rpre_dly_12.write(r_in);
@@ -508,50 +526,50 @@ typedef struct State {
 			t_sample rj2 = ((((rr1 - rr2) + rr3) - rr4) * ((t_sample)0.5));
 			t_sample rj3 = ((((rr1 + rr2) - rr3) - rr4) * ((t_sample)0.5));
 			t_sample rj4 = ((((rr1 - rr2) - rr3) + rr4) * ((t_sample)0.5));
-			t_sample tmp_mix_1079 = (rj1 + (rdamp * (m_rh1_11 - rj1)));
-			m_rh1_11 = tmp_mix_1079;
-			t_sample tmp_mix_1080 = (rj2 + (rdamp * (m_rh2_10 - rj2)));
-			m_rh2_10 = tmp_mix_1080;
-			t_sample tmp_mix_1081 = (rj3 + (rdamp * (m_rh3_9 - rj3)));
-			m_rh3_9 = tmp_mix_1081;
-			t_sample tmp_mix_1082 = (rj4 + (rdamp * (m_rh4_8 - rj4)));
-			m_rh4_8 = tmp_mix_1082;
-			m_rd1_18.write(fixdenorm(__m_dcblock_133((r_diff_in + tanh((m_rh1_11 * rfb))))));
-			m_rd2_17.write(fixdenorm(__m_dcblock_134((r_diff_in + tanh((m_rh2_10 * rfb))))));
-			m_rd3_16.write(fixdenorm(__m_dcblock_135((r_diff_in + tanh((m_rh3_9 * rfb))))));
-			m_rd4_15.write(fixdenorm(__m_dcblock_136((r_diff_in + tanh((m_rh4_8 * rfb))))));
+			t_sample tmp_mix_907 = (rj1 + (rdamp * (m_rh1_11 - rj1)));
+			m_rh1_11 = tmp_mix_907;
+			t_sample tmp_mix_908 = (rj2 + (rdamp * (m_rh2_10 - rj2)));
+			m_rh2_10 = tmp_mix_908;
+			t_sample tmp_mix_909 = (rj3 + (rdamp * (m_rh3_9 - rj3)));
+			m_rh3_9 = tmp_mix_909;
+			t_sample tmp_mix_910 = (rj4 + (rdamp * (m_rh4_8 - rj4)));
+			m_rh4_8 = tmp_mix_910;
+			m_rd1_18.write(fixdenorm(__m_dcblock_129((r_diff_in + tanh((m_rh1_11 * rfb))))));
+			m_rd2_17.write(fixdenorm(__m_dcblock_130((r_diff_in + tanh((m_rh2_10 * rfb))))));
+			m_rd3_16.write(fixdenorm(__m_dcblock_131((r_diff_in + tanh((m_rh3_9 * rfb))))));
+			m_rd4_15.write(fixdenorm(__m_dcblock_132((r_diff_in + tanh((m_rh4_8 * rfb))))));
 			t_sample rrawL = ((rr1 + rr3) * ((t_sample)0.5));
 			t_sample rrawR = ((rr2 + rr4) * ((t_sample)0.5));
-			t_sample tmp_mix_1083 = (rrawL + (((t_sample)0.10000000000000001) * (m_rh_lpL_7 - rrawL)));
-			t_sample rt_lpL = tmp_mix_1083;
+			t_sample tmp_mix_911 = (rrawL + (((t_sample)0.10000000000000001) * (m_rh_lpL_7 - rrawL)));
+			t_sample rt_lpL = tmp_mix_911;
 			m_rh_lpL_7 = rt_lpL;
-			t_sample tmp_mix_1084 = (rrawR + (((t_sample)0.10000000000000001) * (m_rh_lpR_6 - rrawR)));
-			t_sample rt_lpR = tmp_mix_1084;
+			t_sample tmp_mix_912 = (rrawR + (((t_sample)0.10000000000000001) * (m_rh_lpR_6 - rrawR)));
+			t_sample rt_lpR = tmp_mix_912;
 			m_rh_lpR_6 = rt_lpR;
-			t_sample tmp_mix_1085 = (rrawL + (tmp_abs_1086 * (rt_lpL - rrawL)));
-			t_sample tmp_sub_1088 = (rrawL - rt_lpL);
-			t_sample tmp_mix_1087 = (rrawL + (m_r_tilt_60 * (tmp_sub_1088 - rrawL)));
-			t_sample rresL = (cond_137 ? tmp_mix_1085 : tmp_mix_1087);
-			t_sample tmp_mix_1089 = (rrawR + (tmp_abs_1090 * (rt_lpR - rrawR)));
-			t_sample tmp_sub_1092 = (rrawR - rt_lpR);
-			t_sample tmp_mix_1091 = (rrawR + (m_r_tilt_60 * (tmp_sub_1092 - rrawR)));
-			t_sample rresR = (cond_138 ? tmp_mix_1089 : tmp_mix_1091);
-			t_sample tmp_mix_1093 = (in1 + (tmp_div_1094 * (wet_granL - in1)));
-			t_sample tmp_mix_1095 = (tmp_mix_1093 + (tmp_div_1096 * (rresL - tmp_mix_1093)));
-			t_sample finalL = (tmp_mix_1095 * dbtoa(m_gainout_80));
-			t_sample tmp_mix_1097 = (in2 + (tmp_div_1098 * (wet_granR - in2)));
-			t_sample tmp_mix_1099 = (tmp_mix_1097 + (tmp_div_1100 * (rresR - tmp_mix_1097)));
-			t_sample finalR = (tmp_mix_1099 * dbtoa(m_gainout_80));
+			t_sample tmp_mix_913 = (rrawL + (tmp_abs_914 * (rt_lpL - rrawL)));
+			t_sample tmp_sub_916 = (rrawL - rt_lpL);
+			t_sample tmp_mix_915 = (rrawL + (m_r_tilt_60 * (tmp_sub_916 - rrawL)));
+			t_sample rresL = (cond_133 ? tmp_mix_913 : tmp_mix_915);
+			t_sample tmp_mix_917 = (rrawR + (tmp_abs_918 * (rt_lpR - rrawR)));
+			t_sample tmp_sub_920 = (rrawR - rt_lpR);
+			t_sample tmp_mix_919 = (rrawR + (m_r_tilt_60 * (tmp_sub_920 - rrawR)));
+			t_sample rresR = (cond_134 ? tmp_mix_917 : tmp_mix_919);
+			t_sample tmp_mix_921 = (in1 + (tmp_div_922 * (wet_granL - in1)));
+			t_sample tmp_mix_923 = (tmp_mix_921 + (tmp_div_924 * (rresL - tmp_mix_921)));
+			t_sample finalL = (tmp_mix_923 * dbtoa(m_gainout_80));
+			t_sample tmp_mix_925 = (in2 + (tmp_div_926 * (wet_granR - in2)));
+			t_sample tmp_mix_927 = (tmp_mix_925 + (tmp_div_928 * (rresR - tmp_mix_925)));
+			t_sample finalR = (tmp_mix_927 * dbtoa(m_gainout_80));
 			t_sample out_fL = ((finalL - m_h_dc_inL_2) + (((t_sample)0.995) * m_h_dcL_4));
 			m_h_dc_inL_2 = finalL;
 			m_h_dcL_4 = out_fL;
 			t_sample out_fR = ((finalR - m_h_dc_inR_1) + (((t_sample)0.995) * m_h_dcR_3));
 			m_h_dc_inR_1 = finalR;
 			m_h_dcR_3 = out_fR;
-			t_sample tmp_expr_71 = tanh(out_fL);
-			t_sample tmp_expr_72 = tanh(out_fR);
-			t_sample out2 = tmp_expr_72;
-			t_sample out1 = tmp_expr_71;
+			t_sample tmp_expr_103 = tanh(out_fL);
+			t_sample tmp_expr_104 = tanh(out_fR);
+			t_sample out2 = tmp_expr_104;
+			t_sample out1 = tmp_expr_103;
 			m_rpre_dly_12.step();
 			m_rap2_13.step();
 			m_rap1_14.step();
@@ -643,8 +661,8 @@ typedef struct State {
 		m_gainout_80 = (_value < -60 ? -60 : (_value > 12 ? 12 : _value));
 	};
 	inline t_sample box_muller_() {
-		t_sample v_92 = fabs(noise());
-		t_sample u1 = ((v_92 <= ((t_sample)0.0001)) ? ((t_sample)0.0001) : ((v_92 >= ((int)1)) ? ((int)1) : v_92));
+		t_sample v_88 = fabs(noise());
+		t_sample u1 = ((v_88 <= ((t_sample)0.0001)) ? ((t_sample)0.0001) : ((v_88 >= ((int)1)) ? ((int)1) : v_88));
 		t_sample u2 = (noise() * ((t_sample)3.1415926535897931));
 		return (sqrt(((-((int)2)) * log(u1))) * cos(u2));
 		
@@ -653,15 +671,15 @@ typedef struct State {
 		t_sample tri = (((int)1) - fabs(((p * ((int)2)) - ((int)1))));
 		t_sample spline = ((((int)3) * safepow(tri, ((int)2))) - (((int)2) * safepow(tri, ((int)3))));
 		t_sample perc = safepow(tri, ((int)4));
-		t_sample v_111 = (tri * ((int)3));
-		t_sample trap = ((v_111 <= ((int)0)) ? ((int)0) : ((v_111 >= ((int)1)) ? ((int)1) : v_111));
-		t_sample tmp_mul_1076 = (shape * ((int)2));
-		t_sample tmp_mix_1075 = (perc + (tmp_mul_1076 * (spline - perc)));
-		t_sample tmp_mul_1078 = ((shape - ((t_sample)0.5)) * ((int)2));
-		t_sample tmp_mix_1077 = (spline + (tmp_mul_1078 * (trap - spline)));
-		int cond_112 = (shape < ((t_sample)0.5));
-		t_sample tmp_tmp__get_window_ret_63 = (cond_112 ? tmp_mix_1075 : tmp_mix_1077);
-		return tmp_tmp__get_window_ret_63;
+		t_sample v_107 = (tri * ((int)3));
+		t_sample trap = ((v_107 <= ((int)0)) ? ((int)0) : ((v_107 >= ((int)1)) ? ((int)1) : v_107));
+		t_sample tmp_mul_904 = (shape * ((int)2));
+		t_sample tmp_mix_903 = (perc + (tmp_mul_904 * (spline - perc)));
+		t_sample tmp_mul_906 = ((shape - ((t_sample)0.5)) * ((int)2));
+		t_sample tmp_mix_905 = (spline + (tmp_mul_906 * (trap - spline)));
+		int cond_108 = (shape < ((t_sample)0.5));
+		t_sample tmp_tmp__get_window_ret_96 = (cond_108 ? tmp_mix_903 : tmp_mix_905);
+		return tmp_tmp__get_window_ret_96;
 		
 	};
 	

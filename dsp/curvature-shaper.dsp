@@ -13,8 +13,7 @@
 //
 // Parameters: a (start value, def 0), b (end value, def 1), shape (-1..1),
 // steepness (0.5..10, def 4), clamp_in (0/1, def 1: clamp in1 to [0, 1]).
-// a and b are declared without min/max in the gendsp: the export clamps them
-// to [0, 1] (setparameter), gen~ in Max does not; the range here is wider.
+// a and b range over -1000..1000.
 
 declare name "curvature-shaper";
 declare author "Max Bruckert (gen~), Faust port";
@@ -22,8 +21,8 @@ declare license "MIT";
 
 g = library("genops.lib");
 
-a = hslider("a", 0, -10, 10, 0.001);
-b = hslider("b", 1, -10, 10, 0.001);
+a = hslider("a", 0, -1000, 1000, 0.001);
+b = hslider("b", 1, -1000, 1000, 0.001);
 shape = hslider("shape", 0, -1, 1, 0.001);
 steepness = hslider("steepness", 4, 0.5, 10, 0.01);
 clamp_in = hslider("clamp_in", 1, 0, 1, 1);

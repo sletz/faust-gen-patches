@@ -1,0 +1,17 @@
+MODEL = dict(name="multiband-drive", export="multiband_drive", inputs=2, sites=[], input="music",
+    settings=[
+        dict(name="default"),
+        dict(name="morph", set=dict(low_model_choice=33.3, mid_model_choice=66.7, high_model_choice=100,
+                                    low_drive_mix=100, mid_drive_mix=100, high_drive_mix=100),
+             at=[(30000, "low_model_choice", 99.9), (60000, "high_model_choice", 50),
+                 (75000, "mid_model_choice", 16)]),
+        dict(name="crossovers", set=dict(crossover1=2000, crossover2=200, low_drive_mix=20, high_model_choice=80),
+             at=[(30000, "crossover1", 20), (30000, "crossover2", 18000), (60000, "crossover1", 900),
+                 (75000, "crossover2", 1000)]),
+        dict(name="levels", set=dict(low_band_gain=12, mid_band_gain=-40, high_band_gain=-39.99, gain=12, mix=50,
+                                     low_drive_mix=0, high_drive_mix=100, high_model_choice=45),
+             at=[(48000, "mid_band_gain", -48), (48000, "high_band_gain", 6), (70000, "gain", -24)]),
+        dict(name="quantizer", set=dict(low_model_choice=66.7, mid_model_choice=75, high_model_choice=60,
+                                        low_drive_mix=75, mid_drive_mix=10, high_drive_mix=90, mix=100),
+             at=[(50000, "mix", 0)]),
+    ])

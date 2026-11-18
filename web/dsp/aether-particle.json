@@ -5,7 +5,7 @@
 	"compile_options": "-lang wasm -double",
 	"library_list": ["dsp/genops.lib","/usr/local/share/faust/noises.lib","/usr/local/share/faust/basics.lib","/usr/local/share/faust/maths.lib","/usr/local/share/faust/signals.lib","/usr/local/share/faust/platform.lib"],
 	"include_pathnames": ["dsp","/Users/letz/Developpements/RUST/faust-gen-patches/../faust-rs/target/share/faust","/usr/local/share/faust","/usr/share/faust"],
-	"size": 68486776,
+	"size": 62817944,
 	"inputs": 2,
 	"outputs": 2,
 	"sr_index": 0,
@@ -43,7 +43,7 @@
 					"varname": "fHslider13",
 					"shortname": "clear",
 					"address": "/aether-particle/clear",
-					"index": 40,
+					"index": 232,
 					"init": 0,
 					"min": 0,
 					"max": 1,
@@ -52,10 +52,10 @@
 				{
 					"type": "hslider",
 					"label": "freeze",
-					"varname": "fHslider12",
+					"varname": "fHslider6",
 					"shortname": "freeze",
 					"address": "/aether-particle/freeze",
-					"index": 32,
+					"index": 24,
 					"init": 0,
 					"min": 0,
 					"max": 1,
@@ -64,10 +64,10 @@
 				{
 					"type": "hslider",
 					"label": "g_crush",
-					"varname": "fHslider9",
+					"varname": "fHslider10",
 					"shortname": "g_crush",
 					"address": "/aether-particle/g_crush",
-					"index": 224,
+					"index": 216,
 					"meta": [
 						{ "unit": "%" }
 					],
@@ -82,7 +82,7 @@
 					"varname": "fHslider1",
 					"shortname": "g_density",
 					"address": "/aether-particle/g_density",
-					"index": 64,
+					"index": 56,
 					"meta": [
 						{ "unit": "Hz" }
 					],
@@ -97,7 +97,7 @@
 					"varname": "fHslider0",
 					"shortname": "g_mix",
 					"address": "/aether-particle/g_mix",
-					"index": 136,
+					"index": 128,
 					"meta": [
 						{ "unit": "%" }
 					],
@@ -109,10 +109,10 @@
 				{
 					"type": "hslider",
 					"label": "g_pitch",
-					"varname": "fHslider8",
+					"varname": "fHslider9",
 					"shortname": "g_pitch",
 					"address": "/aether-particle/g_pitch",
-					"index": 216,
+					"index": 208,
 					"init": 1,
 					"min": -4,
 					"max": 4,
@@ -121,10 +121,10 @@
 				{
 					"type": "hslider",
 					"label": "g_pos",
-					"varname": "fHslider6",
+					"varname": "fHslider7",
 					"shortname": "g_pos",
 					"address": "/aether-particle/g_pos",
-					"index": 184,
+					"index": 176,
 					"meta": [
 						{ "unit": "%" }
 					],
@@ -139,7 +139,7 @@
 					"varname": "fHslider3",
 					"shortname": "g_prob",
 					"address": "/aether-particle/g_prob",
-					"index": 152,
+					"index": 144,
 					"meta": [
 						{ "unit": "%" }
 					],
@@ -181,10 +181,10 @@
 				{
 					"type": "hslider",
 					"label": "g_skew",
-					"varname": "fHslider10",
+					"varname": "fHslider11",
 					"shortname": "g_skew",
 					"address": "/aether-particle/g_skew",
-					"index": 232,
+					"index": 224,
 					"meta": [
 						{ "unit": "%" }
 					],
@@ -199,7 +199,7 @@
 					"varname": "fHslider2",
 					"shortname": "g_std_density",
 					"address": "/aether-particle/g_std_density",
-					"index": 144,
+					"index": 136,
 					"meta": [
 						{ "unit": "%" }
 					],
@@ -211,10 +211,10 @@
 				{
 					"type": "hslider",
 					"label": "g_std_pos",
-					"varname": "fHslider7",
+					"varname": "fHslider8",
 					"shortname": "g_std_pos",
 					"address": "/aether-particle/g_std_pos",
-					"index": 192,
+					"index": 184,
 					"meta": [
 						{ "unit": "%" }
 					],
@@ -241,10 +241,10 @@
 				{
 					"type": "hslider",
 					"label": "g_window",
-					"varname": "fHslider11",
+					"varname": "fHslider12",
 					"shortname": "g_window",
 					"address": "/aether-particle/g_window",
-					"index": 24,
+					"index": 32,
 					"init": 0.5,
 					"min": 0,
 					"max": 1,
@@ -313,7 +313,7 @@
 					"varname": "fHslider15",
 					"shortname": "r_mix",
 					"address": "/aether-particle/r_mix",
-					"index": 48,
+					"index": 40,
 					"meta": [
 						{ "unit": "%" }
 					],
@@ -358,7 +358,7 @@
 					"varname": "fHslider16",
 					"shortname": "r_tilt",
 					"address": "/aether-particle/r_tilt",
-					"index": 56,
+					"index": 48,
 					"init": 0,
 					"min": -1,
 					"max": 1,

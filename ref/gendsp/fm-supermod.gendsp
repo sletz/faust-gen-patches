@@ -1,0 +1,231 @@
+{
+    "patcher": {
+        "fileversion": 1,
+        "appversion": {
+            "major": 9,
+            "minor": 2,
+            "revision": 1,
+            "architecture": "x64",
+            "modernui": 1
+        },
+        "classnamespace": "dsp.gen",
+        "rect": [
+            0.0,
+            68.0,
+            1800.0,
+            1101.0
+        ],
+        "default_fontsize": 11.0,
+        "gridsize": [
+            8.0,
+            8.0
+        ],
+        "lefttoolbarpinned": 2,
+        "toptoolbarpinned": 2,
+        "righttoolbarpinned": 2,
+        "bottomtoolbarpinned": 2,
+        "toolbars_unpinned_last_save": 15,
+        "boxanimatetime": 20,
+        "subpatcher_template": "Max Audio Effect_template",
+        "boxes": [
+            {
+                "box": {
+                    "id": "obj-21",
+                    "maxclass": "newobj",
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        796.0,
+                        42.0,
+                        221.0,
+                        21.0
+                    ],
+                    "text": "in 4 @comment Feedback Depth CV (-2..2)"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-17",
+                    "maxclass": "newobj",
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        536.0,
+                        19.0,
+                        194.0,
+                        21.0
+                    ],
+                    "text": "in 3 @comment FM Index CV (0..100)"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-9",
+                    "maxclass": "newobj",
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        276.0,
+                        19.0,
+                        201.0,
+                        21.0
+                    ],
+                    "text": "in 2 @comment Audio R / Ratio Mod IN"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-1",
+                    "maxclass": "newobj",
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        16.0,
+                        19.0,
+                        172.0,
+                        21.0
+                    ],
+                    "text": "in 1 @comment Audio L / Note IN"
+                }
+            },
+            {
+                "box": {
+                    "code": "/**\n * ============================================================================\n * @file fm-supermod.gendsp / fm-supermod.maxpat\n * @title FM-SUPERMOD (Stereo Bell Phase Modulation & Audio Effects Processor)\n * @author Max Bruckert\n *\n * @description\n * High-definition Stereo Phase Modulation (PM / Chowning FM) engine inspired by\n * classic Yamaha DX and Buchla 259 architectures. Operates by default with\n * crystal-clear, glassy bell timbres and self-modulating feedback (Self-FM).\n * As Index, Ratio, and Feedback are increased, the spectrum smoothly morphs\n * from pure sine and singing bells to brassy gongs, harmonic grit, and dense noise.\n *\n * Features 3 Ratio Quantization modes:\n *   - Mode 0: Free / Continuous (microtonal, smooth sweeps, custom ratios)\n *   - Mode 1: Pure Harmonic Integers (1, 2, 3, 4... consonant harmonic partials)\n *   - Mode 2: Risset Inharmonic Bell Mode (Jean-Claude Risset 1969 bell partial\n *     series: 0.56, 0.92, 1.19, 1.414, 1.70, 2.00, 2.74, 3.00, 3.76, 4.07\n *     with slow acoustic doublet micro-beating for bronze metallic shimmer).\n *\n * Designed as a dual-purpose stereo synthesizer and live audio processor:\n *   - Mode 0 (Off / Mute):\n *     Mutes both the internal carrier/modulator and audio throughput (silent zero).\n *   - Mode 1 (Stereo Ring Modulation):\n *     Audio inputs (L/R) are multiplied by the stereo bell carriers with\n *     automatic level compensation (+3.5 dB RMS), yielding exquisite bell-chime sidebands.\n *     In pure synthesis mode (no audio in / MIDI note mode), an automatic -8 dB\n *     gain compensation (synth_gain = 0.40) equalizes perceived loudness.\n *   - Mode 2 (Through-Zero Time/Doppler FM):\n *     Audio inputs (L/R) are dynamically time-modulated through a short\n *     cubic delay line, creating true acoustic pitch vibrato, flanging, and flutter.\n *   - Mode 3 (Adaptive Audio FM):\n *     Live audio dynamically injects into the phase of the modulator and carrier,\n *     blending the acoustic instrument with the FM bell spectrum.\n *\n * @inlets\n *   in1 : Audio Left Input (or MIDI Note when use_note_in=1)\n *   in2 : Audio Right Input (or Modulator Ratio CV)\n *   in3 : FM Index CV (added to fm_index parameter)\n *   in4 : Feedback CV (added to feedback parameter)\n *\n * @outlets\n *   out1 : Processed Audio Left (Dry/Wet)\n *   out2 : Processed Audio Right (Dry/Wet)\n *\n * @parameters\n *   mode          (0..3, def: 1)           : 0: Off, 1: Ring Mod, 2: Time FM, 3: Adaptive FM\n *   freq          (20..10000 Hz, def: 220) : Base carrier frequency in Hz\n *   ratio         (0.01..30, def: 1.414)   : Modulator to carrier frequency ratio (1.414 = bell)\n *   quantize      (0..2, def: 0)           : 0: Free / Continuous, 1: Pure Harmonic Integers, 2: Risset Inharmonic Bell Mode\n *   fm_index      (0..50, def: 1.8)        : Phase modulation index (depth of bell harmonics)\n *   feedback      (0..2, def: 0.25)        : Modulator Self-FM feedback (0=pure, 0.5=saw, >1=noise)\n *   stereo_spread (0..100 %, def: 50)      : Stereo detuning and spatial phase width\n *   use_note_in   (0/1, def: 0)            : 1: Treat in1 as MIDI pitch, 0: in1 is pure audio\n *   filter_lp     (0/1, def: 0)            : Optional 2nd-order lowpass filter\n *   mix           (0..100 %, def: 100)     : Global Dry / Wet blend\n * ============================================================================\n */\n\n// 1. RECONSTRUCTION / ANTI-ALIASING FILTER (2nd-Order Lowpass)\nbiquad_lp(sig, x1, x2, y1, y2) {\n    y = (sig * 0.469) + (x1 * 0.938) + (x2 * 0.469) - (y1 * 0.74) - (y2 * 0.137);\n    return y, sig, x1, y, y1;\n}\n\n// 2. WARM ASYMMETRIC TUBE SOFT-CLIPPER / COMPRESSOR\n// Gently tames violent transients while adding rich 2nd-order warm harmonics\nsaturate_hot(x) {\n    b = x + 0.08 * (x * abs(x));\n    return tanh(b * 1.25) * 0.95;\n}\n\n// 3. PARAMETERS\nParam mode(1, min=0, max=3);\nParam freq(220, min=20, max=10000);\nParam ratio(1.414, min=0.01, max=30);\nParam quantize(0, min=0, max=2);\nParam fm_index(1.8, min=0, max=50);\nParam feedback(0.25, min=0, max=2.0);\nParam stereo_spread(50, min=0, max=100);\nParam use_note_in(0, min=0, max=1);\nParam filter_lp(0, min=0, max=1);\nParam mix(100, min=0, max=100);\n\n// 4. MEMORIES & HISTORIES\nHistory h_ph_car_L(0), h_ph_car_R(0);\nHistory h_ph_mod_L(0), h_ph_mod_R(0);\nHistory h_mod_L(0), h_mod_R(0);\nHistory h_x1_L(0), h_x2_L(0), h_y1_L(0), h_y2_L(0);\nHistory h_x1_R(0), h_x2_R(0), h_y1_R(0), h_y2_R(0);\nDelay dly_L(4800), dly_R(4800);\n\n// 5. FREQUENCY & MODULATION PARAMETER MAPPING\neff_note = clamp(in1, 0, 128);\nf_base = (use_note_in > 0.5) ? mtof(eff_note) : max(freq, 10.0);\n\n// Stereo micro-detune for lush spatialization\nspr = stereo_spread * 0.01;\nf_car_L = f_base * (1.0 - spr * 0.003);\nf_car_R = f_base * (1.0 + spr * 0.003);\n\n// Harmonic ratio quantization / Risset Mode\nraw_ratio = clamp(ratio + (in2 * 0.05), 0.01, 30.0);\n\n// Canonical Risset 1969 Inharmonic Bell Ratios:\n// Hum (0.56), Prime (0.92), Tierce min (1.19), Chowning (1.414),\n// Quint (1.70), Nominal Octave (2.00), Tenth (2.74), Twelfth (3.00),\n// Super-Octave (3.76), Double Octave (4.07)\nrisset_ratio = (raw_ratio < 0.74) ? 0.56 :\n               (raw_ratio < 1.05) ? 0.92 :\n               (raw_ratio < 1.30) ? 1.19 :\n               (raw_ratio < 1.55) ? 1.414 :\n               (raw_ratio < 1.85) ? 1.70 :\n               (raw_ratio < 2.37) ? 2.00 :\n               (raw_ratio < 2.87) ? 2.74 :\n               (raw_ratio < 3.38) ? 3.00 :\n               (raw_ratio < 3.91) ? 3.76 :\n               (raw_ratio < 4.50) ? 4.07 : (floor(raw_ratio) * 1.19 - 0.1);\n\neff_ratio = (quantize < 0.5) ? raw_ratio :\n            (quantize < 1.5) ? max(1.0, floor(raw_ratio + 0.5)) :\n            risset_ratio;\n\n// In Risset mode (quantize == 2), inject Jean-Claude Risset's signature\n// acoustic doublet micro-beating (1.2 Hz) for organic bronze metallic shimmer\nrisset_beat = (quantize >= 1.5) ? 1.2 : 0.0;\n\nf_mod_L = f_car_L * eff_ratio;\nf_mod_R = (f_car_R * eff_ratio * (1.0 + spr * 0.002)) + risset_beat;\n\neff_index = clamp(fm_index + in3, 0.0, 50.0);\neff_fb = clamp(feedback + in4, 0.0, 2.0);\n\n// 6. STEREO MODULATOR OSCILLATOR WITH SELF-FM\ninc_mod_L = (f_mod_L * TWOPI) / samplerate;\ninc_mod_R = (f_mod_R * TWOPI) / samplerate;\n\nh_ph_mod_L = wrap(h_ph_mod_L + inc_mod_L, 0, TWOPI);\nh_ph_mod_R = wrap(h_ph_mod_R + inc_mod_R, 0, TWOPI);\n\n// In Mode 3 (Adaptive Audio), live audio directly injects into the modulator phase\naudio_in_L = in1;\naudio_in_R = (in2 != 0) ? in2 : in1;\nclean_audio_in = (use_note_in > 0.5) ? 0.0 : (audio_in_L * 0.5 + audio_in_R * 0.5);\naudio_inject = (mode >= 2.5) ? clean_audio_in * eff_index * 0.5 : 0.0;\n\n// Classic DX7-style self-feedback phase modulation (Self-FM)\nraw_mod_L = sin(h_ph_mod_L + (h_mod_L * eff_fb) + audio_inject);\nraw_mod_R = sin(h_ph_mod_R + (h_mod_R * eff_fb) + audio_inject);\n\nh_mod_L = fixdenorm(raw_mod_L);\nh_mod_R = fixdenorm(raw_mod_R);\n\n// 7. STEREO CARRIER OSCILLATOR (CLASSICAL CHOWNING PHASE MODULATION)\ninc_car_L = (f_car_L * TWOPI) / samplerate;\ninc_car_R = (f_car_R * TWOPI) / samplerate;\n\nh_ph_car_L = wrap(h_ph_car_L + inc_car_L, 0, TWOPI);\n// Spatial phase offset between L and R (quadrature spread up to 90 degrees)\nspatial_offset = spr * HALFPI * 0.5;\nh_ph_car_R = wrap(h_ph_car_R + inc_car_R, 0, TWOPI);\n\n// Phase Modulation of carrier by the self-modulated bell modulator\nbell_car_L = sin(h_ph_car_L + (raw_mod_L * eff_index));\nbell_car_R = sin(h_ph_car_R + spatial_offset + (raw_mod_R * eff_index));\n\n// 8. OPTIONAL ANTI-ALIASING FILTER\nlp_s, h_x1_L, h_x2_L, h_y1_L, h_y2_L = biquad_lp(bell_car_L, h_x1_L, h_x2_L, h_y1_L, h_y2_L);\nlp_c, h_x1_R, h_x2_R, h_y1_R, h_y2_R = biquad_lp(bell_car_R, h_x1_R, h_x2_R, h_y1_R, h_y2_R);\n\nfilt_car_L = (filter_lp > 0.5) ? lp_s : bell_car_L;\nfilt_car_R = (filter_lp > 0.5) ? lp_c : bell_car_R;\n\n// 9. AUDIO PROCESSING MODES (EFFECTS ON LIVE AUDIO / FILES)\ndry_L = (use_note_in > 0.5) ? 0.0 : audio_in_L;\ndry_R = (use_note_in > 0.5) ? 0.0 : audio_in_R;\n\ndly_L.write(dry_L);\ndly_R.write(dry_R);\n\n// Synthesis level calibration (-8 dB / 0.40):\n// Balances pure carrier output with audio-modulated output for consistent loudness\nsynth_gain = 0.40;\n\n// Detection of external audio presence\nhas_audio = (abs(in1) > 0.0001 || abs(in2) > 0.0001) && (use_note_in < 0.5);\n\n// Mode 1: Stereo Ring Modulation (audio x carrier x 1.5, or calibrated carrier in pure synth)\nm1_L = has_audio ? (dry_L * filt_car_L * 1.5) : (filt_car_L * synth_gain);\nm1_R = has_audio ? (dry_R * filt_car_R * 1.5) : (filt_car_R * synth_gain);\n\n// Mode 2: Through-Zero Time/Doppler FM\ncenter_ms = 4.0;\nspan_ms = min(3.8, (eff_index * 0.08) + 0.1);\nmod_time_L = mstosamps(center_ms + (filt_car_L * span_ms));\nmod_time_R = mstosamps(center_ms + (filt_car_R * span_ms));\nm2_L = dly_L.read(mod_time_L, interp=\"cubic\");\nm2_R = dly_R.read(mod_time_R, interp=\"cubic\");\n\n// Mode 3: Adaptive Audio FM\nm3_L = filt_car_L * synth_gain;\nm3_R = filt_car_R * synth_gain;\n\nraw_wet_L = (mode < 1.5) ? m1_L : ((mode < 2.5) ? m2_L : m3_L);\nraw_wet_R = (mode < 1.5) ? m1_R : ((mode < 2.5) ? m2_R : m3_R);\n\n// 10. HOT TUBE SATURATION / SOFT CLIPPING & COMPRESSION\nsat_wet_L = saturate_hot(raw_wet_L);\nsat_wet_R = saturate_hot(raw_wet_R);\n\n// 11. DRY / WET & MASTER MUTE (MODE 0)\nmix_val = clamp(mix * 0.01, 0.0, 1.0);\nactive_out_L = mix(dry_L, sat_wet_L, mix_val);\nactive_out_R = mix(dry_R, sat_wet_R, mix_val);\n\n// Mode 0 = Off (mutes both audio and modulator completely)\nis_active = (mode >= 0.5);\nout1 = is_active ? active_out_L : 0;\nout2 = is_active ? active_out_R : 0;\n",
+                    "fontface": 0,
+                    "fontname": "<Monospaced>",
+                    "fontsize": 11.0,
+                    "id": "obj-5",
+                    "maxclass": "codebox",
+                    "numinlets": 4,
+                    "numoutlets": 2,
+                    "outlettype": [
+                        "",
+                        ""
+                    ],
+                    "patching_rect": [
+                        16.0,
+                        71.0,
+                        799.0,
+                        979.0
+                    ]
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-4",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        16.0,
+                        1062.0,
+                        33.0,
+                        21.0
+                    ],
+                    "text": "out 1"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-6",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        796.0,
+                        1062.0,
+                        33.0,
+                        21.0
+                    ],
+                    "text": "out 2"
+                }
+            }
+        ],
+        "lines": [
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-5",
+                        0
+                    ],
+                    "source": [
+                        "obj-1",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-5",
+                        2
+                    ],
+                    "source": [
+                        "obj-17",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-5",
+                        3
+                    ],
+                    "source": [
+                        "obj-21",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-4",
+                        0
+                    ],
+                    "source": [
+                        "obj-5",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-6",
+                        0
+                    ],
+                    "source": [
+                        "obj-5",
+                        1
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-5",
+                        1
+                    ],
+                    "source": [
+                        "obj-9",
+                        0
+                    ]
+                }
+            }
+        ]
+    }
+}

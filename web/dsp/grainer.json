@@ -1,0 +1,175 @@
+{
+	"name": "grainer",
+	"filename": "grainer.dsp",
+	"version": "0.9.6",
+	"compile_options": "-lang wasm -double",
+	"library_list": ["dsp/genops.lib","/usr/local/share/faust/noises.lib","/usr/local/share/faust/basics.lib","/usr/local/share/faust/maths.lib","/usr/local/share/faust/platform.lib","/usr/local/share/faust/signals.lib"],
+	"include_pathnames": ["dsp","/Users/letz/Developpements/RUST/faust-gen-patches/../faust-rs/target/share/faust","/usr/local/share/faust","/usr/share/faust"],
+	"size": 524504,
+	"inputs": 4,
+	"outputs": 4,
+	"sr_index": 0,
+	"meta": [ 
+		{ "/Users/letz/Developpements/RUST/faust-gen-patches/dsp/genops.lib/license": "MIT" },
+		{ "/Users/letz/Developpements/RUST/faust-gen-patches/dsp/genops.lib/name": "genops" },
+		{ "/Users/letz/Developpements/RUST/faust-gen-patches/dsp/genops.lib/version": "1.0.0" },
+		{ "/usr/local/share/faust/basics.lib/name": "Faust Basic Element Library" },
+		{ "/usr/local/share/faust/basics.lib/version": "1.23.6" },
+		{ "/usr/local/share/faust/maths.lib/author": "GRAME" },
+		{ "/usr/local/share/faust/maths.lib/copyright": "GRAME" },
+		{ "/usr/local/share/faust/maths.lib/license": "LicenseRef-LGPL-2.1-or-later-with-Faust-exception" },
+		{ "/usr/local/share/faust/maths.lib/name": "Faust Math Library" },
+		{ "/usr/local/share/faust/maths.lib/version": "2.9.3" },
+		{ "/usr/local/share/faust/noises.lib/name": "Faust Noise Generator Library" },
+		{ "/usr/local/share/faust/noises.lib/version": "1.9.0" },
+		{ "/usr/local/share/faust/platform.lib/name": "Generic Platform Library" },
+		{ "/usr/local/share/faust/platform.lib/version": "1.3.1" },
+		{ "/usr/local/share/faust/signals.lib/name": "Faust Routing Library" },
+		{ "/usr/local/share/faust/signals.lib/version": "1.8.0" },
+		{ "author": "Max Bruckert (gen~), Faust port" },
+		{ "compile_options": "-lang wasm -double" },
+		{ "filename": "grainer.dsp" },
+		{ "license": "MIT" },
+		{ "name": "grainer" }
+	],
+	"ui": [ 
+		{
+			"type": "vgroup",
+			"label": "grainer",
+			"items": [ 
+				{
+					"type": "hslider",
+					"label": "antibis",
+					"varname": "fHslider6",
+					"shortname": "antibis",
+					"address": "/grainer/antibis",
+					"index": 72,
+					"meta": [
+						{ "unit": "ms" }
+					],
+					"init": 150,
+					"min": 0,
+					"max": 10000,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "fade",
+					"varname": "fHslider0",
+					"shortname": "fade",
+					"address": "/grainer/fade",
+					"index": 40,
+					"meta": [
+						{ "unit": "ms" }
+					],
+					"init": 1.5,
+					"min": 0.5,
+					"max": 20,
+					"step": 0.001
+				},
+				{
+					"type": "hslider",
+					"label": "gain",
+					"varname": "fHslider2",
+					"shortname": "gain",
+					"address": "/grainer/gain",
+					"index": 24,
+					"init": 4,
+					"min": 1,
+					"max": 10,
+					"step": 0.001
+				},
+				{
+					"type": "hslider",
+					"label": "grain",
+					"varname": "fHslider8",
+					"shortname": "grain",
+					"address": "/grainer/grain",
+					"index": 80,
+					"meta": [
+						{ "unit": "ms" }
+					],
+					"init": 250,
+					"min": 6,
+					"max": 20000,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "mix",
+					"varname": "fHslider1",
+					"shortname": "mix",
+					"address": "/grainer/mix",
+					"index": 48,
+					"meta": [
+						{ "unit": "%" }
+					],
+					"init": 100,
+					"min": 0,
+					"max": 100,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "proba",
+					"varname": "fHslider7",
+					"shortname": "proba",
+					"address": "/grainer/proba",
+					"index": 16,
+					"meta": [
+						{ "unit": "%" }
+					],
+					"init": 100,
+					"min": 0,
+					"max": 100,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "slide_attack",
+					"varname": "fHslider4",
+					"shortname": "slide_attack",
+					"address": "/grainer/slide_attack",
+					"index": 64,
+					"meta": [
+						{ "unit": "ms" }
+					],
+					"init": 5,
+					"min": 0,
+					"max": 500,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "slide_decay",
+					"varname": "fHslider3",
+					"shortname": "slide_decay",
+					"address": "/grainer/slide_decay",
+					"index": 56,
+					"meta": [
+						{ "unit": "ms" }
+					],
+					"init": 50,
+					"min": 0,
+					"max": 5000,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "thresh",
+					"varname": "fHslider5",
+					"shortname": "thresh",
+					"address": "/grainer/thresh",
+					"index": 8,
+					"meta": [
+						{ "unit": "%" }
+					],
+					"init": 40,
+					"min": 0,
+					"max": 100,
+					"step": 0.01
+				}
+			]
+		}
+	]
+}

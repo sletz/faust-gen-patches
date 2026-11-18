@@ -87,7 +87,8 @@ let searchQuery = "";
 function metrics() {
   const models = MODELS_DATA.filter((m) => m.category !== "utilities").length;
   const items = [
-    [`${models} + ${MODELS_DATA.length - models}`, "Models + utilities"],
+    MODELS_DATA.length > models ? [`${models} + ${MODELS_DATA.length - models}`, "Models + utilities"]
+      : [String(models), "Models"],
     [`${SUITE.passed}/${SUITE.settings}`, `Settings within ${SUITE.worst} dB of gen~`],
     [String(SUITE.bitexact), "Bit-exact settings"],
     ["Float64", "WebAssembly, AudioWorklet"],

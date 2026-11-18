@@ -168,12 +168,12 @@ typedef struct State {
 		int max_48 = (samplerate - ((int)10));
 		int max_50 = (samplerate - ((int)10));
 		int max_52 = (samplerate - ((int)10));
-		t_sample tmp_sub1_846 = (m_stiffness_27 - ((int)0));
-		t_sample tmp_scale_843 = ((safepow((tmp_sub1_846 * ((t_sample)1)), ((int)1)) * ((t_sample)0.71999999999999997)) + ((int)0));
-		t_sample ap_coeff = tmp_scale_843;
-		t_sample tmp_sub1_850 = (m_damping_28 - ((int)0));
-		t_sample tmp_scale_847 = ((safepow((tmp_sub1_850 * ((t_sample)1)), ((int)1)) * ((t_sample)-0.91999999999999993)) + ((t_sample)0.95999999999999996));
-		t_sample damp_alpha = tmp_scale_847;
+		t_sample tmp_sub1_600 = (m_stiffness_27 - ((int)0));
+		t_sample tmp_scale_597 = ((safepow((tmp_sub1_600 * ((t_sample)1)), ((int)1)) * ((t_sample)0.71999999999999997)) + ((int)0));
+		t_sample ap_coeff = tmp_scale_597;
+		t_sample tmp_sub1_604 = (m_damping_28 - ((int)0));
+		t_sample tmp_scale_601 = ((safepow((tmp_sub1_604 * ((t_sample)1)), ((int)1)) * ((t_sample)-0.91999999999999993)) + ((t_sample)0.95999999999999996));
+		t_sample damp_alpha = tmp_scale_601;
 		t_sample drive_term = (((int)1) + (m_nl_bridge_24 * ((int)3)));
 		t_sample v_57 = (m_mix_pct_22 * ((t_sample)0.01));
 		t_sample bal = ((v_57 <= ((int)0)) ? ((int)0) : ((v_57 >= ((int)1)) ? ((int)1) : v_57));
@@ -185,9 +185,9 @@ typedef struct State {
 			m_h_trig_4 = in1;
 			int is_trig = (ext_trig || (m_trig_23 > ((int)0)));
 			if (is_trig) {
-				t_sample tmp_sub1_842 = (m_strike_res_25 - ((int)0));
-				t_sample tmp_scale_839 = ((safepow((tmp_sub1_842 * ((t_sample)1)), ((int)1)) * ((t_sample)7.5)) + ((t_sample)0.5));
-				t_sample v_32 = (tmp_scale_839 * (samplerate * 0.001));
+				t_sample tmp_sub1_596 = (m_strike_res_25 - ((int)0));
+				t_sample tmp_scale_593 = ((safepow((tmp_sub1_596 * ((t_sample)1)), ((int)1)) * ((t_sample)7.5)) + ((t_sample)0.5));
+				t_sample v_32 = (tmp_scale_593 * (samplerate * 0.001));
 				m_h_burst_cnt_3 = ((v_32 <= ((int)4)) ? ((int)4) : ((v_32 >= ((int)1200)) ? ((int)1200) : v_32));
 				
 			};
@@ -269,12 +269,12 @@ typedef struct State {
 			t_sample outR = ((((sat1 * ((t_sample)0.12)) + (sat2 * ((t_sample)0.28000000000000003))) + (sat3 * ((t_sample)0.14999999999999999))) + (sat4 * ((t_sample)0.34999999999999998)));
 			t_sample wetL = tanh((outL * ((t_sample)1.2)));
 			t_sample wetR = tanh((outR * ((t_sample)1.2)));
-			t_sample tmp_mix_851 = (in1 + (bal * (wetL - in1)));
-			t_sample tmp_expr_536 = tmp_mix_851;
-			t_sample tmp_mix_852 = (in1 + (bal * (wetR - in1)));
-			t_sample tmp_expr_537 = tmp_mix_852;
-			t_sample out1 = tmp_expr_536;
-			t_sample out2 = tmp_expr_537;
+			t_sample tmp_mix_605 = (in1 + (bal * (wetL - in1)));
+			t_sample tmp_expr_587 = tmp_mix_605;
+			t_sample tmp_mix_606 = (in1 + (bal * (wetR - in1)));
+			t_sample tmp_expr_588 = tmp_mix_606;
+			t_sample out1 = tmp_expr_587;
+			t_sample out2 = tmp_expr_588;
 			m_pick_del_17.step();
 			m_str4_18.step();
 			m_str3_19.step();

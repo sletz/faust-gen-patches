@@ -1,0 +1,213 @@
+{
+    "patcher": {
+        "fileversion": 1,
+        "appversion": {
+            "major": 9,
+            "minor": 2,
+            "revision": 1,
+            "architecture": "x64",
+            "modernui": 1
+        },
+        "classnamespace": "dsp.gen",
+        "rect": [
+            100.0,
+            100.0,
+            800.0,
+            750.0
+        ],
+        "default_fontname": "Lato",
+        "boxes": [
+            {
+                "box": {
+                    "id": "obj-1",
+                    "maxclass": "newobj",
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        50.0,
+                        40.0,
+                        175.0,
+                        22.0
+                    ],
+                    "text": "in 1 @comment \"Audio Left In\""
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-2",
+                    "maxclass": "newobj",
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        250.0,
+                        40.0,
+                        185.0,
+                        22.0
+                    ],
+                    "text": "in 2 @comment \"Audio Right In\""
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-3",
+                    "maxclass": "codebox",
+                    "numinlets": 2,
+                    "numoutlets": 4,
+                    "outlettype": [
+                        "",
+                        "",
+                        "",
+                        ""
+                    ],
+                    "patching_rect": [
+                        50.0,
+                        90.0,
+                        680.0,
+                        560.0
+                    ],
+                    "code": "/**\n * ============================================================================\n * @file filterbank-8.gendsp / filterbank-8.maxpat\n * @title FILTERBANK-8 (8-Band Analog Resonant Filterbank with Soft-Clipping)\n * @author Max Bruckert\n *\n * @description\n * High-definition 8-band analog-modeled resonant filterbank inspired by classic\n * modular filterbanks (Moog 914, Serge Resonant Equalizer, Buchla 296).\n *\n * Each band features:\n *   - Zero-Delay Feedback (ZDF) 2nd-order State Variable Filter (SVF).\n *   - High Q resonance reaching singing / ringing near-self-oscillation without divergence.\n *   - Soft clipping saturation per band and on master sum.\n *   - Individual band levels (-48 dB notch/mute to +12 dB boost).\n *   - Odd/Even band stereo spatialization (stereo_spread).\n *\n * Global controls include:\n *   - Master pitch / formant transposition (freq_shift: -24..+24 semitones).\n *   - Global resonance factor (q_global: 0.5 broad EQ to 50 singing ringing).\n *   - Analog pre-drive and master soft-clipping saturation.\n *   - Master Dry/Wet and makeup gain.\n *\n * @inlets\n *   in1 : Audio Left Input\n *   in2 : Audio Right Input\n *\n * @outlets\n *   out1 : Processed Audio Left (Dry/Wet)\n *   out2 : Processed Audio Right (Dry/Wet)\n *   out3 : Low Bands (1-4) Monitor Sum\n *   out4 : High Bands (5-8) Monitor Sum\n * ============================================================================\n */\n\n// 1. PARAMETERS\nParam freq_shift(0, min=-24, max=24);        // Global pitch / formant transpose in semitones\nParam q_global(4.0, min=0.5, max=50.0);      // Global resonance (near-self-oscillation above 25)\nParam drive(20, min=0, max=100);             // Analog input drive / saturation\nParam soft_clip(50, min=0, max=100);         // Non-linear feedback saturation intensity\nParam stereo_spread(50, min=0, max=100);     // Spatial width across odd/even bands\n\n// 8 Individual Band Levels (-48 dB to +12 dB)\nParam gain_1(0, min=-48, max=12); // Band 1:   65.4 Hz (Sub C2)\nParam gain_2(0, min=-48, max=12); // Band 2:  130.8 Hz (Bass C3)\nParam gain_3(0, min=-48, max=12); // Band 3:  261.6 Hz (Warmth C4)\nParam gain_4(0, min=-48, max=12); // Band 4:  523.2 Hz (Mid Body C5)\nParam gain_5(0, min=-48, max=12); // Band 5: 1046.5 Hz (Vocal Bite C6)\nParam gain_6(0, min=-48, max=12); // Band 6: 2093.0 Hz (Presence C7)\nParam gain_7(0, min=-48, max=12); // Band 7: 4186.0 Hz (Brilliance C8)\nParam gain_8(0, min=-48, max=12); // Band 8: 8372.0 Hz (Air / Top C9)\n\n// Master Output Stage\nParam gain(0, min=-24, max=12);              // Master makeup gain in dB\nParam mix(100, min=0, max=100);              // Master Dry / Wet mix\n\n// 2. STATE HISTORIES (16 SVF Integrator States)\nHistory s1_L1(0), s2_L1(0), s1_R1(0), s2_R1(0);\nHistory s1_L2(0), s2_L2(0), s1_R2(0), s2_R2(0);\nHistory s1_L3(0), s2_L3(0), s1_R3(0), s2_R3(0);\nHistory s1_L4(0), s2_L4(0), s1_R4(0), s2_R4(0);\nHistory s1_L5(0), s2_L5(0), s1_R5(0), s2_R5(0);\nHistory s1_L6(0), s2_L6(0), s1_R6(0), s2_R6(0);\nHistory s1_L7(0), s2_L7(0), s1_R7(0), s2_R7(0);\nHistory s1_L8(0), s2_L8(0), s1_R8(0), s2_R8(0);\n\n// Output DC Blockers\nHistory h_dc_x_L(0), h_dc_y_L(0);\nHistory h_dc_x_R(0), h_dc_y_R(0);\n\n// 3. TUNING & RESONANCE PRE-COMPUTATION\ntransp = pow(2.0, freq_shift * (1.0 / 12.0));\n\n// Damping factor (d = 1/Q)\neff_q = max(0.5, q_global);\nd = 1.0 / eff_q;\nres_boost = pow(eff_q, 0.45);\n\nclip_drive = 1.0 + (soft_clip * 0.01) * 1.5;\nclip_norm = 1.0 / sqrt(clip_drive);\n\n// Center frequencies (C2 to C9 octave ladder)\nf1 = clamp(65.41 * transp, 10.0, samplerate * 0.45);\nf2 = clamp(130.81 * transp, 10.0, samplerate * 0.45);\nf3 = clamp(261.63 * transp, 10.0, samplerate * 0.45);\nf4 = clamp(523.25 * transp, 10.0, samplerate * 0.45);\nf5 = clamp(1046.50 * transp, 10.0, samplerate * 0.45);\nf6 = clamp(2093.00 * transp, 10.0, samplerate * 0.45);\nf7 = clamp(4186.01 * transp, 10.0, samplerate * 0.45);\nf8 = clamp(8372.02 * transp, 10.0, samplerate * 0.45);\n\n// ZDF SVF Tuning Gains g and h\ng1 = tan(PI * f1 / samplerate); h1 = 1.0 / (1.0 + g1 * (g1 + d));\ng2 = tan(PI * f2 / samplerate); h2 = 1.0 / (1.0 + g2 * (g2 + d));\ng3 = tan(PI * f3 / samplerate); h3 = 1.0 / (1.0 + g3 * (g3 + d));\ng4 = tan(PI * f4 / samplerate); h4 = 1.0 / (1.0 + g4 * (g4 + d));\ng5 = tan(PI * f5 / samplerate); h5 = 1.0 / (1.0 + g5 * (g5 + d));\ng6 = tan(PI * f6 / samplerate); h6 = 1.0 / (1.0 + g6 * (g6 + d));\ng7 = tan(PI * f7 / samplerate); h7 = 1.0 / (1.0 + g7 * (g7 + d));\ng8 = tan(PI * f8 / samplerate); h8 = 1.0 / (1.0 + g8 * (g8 + d));\n\n// Band Gain Coefficients (dB to linear, with -40dB cut down to 0)\nk1 = (gain_1 <= -40.0) ? 0.0 : dbtoa(gain_1);\nk2 = (gain_2 <= -40.0) ? 0.0 : dbtoa(gain_2);\nk3 = (gain_3 <= -40.0) ? 0.0 : dbtoa(gain_3);\nk4 = (gain_4 <= -40.0) ? 0.0 : dbtoa(gain_4);\nk5 = (gain_5 <= -40.0) ? 0.0 : dbtoa(gain_5);\nk6 = (gain_6 <= -40.0) ? 0.0 : dbtoa(gain_6);\nk7 = (gain_7 <= -40.0) ? 0.0 : dbtoa(gain_7);\nk8 = (gain_8 <= -40.0) ? 0.0 : dbtoa(gain_8);\n\n// Stereo Spread Panning Weights (alternating odd/even)\nsp = clamp(stereo_spread * 0.01, 0.0, 1.0) * 0.5;\npan_odd_L = 1.0 + sp; pan_odd_R = 1.0 - sp;\npan_evn_L = 1.0 - sp; pan_evn_R = 1.0 + sp;\n\n// 4. PRE-SATURATION INPUT STAGE\nin_drive = 1.0 + (drive * 0.01) * 2.0;\nx_L = tanh(in1 * in_drive);\nx_R = tanh(in2 * in_drive);\n\n// 5. STABLE ZDF SVF PROCESSING - LEFT CHANNEL\n// Band 1\nhp_L1 = (x_L - (g1 + d) * s1_L1 - s2_L1) * h1; v1_L1 = g1 * hp_L1; bp_L1 = v1_L1 + s1_L1;\ns1_L1 = 2.0 * v1_L1 + s1_L1; v2_L1 = g1 * bp_L1; s2_L1 = 2.0 * v2_L1 + s2_L1;\nsat_L1 = tanh((bp_L1 * d * res_boost) * clip_drive) * clip_norm;\n\n// Band 2\nhp_L2 = (x_L - (g2 + d) * s1_L2 - s2_L2) * h2; v1_L2 = g2 * hp_L2; bp_L2 = v1_L2 + s1_L2;\ns1_L2 = 2.0 * v1_L2 + s1_L2; v2_L2 = g2 * bp_L2; s2_L2 = 2.0 * v2_L2 + s2_L2;\nsat_L2 = tanh((bp_L2 * d * res_boost) * clip_drive) * clip_norm;\n\n// Band 3\nhp_L3 = (x_L - (g3 + d) * s1_L3 - s2_L3) * h3; v1_L3 = g3 * hp_L3; bp_L3 = v1_L3 + s1_L3;\ns1_L3 = 2.0 * v1_L3 + s1_L3; v2_L3 = g3 * bp_L3; s2_L3 = 2.0 * v2_L3 + s2_L3;\nsat_L3 = tanh((bp_L3 * d * res_boost) * clip_drive) * clip_norm;\n\n// Band 4\nhp_L4 = (x_L - (g4 + d) * s1_L4 - s2_L4) * h4; v1_L4 = g4 * hp_L4; bp_L4 = v1_L4 + s1_L4;\ns1_L4 = 2.0 * v1_L4 + s1_L4; v2_L4 = g4 * bp_L4; s2_L4 = 2.0 * v2_L4 + s2_L4;\nsat_L4 = tanh((bp_L4 * d * res_boost) * clip_drive) * clip_norm;\n\n// Band 5\nhp_L5 = (x_L - (g5 + d) * s1_L5 - s2_L5) * h5; v1_L5 = g5 * hp_L5; bp_L5 = v1_L5 + s1_L5;\ns1_L5 = 2.0 * v1_L5 + s1_L5; v2_L5 = g5 * bp_L5; s2_L5 = 2.0 * v2_L5 + s2_L5;\nsat_L5 = tanh((bp_L5 * d * res_boost) * clip_drive) * clip_norm;\n\n// Band 6\nhp_L6 = (x_L - (g6 + d) * s1_L6 - s2_L6) * h6; v1_L6 = g6 * hp_L6; bp_L6 = v1_L6 + s1_L6;\ns1_L6 = 2.0 * v1_L6 + s1_L6; v2_L6 = g6 * bp_L6; s2_L6 = 2.0 * v2_L6 + s2_L6;\nsat_L6 = tanh((bp_L6 * d * res_boost) * clip_drive) * clip_norm;\n\n// Band 7\nhp_L7 = (x_L - (g7 + d) * s1_L7 - s2_L7) * h7; v1_L7 = g7 * hp_L7; bp_L7 = v1_L7 + s1_L7;\ns1_L7 = 2.0 * v1_L7 + s1_L7; v2_L7 = g7 * bp_L7; s2_L7 = 2.0 * v2_L7 + s2_L7;\nsat_L7 = tanh((bp_L7 * d * res_boost) * clip_drive) * clip_norm;\n\n// Band 8\nhp_L8 = (x_L - (g8 + d) * s1_L8 - s2_L8) * h8; v1_L8 = g8 * hp_L8; bp_L8 = v1_L8 + s1_L8;\ns1_L8 = 2.0 * v1_L8 + s1_L8; v2_L8 = g8 * bp_L8; s2_L8 = 2.0 * v2_L8 + s2_L8;\nsat_L8 = tanh((bp_L8 * d * res_boost) * clip_drive) * clip_norm;\n\n// 6. STABLE ZDF SVF PROCESSING - RIGHT CHANNEL\n// Band 1\nhp_R1 = (x_R - (g1 + d) * s1_R1 - s2_R1) * h1; v1_R1 = g1 * hp_R1; bp_R1 = v1_R1 + s1_R1;\ns1_R1 = 2.0 * v1_R1 + s1_R1; v2_R1 = g1 * bp_R1; s2_R1 = 2.0 * v2_R1 + s2_R1;\nsat_R1 = tanh((bp_R1 * d * res_boost) * clip_drive) * clip_norm;\n\n// Band 2\nhp_R2 = (x_R - (g2 + d) * s1_R2 - s2_R2) * h2; v1_R2 = g2 * hp_R2; bp_R2 = v1_R2 + s1_R2;\ns1_R2 = 2.0 * v1_R2 + s1_R2; v2_R2 = g2 * bp_R2; s2_R2 = 2.0 * v2_R2 + s2_R2;\nsat_R2 = tanh((bp_R2 * d * res_boost) * clip_drive) * clip_norm;\n\n// Band 3\nhp_R3 = (x_R - (g3 + d) * s1_R3 - s2_R3) * h3; v1_R3 = g3 * hp_R3; bp_R3 = v1_R3 + s1_R3;\ns1_R3 = 2.0 * v1_R3 + s1_R3; v2_R3 = g3 * bp_R3; s2_R3 = 2.0 * v2_R3 + s2_R3;\nsat_R3 = tanh((bp_R3 * d * res_boost) * clip_drive) * clip_norm;\n\n// Band 4\nhp_R4 = (x_R - (g4 + d) * s1_R4 - s2_R4) * h4; v1_R4 = g4 * hp_R4; bp_R4 = v1_R4 + s1_R4;\ns1_R4 = 2.0 * v1_R4 + s1_R4; v2_R4 = g4 * bp_R4; s2_R4 = 2.0 * v2_R4 + s2_R4;\nsat_R4 = tanh((bp_R4 * d * res_boost) * clip_drive) * clip_norm;\n\n// Band 5\nhp_R5 = (x_R - (g5 + d) * s1_R5 - s2_R5) * h5; v1_R5 = g5 * hp_R5; bp_R5 = v1_R5 + s1_R5;\ns1_R5 = 2.0 * v1_R5 + s1_R5; v2_R5 = g5 * bp_R5; s2_R5 = 2.0 * v2_R5 + s2_R5;\nsat_R5 = tanh((bp_R5 * d * res_boost) * clip_drive) * clip_norm;\n\n// Band 6\nhp_R6 = (x_R - (g6 + d) * s1_R6 - s2_R6) * h6; v1_R6 = g6 * hp_R6; bp_R6 = v1_R6 + s1_R6;\ns1_R6 = 2.0 * v1_R6 + s1_R6; v2_R6 = g6 * bp_R6; s2_R6 = 2.0 * v2_R6 + s2_R6;\nsat_R6 = tanh((bp_R6 * d * res_boost) * clip_drive) * clip_norm;\n\n// Band 7\nhp_R7 = (x_R - (g7 + d) * s1_R7 - s2_R7) * h7; v1_R7 = g7 * hp_R7; bp_R7 = v1_R7 + s1_R7;\ns1_R7 = 2.0 * v1_R7 + s1_R7; v2_R7 = g7 * bp_R7; s2_R7 = 2.0 * v2_R7 + s2_R7;\nsat_R7 = tanh((bp_R7 * d * res_boost) * clip_drive) * clip_norm;\n\n// Band 8\nhp_R8 = (x_R - (g8 + d) * s1_R8 - s2_R8) * h8; v1_R8 = g8 * hp_R8; bp_R8 = v1_R8 + s1_R8;\ns1_R8 = 2.0 * v1_R8 + s1_R8; v2_R8 = g8 * bp_R8; s2_R8 = 2.0 * v2_R8 + s2_R8;\nsat_R8 = tanh((bp_R8 * d * res_boost) * clip_drive) * clip_norm;\n\n// 7. WEIGHTED SUM & SPATIAL EXPANSION\n// Odd bands: pan_odd, Even bands: pan_evn\nb1_L = sat_L1 * k1 * pan_odd_L; b1_R = sat_R1 * k1 * pan_odd_R;\nb2_L = sat_L2 * k2 * pan_evn_L; b2_R = sat_R2 * k2 * pan_evn_R;\nb3_L = sat_L3 * k3 * pan_odd_L; b3_R = sat_R3 * k3 * pan_odd_R;\nb4_L = sat_L4 * k4 * pan_evn_L; b4_R = sat_R4 * k4 * pan_evn_R;\nb5_L = sat_L5 * k5 * pan_odd_L; b5_R = sat_R5 * k5 * pan_odd_R;\nb6_L = sat_L6 * k6 * pan_evn_L; b6_R = sat_R6 * k6 * pan_evn_R;\nb7_L = sat_L7 * k7 * pan_odd_L; b7_R = sat_R7 * k7 * pan_odd_R;\nb8_L = sat_L8 * k8 * pan_evn_L; b8_R = sat_R8 * k8 * pan_evn_R;\n\n// Subgroup monitors (Low 1-4, High 5-8)\nlow_sub_L = b1_L + b2_L + b3_L + b4_L;\nlow_sub_R = b1_R + b2_R + b3_R + b4_R;\nhigh_sub_L = b5_L + b6_L + b7_L + b8_L;\nhigh_sub_R = b5_R + b6_R + b7_R + b8_R;\n\nsum_raw_L = low_sub_L + high_sub_L;\nsum_raw_R = low_sub_R + high_sub_R;\n\n// 8. MASTER DC-BLOCK, SOFT CLIPPING & MAKEUP GAIN\ndc_L = sum_raw_L - h_dc_x_L + 0.995 * h_dc_y_L;\nh_dc_x_L = sum_raw_L; h_dc_y_L = dc_L;\n\ndc_R = sum_raw_R - h_dc_x_R + 0.995 * h_dc_y_R;\nh_dc_x_R = sum_raw_R; h_dc_y_R = dc_R;\n\nmake_up = dbtoa(gain);\nlim_L = tanh(dc_L * 0.4) * 2.5 * make_up;\nlim_R = tanh(dc_R * 0.4) * 2.5 * make_up;\n\n// Master Dry/Wet\neff_mix = clamp(mix * 0.01, 0.0, 1.0);\nout1 = mix(in1, lim_L, eff_mix);\nout2 = mix(in2, lim_R, eff_mix);\n\nout3 = (low_sub_L + low_sub_R) * 0.5;\nout4 = (high_sub_L + high_sub_R) * 0.5;\n"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-4",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        50.0,
+                        680.0,
+                        210.0,
+                        22.0
+                    ],
+                    "text": "out 1 @comment \"Processed Left Out\""
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-5",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        270.0,
+                        680.0,
+                        220.0,
+                        22.0
+                    ],
+                    "text": "out 2 @comment \"Processed Right Out\""
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-6",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        500.0,
+                        680.0,
+                        150.0,
+                        22.0
+                    ],
+                    "text": "out 3 @comment \"Low Sub Sum\""
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-7",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        660.0,
+                        680.0,
+                        150.0,
+                        22.0
+                    ],
+                    "text": "out 4 @comment \"High Sub Sum\""
+                }
+            }
+        ],
+        "lines": [
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-3",
+                        0
+                    ],
+                    "source": [
+                        "obj-1",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-3",
+                        1
+                    ],
+                    "source": [
+                        "obj-2",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-4",
+                        0
+                    ],
+                    "source": [
+                        "obj-3",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-5",
+                        0
+                    ],
+                    "source": [
+                        "obj-3",
+                        1
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-6",
+                        0
+                    ],
+                    "source": [
+                        "obj-3",
+                        2
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-7",
+                        0
+                    ],
+                    "source": [
+                        "obj-3",
+                        3
+                    ]
+                }
+            }
+        ]
+    }
+}

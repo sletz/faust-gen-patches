@@ -24,11 +24,9 @@
 // p_fuzz_db (0..60 dB), p_fuzz_hz (100..8000 Hz), p_pump_db (-60..0 dB),
 // p_release_ms (10..5000 ms), p_gain_wet_db (-60..24 dB), p_mix_pct (0..100 %).
 //
-// Note: the gendsp's header comment documents another version of the patch
-// (4 inlets with a sidechain and an aux input, p_absorb_pct, p_fuzz_drive,
-// p_fuzz_mix, p_tone_freq, p_duck_amt, p_duck_rel_ms, p_wet_gain_db, p_mix,
-// a soft-clip limiter): the code has 2 inputs, the parameters above, no
-// limiter, and ducks on the dry input L+R. The port follows the code.
+// Note: the gendsp's header comment lists a soft-clip safety limiter as the
+// last stage; the code has none (the wet signal is only gained, x2, and
+// mixed). The port follows the code.
 
 declare name "frost-machine";
 declare author "Max Bruckert (gen~), Faust port";

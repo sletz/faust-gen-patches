@@ -1,0 +1,191 @@
+{
+	"name": "fhickup",
+	"filename": "fhickup.dsp",
+	"version": "0.9.6",
+	"compile_options": "-lang wasm -double",
+	"library_list": ["dsp/genops.lib","/usr/local/share/faust/noises.lib","/usr/local/share/faust/basics.lib","/usr/local/share/faust/maths.lib","/usr/local/share/faust/platform.lib"],
+	"include_pathnames": ["dsp","/Users/letz/Developpements/RUST/faust-gen-patches/../faust-rs/target/share/faust","/usr/local/share/faust","/usr/share/faust"],
+	"size": 432,
+	"inputs": 4,
+	"outputs": 2,
+	"sr_index": 0,
+	"meta": [ 
+		{ "/Users/letz/Developpements/RUST/faust-gen-patches/dsp/genops.lib/license": "MIT" },
+		{ "/Users/letz/Developpements/RUST/faust-gen-patches/dsp/genops.lib/name": "genops" },
+		{ "/Users/letz/Developpements/RUST/faust-gen-patches/dsp/genops.lib/version": "1.0.0" },
+		{ "/usr/local/share/faust/basics.lib/name": "Faust Basic Element Library" },
+		{ "/usr/local/share/faust/basics.lib/version": "1.23.6" },
+		{ "/usr/local/share/faust/maths.lib/author": "GRAME" },
+		{ "/usr/local/share/faust/maths.lib/copyright": "GRAME" },
+		{ "/usr/local/share/faust/maths.lib/license": "LicenseRef-LGPL-2.1-or-later-with-Faust-exception" },
+		{ "/usr/local/share/faust/maths.lib/name": "Faust Math Library" },
+		{ "/usr/local/share/faust/maths.lib/version": "2.9.3" },
+		{ "/usr/local/share/faust/noises.lib/name": "Faust Noise Generator Library" },
+		{ "/usr/local/share/faust/noises.lib/version": "1.9.0" },
+		{ "/usr/local/share/faust/platform.lib/name": "Generic Platform Library" },
+		{ "/usr/local/share/faust/platform.lib/version": "1.3.1" },
+		{ "author": "Max Bruckert (gen~), Faust port" },
+		{ "compile_options": "-lang wasm -double" },
+		{ "filename": "fhickup.dsp" },
+		{ "license": "MIT" },
+		{ "name": "fhickup" }
+	],
+	"ui": [ 
+		{
+			"type": "vgroup",
+			"label": "fhickup",
+			"items": [ 
+				{
+					"type": "hslider",
+					"label": "drive",
+					"varname": "fHslider3",
+					"shortname": "drive",
+					"address": "/fhickup/drive",
+					"index": 16,
+					"meta": [
+						{ "unit": "%" }
+					],
+					"init": 15,
+					"min": 0,
+					"max": 100,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "env_to_filt",
+					"varname": "fHslider2",
+					"shortname": "env_to_filt",
+					"address": "/fhickup/env_to_filt",
+					"index": 64,
+					"meta": [
+						{ "unit": "%" }
+					],
+					"init": 0,
+					"min": -100,
+					"max": 100,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "filter_morph",
+					"varname": "fHslider8",
+					"shortname": "filter_morph",
+					"address": "/fhickup/filter_morph",
+					"index": 56,
+					"meta": [
+						{ "unit": "%" }
+					],
+					"init": 50,
+					"min": 0,
+					"max": 100,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "freq",
+					"varname": "fHslider1",
+					"shortname": "freq",
+					"address": "/fhickup/freq",
+					"index": 8,
+					"meta": [
+						{ "unit": "Hz" }
+					],
+					"init": 1200,
+					"min": 50,
+					"max": 8000,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "hickclick",
+					"varname": "fHslider6",
+					"shortname": "hickclick",
+					"address": "/fhickup/hickclick",
+					"index": 112,
+					"meta": [
+						{ "unit": "ms" }
+					],
+					"init": 15,
+					"min": 0.5,
+					"max": 100,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "hickfreq",
+					"varname": "fHslider5",
+					"shortname": "hickfreq",
+					"address": "/fhickup/hickfreq",
+					"index": 104,
+					"meta": [
+						{ "unit": "Hz" }
+					],
+					"init": 8,
+					"min": 0.1,
+					"max": 1000,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "hickmix",
+					"varname": "fHslider4",
+					"shortname": "hickmix",
+					"address": "/fhickup/hickmix",
+					"index": 96,
+					"meta": [
+						{ "unit": "%" }
+					],
+					"init": 60,
+					"min": 0,
+					"max": 100,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "mix",
+					"varname": "fHslider0",
+					"shortname": "mix",
+					"address": "/fhickup/mix",
+					"index": 48,
+					"meta": [
+						{ "unit": "%" }
+					],
+					"init": 100,
+					"min": 0,
+					"max": 100,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "ringmod",
+					"varname": "fHslider7",
+					"shortname": "ringmod",
+					"address": "/fhickup/ringmod",
+					"index": 120,
+					"meta": [
+						{ "unit": "%" }
+					],
+					"init": 0,
+					"min": 0,
+					"max": 100,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "stereo_spread",
+					"varname": "fHslider9",
+					"shortname": "stereo_spread",
+					"address": "/fhickup/stereo_spread",
+					"index": 24,
+					"meta": [
+						{ "unit": "%" }
+					],
+					"init": 40,
+					"min": 0,
+					"max": 100,
+					"step": 0.01
+				}
+			]
+		}
+	]
+}

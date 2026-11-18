@@ -11,6 +11,13 @@ both sides with gen~'s parameter names, optional `at` [(frame, param, value)],
 `input`, `tol_db`, `skip`, `window`), `frames`, `tol_db` and `note` (why a
 tolerance is not the default, or what differs).
 
+An mc.gen~ patch (`mc`: N) is ported as its N instances in one program: the
+export is rendered once per channel, with mc_channel = 1..N and
+mc_channelcount = N, and its outputs are compared with the program's, channel
+by channel. `mc_inputs` (k > 0): each instance takes its own k inputs, the
+program's inputs (c-1)*k..c*k-1; 0 (default): every instance takes all of
+them, `inputs` being then the export's.
+
 Parameters declared without min/max in the gendsp (`Param smooth(100);`) are
 clamped to [0, 1] by the export's setparameter (gen~ inside Max does not clamp
 them): the settings leave them at their defaults, which are not clamped.

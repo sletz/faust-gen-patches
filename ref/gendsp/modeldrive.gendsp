@@ -1,0 +1,187 @@
+{
+    "patcher": {
+        "fileversion": 1,
+        "appversion": {
+            "major": 9,
+            "minor": 2,
+            "revision": 1,
+            "architecture": "x64",
+            "modernui": 1
+        },
+        "classnamespace": "dsp.gen",
+        "rect": [
+            100.0,
+            100.0,
+            750.0,
+            700.0
+        ],
+        "default_fontname": "Lato",
+        "boxes": [
+            {
+                "box": {
+                    "id": "obj-1",
+                    "maxclass": "newobj",
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        50.0,
+                        40.0,
+                        175.0,
+                        22.0
+                    ],
+                    "text": "in 1 @comment \"Audio Left In\""
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-2",
+                    "maxclass": "newobj",
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        240.0,
+                        40.0,
+                        185.0,
+                        22.0
+                    ],
+                    "text": "in 2 @comment \"Audio Right In\""
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-3",
+                    "maxclass": "newobj",
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        440.0,
+                        40.0,
+                        175.0,
+                        22.0
+                    ],
+                    "text": "in 3 @comment \"Drive CV In\""
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-4",
+                    "maxclass": "codebox",
+                    "numinlets": 3,
+                    "numoutlets": 2,
+                    "outlettype": [
+                        "",
+                        ""
+                    ],
+                    "patching_rect": [
+                        50.0,
+                        90.0,
+                        600.0,
+                        520.0
+                    ],
+                    "code": "/**\n * ============================================================================\n * @file pisound-drive.gendsp / modeldrive.maxpat\n * @title PISOUND DRIVE / MODELDRIVE (Morphing Multi-Model Distortion Engine)\n * @author Max Bruckert\n *\n * @description\n * High-definition GenExpr port of the Pisound Drive processor.\n * Stripped of redundant predrive and hickup stages, this pure codebox\n * architecture focuses on four distinct, classic distortion models\n * seamlessly unified by an equal-power continuous morphing gesture:\n *   1. Tanh Overdrive: Warm analog soft saturation.\n *   2. Wavefolder: Dynamic Buchla/Serge-style symmetric wavefolding.\n *   3. Quantizer: Staircase digital bitcrushing with DC blocking.\n *   4. Modulo Wrap: Aggressive cyclical wrap-around clipping.\n *\n * Features calibrated loudness weighting (equal RMS energy across all models),\n * post-distortion analog one-pole lowpass tone sculpting, soft limiter,\n * and master Dry/Wet blending.\n *\n * @inlets\n *   in1 : Audio Left Input\n *   in2 : Audio Right Input\n *   in3 : Optional Drive CV Modulation\n *\n * @outlets\n *   out1 : Processed Left Audio (Dry/Wet)\n *   out2 : Processed Right Audio (Dry/Wet)\n *\n * @parameters\n *   drive       (0..100 %, def: 30)         : Distortion intensity\n *   model       (0..100 %, def: 0)          : Continuous morphing through the 4 drive engines\n *   tone        (100..18000 Hz, def: 12000) : Post-drive analog lowpass filter cutoff\n *   level_comp  (0/1, def: 1)               : Enable loudness energy normalization\n *   gain        (-24..12 dB, def: 0)        : Final output makeup gain\n *   mix         (0..100 %, def: 100)        : Master Dry/Wet balance\n * ============================================================================\n */\n\n// 1. PARAMETERS\nParam drive(30, min=0, max=100);\nParam model(0, min=0, max=100);\nParam tone(12000, min=100, max=18000);\nParam level_comp(1, min=0, max=1);\nParam gain(0, min=-24, max=12);\nParam mix(100, min=0, max=100);\n\n// State histories\nHistory h_dc_x_L(0.0), h_dc_y_L(0.0);\nHistory h_dc_x_R(0.0), h_dc_y_R(0.0);\nHistory h_tone_L(0.0), h_tone_R(0.0);\n\n// 2. CONTROLS & SHARED COEFFICIENTS\neff_drive = clamp((drive + in3 * 100.0) * 0.01, 0.0, 1.0);\ncomp_active = (level_comp > 0.5);\n\npos = clamp(model * 0.03, 0.0, 3.0); // 0..100% -> 0.0..3.0\nidx = floor(pos);\nfr = pos - idx;\nw0 = cos(fr * HALFPI);\nw1 = sin(fr * HALFPI);\n\n// Scaling factors for each distortion model\nscale_d1 = 8.0 + (35.0 - 8.0) * pow(eff_drive, 0.3);\nlo_f = -0.7 + (-0.3 - (-0.7)) * pow(eff_drive, 0.8);\nhi_f = 0.7 + (0.3 - 0.7) * pow(eff_drive, 0.8);\nspan = max(0.001, hi_f - lo_f);\nscale_f = 1.0 + (6.0 - 1.0) * pow(eff_drive, 0.3);\nfold_comp = comp_active ? ((0.7 / max(0.1, hi_f)) * 1.9) : 1.0;\nscale_q = 5.0 + (1.05 - 5.0) * pow(eff_drive, 0.3);\nscale_w = 1.0 + (6.0 - 1.0) * pow(eff_drive, 0.3);\n\n// 3. PROCESS LEFT CHANNEL\n// Model 1: Tanh\nm1_L = tanh(in1 * 2.0 * scale_d1) * (comp_active ? 0.36 : 0.15);\n\n// Model 2: Wavefolder\nx_f_L = in1 * 2.0 * scale_f;\nfold_L = lo_f + abs(wrap(x_f_L - lo_f - span, 0.0, 2.0 * span) - span);\nm2_L = clamp(fold_L, -1.0, 1.0) * 0.45 * fold_comp;\n\n// Model 3: Quantizer with DC blocker\nx_q_L = in1 * 0.6 * scale_q;\nq_L = (ceil(x_q_L) + floor(x_q_L + 0.5) - 0.5) / scale_q;\ndc_L = q_L - h_dc_x_L + 0.995 * h_dc_y_L;\nh_dc_x_L = q_L; \nh_dc_y_L = dc_L;\nm3_L = dc_L * 0.25 * (comp_active ? 2.3 : 1.0);\n\n// Model 4: Modulo Wrap\nwrap_L = wrap(in1 * 12.0 * scale_w, -0.5, 0.5);\nm4_L = wrap_L * 0.8 * (comp_active ? 0.95 : 1.28);\n\n// Morphing Left\ndist_L = (idx < 1.0) ? (m1_L * w0 + m2_L * w1) : ((idx < 2.0) ? (m2_L * w0 + m3_L * w1) : (m3_L * w0 + m4_L * w1));\n\n// 4. PROCESS RIGHT CHANNEL\n// Model 1: Tanh\nm1_R = tanh(in2 * 2.0 * scale_d1) * (comp_active ? 0.36 : 0.15);\n\n// Model 2: Wavefolder\nx_f_R = in2 * 2.0 * scale_f;\nfold_R = lo_f + abs(wrap(x_f_R - lo_f - span, 0.0, 2.0 * span) - span);\nm2_R = clamp(fold_R, -1.0, 1.0) * 0.45 * fold_comp;\n\n// Model 3: Quantizer with DC blocker\nx_q_R = in2 * 0.6 * scale_q;\nq_R = (ceil(x_q_R) + floor(x_q_R + 0.5) - 0.5) / scale_q;\ndc_R = q_R - h_dc_x_R + 0.995 * h_dc_y_R;\nh_dc_x_R = q_R; \nh_dc_y_R = dc_R;\nm3_R = dc_R * 0.25 * (comp_active ? 2.3 : 1.0);\n\n// Model 4: Modulo Wrap\nwrap_R = wrap(in2 * 12.0 * scale_w, -0.5, 0.5);\nm4_R = wrap_R * 0.8 * (comp_active ? 0.95 : 1.28);\n\n// Morphing Right\ndist_R = (idx < 1.0) ? (m1_R * w0 + m2_R * w1) : ((idx < 2.0) ? (m2_R * w0 + m3_R * w1) : (m3_R * w0 + m4_R * w1));\n\n// 5. POST-DRIVE TONE SCULPTING (Analog 1-Pole Lowpass)\ntone_fc = clamp(tone, 100.0, 18000.0);\ntone_omega = tone_fc * (TWOPI / samplerate);\ntone_coeff = clamp(tone_omega / (1.0 + tone_omega), 0.001, 0.999);\n\nh_tone_L = fixdenorm(h_tone_L + tone_coeff * (dist_L - h_tone_L));\nh_tone_R = fixdenorm(h_tone_R + tone_coeff * (dist_R - h_tone_R));\n\n// 6. WARM SOFT-LIMITER & MAKE-UP GAIN\nmake_up = dbtoa(gain);\nlim_L = tanh(h_tone_L * 1.1) * make_up;\nlim_R = tanh(h_tone_R * 1.1) * make_up;\n\n// 7. DRY / WET MASTER MIX\neff_mix = clamp(mix * 0.01, 0.0, 1.0);\nout1 = mix(in1, lim_L, eff_mix);\nout2 = mix(in2, lim_R, eff_mix);\n"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-5",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        50.0,
+                        630.0,
+                        230.0,
+                        22.0
+                    ],
+                    "text": "out 1 @comment \"Processed Left (Dry/Wet)\""
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-6",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        300.0,
+                        630.0,
+                        240.0,
+                        22.0
+                    ],
+                    "text": "out 2 @comment \"Processed Right (Dry/Wet)\""
+                }
+            }
+        ],
+        "lines": [
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-4",
+                        0
+                    ],
+                    "source": [
+                        "obj-1",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-4",
+                        1
+                    ],
+                    "source": [
+                        "obj-2",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-4",
+                        2
+                    ],
+                    "source": [
+                        "obj-3",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-5",
+                        0
+                    ],
+                    "source": [
+                        "obj-4",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-6",
+                        0
+                    ],
+                    "source": [
+                        "obj-4",
+                        1
+                    ]
+                }
+            }
+        ]
+    }
+}

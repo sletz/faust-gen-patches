@@ -13,14 +13,9 @@
 // out1: pulse stream   out2: pulse counter (1..occurrences, held at the end)
 // out3: activity (1 while running)
 //
-// Parameters: occurrences (def 16, min 1), interval (1..30000 ms, def 250),
+// Parameters: occurrences (1..1000, def 16), interval (1..30000 ms, def 250),
 // width (0.01..0.99, def 0.5: duty cycle of each pulse), loop (0/1, def 0),
 // jitter (0..1, def 0: 0 regular, 1 Poisson).
-// (The gendsp header comment documents other names, n_pulses, total_time_ms,
-// pulse_width_ms, which are not the code's parameters.)
-// occurrences is declared `min=1` without max: the export clamps it to [1, 1]
-// (setparameter), so only its default 16 can be compared; the range here is
-// 1..1000.
 
 declare name "poisson-cloud";
 declare author "Max Bruckert (gen~), Faust port";

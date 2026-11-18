@@ -4,8 +4,8 @@
 // A 16-line feedback delay network: 16 delay lines of 509..4409 samples
 // (times `size`), their lengths modulated by a sine/cosine LFO, each tap
 // damped by a one-pole lowpass, mixed by the Householder reflection
-// H = I - (2/16)*1*1^T (one global sum), scaled by the decay gain and
-// written back through tanh. The stereo input is injected with alternating
+// H = I - (2/16)*1*1^T (one global sum), scaled by the decay gain of its
+// line and written back through tanh. The stereo input is injected with alternating
 // signs on the 16 lines; the wet outputs are alternating-sign sums of the
 // even (left) and odd (right) taps.
 //
@@ -15,10 +15,10 @@
 // damping (0..1), mod_amt (0..20 samples of LFO excursion),
 // mod_rate (0.1..5 Hz), mix (0..100 %).
 //
-// Quirk kept from gen~: the comment calls `decay` a T60 target, but the
-// feedback gain is pow(0.001, 1/max(decay*SR/2000, 10)) applied once per
-// trip through the lines (509..4409 samples, not once per sample): the decay
-// time depends on `size` and on the sample rate, and is not `decay` seconds.
+// `decay` is a T60 in seconds: line k, of current (modulated) length len_k,
+// is scaled by g_k = exp(-ln(1000) * len_k / (max(decay, 0.1) * SR)), -60 dB
+// after `decay` seconds whatever its length. The tanh in the loop and the
+// damping shorten it further.
 
 declare name "householder-fdn-16";
 declare author "Max Bruckert (gen~), Faust port";
@@ -60,7 +60,9 @@ with {
 };
 
 d_alpha = g.clamp(0, 0.95, damping * 0.7);
-fb_gain = g.safepow(0.001, g.safediv(1, max(decay * (ma.SR * 0.0005), 10)));
+// g_k = exp(alpha_t60 * len_k), alpha_t60 = -ln(1000) / t60 in samples
+alpha_t60 = -6.907755278982137 / (max(decay, 0.1) * ma.SR);
+gain(k) = exp(alpha_t60 * len(k));
 bal = mix * 0.01;
 
 // tap k: Delay d_k(16000) read (linear, before its write) at len_k, then the
@@ -80,7 +82,7 @@ with {
     // the input injected with signs +inL, +inR, -inL, -inR, ...
     v(k) = ba.take((k % 4) + 1, ((t(k) - scale_sum) + inL, (t(k) - scale_sum) + inR,
                                  (t(k) - scale_sum) - inL, (t(k) - scale_sum) - inR));
-    wr(k) = ma.tanh(v(k) * fb_gain);
+    wr(k) = ma.tanh(v(k) * gain(k));
     wetL = ((((((((t(0) - t(2)) + t(4)) - t(6)) + t(8)) - t(10)) + t(12)) - t(14))) * 0.35;
     wetR = ((((((((t(1) - t(3)) + t(5)) - t(7)) + t(9)) - t(11)) + t(13)) - t(15))) * 0.35;
     out1 = (in1 * (1.0 - bal)) + (wetL * bal);

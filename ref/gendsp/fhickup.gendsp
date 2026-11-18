@@ -1,0 +1,221 @@
+{
+    "patcher": {
+        "fileversion": 1,
+        "appversion": {
+            "major": 9,
+            "minor": 2,
+            "revision": 1,
+            "architecture": "x64",
+            "modernui": 1
+        },
+        "classnamespace": "dsp.gen",
+        "rect": [
+            100.0,
+            100.0,
+            850.0,
+            950.0
+        ],
+        "default_fontsize": 11.0,
+        "gridsize": [
+            8.0,
+            8.0
+        ],
+        "boxes": [
+            {
+                "box": {
+                    "id": "obj-1",
+                    "maxclass": "newobj",
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        20.0,
+                        20.0,
+                        180.0,
+                        21.0
+                    ],
+                    "text": "in 1 @comment Audio Left In"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-2",
+                    "maxclass": "newobj",
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        220.0,
+                        20.0,
+                        180.0,
+                        21.0
+                    ],
+                    "text": "in 2 @comment Audio Right In"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-3",
+                    "maxclass": "newobj",
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        420.0,
+                        20.0,
+                        180.0,
+                        21.0
+                    ],
+                    "text": "in 3 @comment Drive CV (0..100)"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-4",
+                    "maxclass": "newobj",
+                    "numinlets": 0,
+                    "numoutlets": 1,
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        620.0,
+                        20.0,
+                        180.0,
+                        21.0
+                    ],
+                    "text": "in 4 @comment Hickmix CV (0..100)"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-5",
+                    "maxclass": "codebox",
+                    "numinlets": 4,
+                    "numoutlets": 2,
+                    "outlettype": [
+                        "",
+                        ""
+                    ],
+                    "patching_rect": [
+                        20.0,
+                        60.0,
+                        780.0,
+                        800.0
+                    ],
+                    "code": "/**\n * ============================================================================\n * @file fhickup.gendsp / fhickup.maxpat\n * @title FHICKUP (Telephone Filter, Overdrive & Glitch Hickup Modulator)\n * @author Max Bruckert\n *\n * @description\n * High-definition port of the RNBO 'fhickup' processor into pure sample-accurate\n * GenExpr. Combines an analog-modeled atan overdrive with automatic loudness\n * compensation, an asynchronous pseudo-random square-wave amplitude chopper\n * ('hickup') with variable edge-smoothing (click to soft tremolo), an audio-rate\n * ring-modulation mode, dynamic input-envelope filter tracking (auto-wah), and a\n * 2nd-order telephone crossover filter with continuous LP -> BP -> HP morphing.\n *\n * Finished with a warm soft limiter and master dry/wet balance.\n *\n * @inlets\n *   in1 : Audio Left Input\n *   in2 : Audio Right Input\n *   in3 : Drive CV (added to drive parameter)\n *   in4 : Hickup Depth CV (added to hickmix parameter)\n *\n * @outlets\n *   out1 : Processed Audio Left (Dry/Wet)\n *   out2 : Processed Audio Right (Dry/Wet)\n *\n * @parameters\n *   drive         (0..100 %, def: 15)      : Overdrive gain and saturation depth\n *   freq          (50..8000 Hz, def: 1200) : Crossover / telephone filter center cutoff\n *   filter_morph  (0..100 %, def: 50)      : Filter mode: 0=Lowpass, 50=Telephone BP, 100=Highpass\n *   env_to_filt   (-100..100 %, def: 0)    : Dynamic input envelope modulation to filter cutoff (auto-wah)\n *   hickfreq      (0.1..1000 Hz, def: 8)   : Hickup chopping frequency in Hz (sub-audio to audio-rate)\n *   hickclick     (0.5..100 ms, def: 15)   : Edge transition smoothing (low = brutal click, high = tremolo)\n *   hickmix       (0..100 %, def: 60)      : Hickup amplitude gate intensity\n *   ringmod       (0..100 %, def: 0)       : Crossfade from unipolar gating [0,1] to bipolar ring-mod [-1,+1]\n *   stereo_spread (0..100 %, def: 40)      : Stereo phase divergence between L and R choppers\n *   mix           (0..100 %, def: 100)     : Global Dry / Wet blend ratio\n * ============================================================================\n */\n\n// 1. PARAMETERS\nParam drive(15, min=0, max=100);\nParam freq(1200, min=50, max=8000);\nParam filter_morph(50, min=0, max=100);\nParam env_to_filt(0, min=-100, max=100);\nParam hickfreq(8, min=0.1, max=1000);\nParam hickclick(15, min=0.5, max=100);\nParam hickmix(60, min=0, max=100);\nParam ringmod(0, min=0, max=100);\nParam stereo_spread(40, min=0, max=100);\nParam mix(100, min=0, max=100);\n\n// 2. MEMORIES & HISTORIES\nHistory h_env(0);\nHistory h_ph_L(0), h_ph_R(0);\nHistory h_rnd_L(0), h_rnd_R(0);\nHistory h_gate_L(1), h_gate_R(1);\nHistory h_svf_s1_L(0), h_svf_s2_L(0);\nHistory h_svf_s1_R(0), h_svf_s2_R(0);\nHistory h_dc_x_L(0), h_dc_y_L(0);\nHistory h_dc_x_R(0), h_dc_y_R(0);\n\n// 3. OVERDRIVE STAGE WITH AUTOMATIC LOUDNESS COMPENSATION\n// Input Envelope Follower for Dynamic Filter Modulation (Auto-Wah / Touch Sensitivity)\nin_mag = max(abs(in1), abs(in2));\nenv_att = 1.0 / max(1.0, mstosamps(5.0));\nenv_rel = 1.0 / max(1.0, mstosamps(60.0));\nenv_alpha = (in_mag > h_env) ? env_att : env_rel;\nh_env = fixdenorm(h_env + (in_mag - h_env) * env_alpha);\n\neff_drive = clamp(drive + in3, 0.0, 100.0);\ngain = 1.0 + pow(eff_drive * 0.01, 3.664) * 1255.0;\natan_g = atan(gain);\n// Normalization curve matching RNBO Drive~ attenuation ([PI/4..PI/2] -> [1.0..0.18])\ncomp = 1.0 - (atan_g - 0.785398) / (1.570796 - 0.785398) * (1.0 - 0.18);\ndrv_scale = 1.0 - (eff_drive * 0.01 * 0.8);\n\nsat_L = atan(in1 * gain) * comp * drv_scale;\nsat_R = atan(in2 * gain) * comp * drv_scale;\n\n// 4. HICKUP MODULATION (STOCHASTIC AMPLITUDE CHOPPER / AUDIO-RATE RING-MOD)\ninc = (clamp(hickfreq, 0.1, 1000.0) * TWOPI) / samplerate;\nspr = stereo_spread * 0.01 * PI;\n\nnew_ph_L = wrap(h_ph_L + inc, 0, TWOPI);\nnew_ph_R = wrap(h_ph_R + inc, 0, TWOPI);\n\n// Retrigger noise on phasor cycle wrap\nif (new_ph_L < h_ph_L) {\n    h_rnd_L = noise();\n}\nif (new_ph_R < h_ph_R) {\n    h_rnd_R = noise();\n}\nh_ph_L = new_ph_L;\nh_ph_R = new_ph_R;\n\n// Jittered pulse gate (50% average duty cycle with stochastic duration)\nraw_gate_L = (h_rnd_L < 0.0) ? 1.0 : 0.0;\nraw_gate_R = (h_rnd_R < 0.0) ? 1.0 : 0.0;\n\n// Slew rate smoothing (hickclick controls rise/fall time)\nslew_samps = max(1.0, mstosamps(clamp(hickclick, 0.5, 100.0)));\nslew_alpha = 1.0 / slew_samps;\n\nh_gate_L = fixdenorm(h_gate_L + (raw_gate_L - h_gate_L) * slew_alpha);\nh_gate_R = fixdenorm(h_gate_R + (raw_gate_R - h_gate_R) * slew_alpha);\n\n// Crossfade from unipolar gating [0, 1] to bipolar balanced ring modulation [-1, +1]\nbipolar_gate_L = h_gate_L * 2.0 - 1.0;\nbipolar_gate_R = h_gate_R * 2.0 - 1.0;\nrm_amt = clamp(ringmod * 0.01, 0.0, 1.0);\neff_gate_L = mix(h_gate_L, bipolar_gate_L, rm_amt);\neff_gate_R = mix(h_gate_R, bipolar_gate_R, rm_amt);\n\neff_hickmix = clamp(hickmix * 0.01 + (in4 * 0.01), 0.0, 1.0);\nhick_sig_L = mix(sat_L, sat_L * eff_gate_L, eff_hickmix);\nhick_sig_R = mix(sat_R, sat_R * eff_gate_R, eff_hickmix);\n\n// 5. DC BLOCKER\ndc_L = hick_sig_L - h_dc_x_L + 0.995 * h_dc_y_L;\nh_dc_x_L = fixdenorm(hick_sig_L);\nh_dc_y_L = fixdenorm(dc_L);\n\ndc_R = hick_sig_R - h_dc_x_R + 0.995 * h_dc_y_R;\nh_dc_x_R = fixdenorm(hick_sig_R);\nh_dc_y_R = fixdenorm(dc_R);\n\n// 6. TELEPHONE CROSSOVER / MORPHING FILTER (TPT State Variable Filter)\n// Dynamic envelope tracking: modulates filter cutoff upwards/downwards by up to 3 octaves\noct_shift = (env_to_filt * 0.01) * h_env * 3.0;\nf_mod = freq * pow(2.0, oct_shift);\nf_clamped = clamp(f_mod, 50.0, samplerate * 0.45);\ng = tan(PI * f_clamped / samplerate);\nk = 1.0 / 1.414; // Q = 1.414 (Butterworth flatness)\n\n// Left Channel SVF\nhp_L = (dc_L - (2.0 * k + g) * h_svf_s1_L - h_svf_s2_L) / (1.0 + 2.0 * k * g + g * g);\nbp_L = g * hp_L + h_svf_s1_L;\nlp_L = g * bp_L + h_svf_s2_L;\nh_svf_s1_L = fixdenorm(g * hp_L + bp_L);\nh_svf_s2_L = fixdenorm(g * bp_L + lp_L);\n\n// Right Channel SVF\nhp_R = (dc_R - (2.0 * k + g) * h_svf_s1_R - h_svf_s2_R) / (1.0 + 2.0 * k * g + g * g);\nbp_R = g * hp_R + h_svf_s1_R;\nlp_R = g * bp_R + h_svf_s2_R;\nh_svf_s1_R = fixdenorm(g * hp_R + bp_R);\nh_svf_s2_R = fixdenorm(g * bp_R + lp_R);\n\n// Continuous Filter Morph: 0% = LP, 50% = BP (Telephone Band), 100% = HP\nmorph_pos = clamp(filter_morph * 0.01, 0.0, 1.0);\nfilt_L = (morph_pos < 0.5) ? mix(lp_L, bp_L, morph_pos * 2.0) : mix(bp_L, hp_L, (morph_pos - 0.5) * 2.0);\nfilt_R = (morph_pos < 0.5) ? mix(lp_R, bp_R, morph_pos * 2.0) : mix(bp_R, hp_R, (morph_pos - 0.5) * 2.0);\n\n// 7. SOFT LIMITER / OUTPUT STAGE\nwet_L = tanh(filt_L * 1.2) * 0.95;\nwet_R = tanh(filt_R * 1.2) * 0.95;\n\n// 8. GLOBAL DRY / WET\nmix_val = clamp(mix * 0.01, 0.0, 1.0);\nout1 = mix(in1, wet_L, mix_val);\nout2 = mix(in2, wet_R, mix_val);\n"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-6",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        20.0,
+                        880.0,
+                        180.0,
+                        21.0
+                    ],
+                    "text": "out 1 @comment Processed Left"
+                }
+            },
+            {
+                "box": {
+                    "id": "obj-7",
+                    "maxclass": "newobj",
+                    "numinlets": 1,
+                    "numoutlets": 0,
+                    "patching_rect": [
+                        220.0,
+                        880.0,
+                        180.0,
+                        21.0
+                    ],
+                    "text": "out 2 @comment Processed Right"
+                }
+            }
+        ],
+        "lines": [
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-5",
+                        0
+                    ],
+                    "source": [
+                        "obj-1",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-5",
+                        1
+                    ],
+                    "source": [
+                        "obj-2",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-5",
+                        2
+                    ],
+                    "source": [
+                        "obj-3",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-5",
+                        3
+                    ],
+                    "source": [
+                        "obj-4",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-6",
+                        0
+                    ],
+                    "source": [
+                        "obj-5",
+                        0
+                    ]
+                }
+            },
+            {
+                "patchline": {
+                    "destination": [
+                        "obj-7",
+                        0
+                    ],
+                    "source": [
+                        "obj-5",
+                        1
+                    ]
+                }
+            }
+        ]
+    }
+}

@@ -9,70 +9,129 @@
             "modernui": 1
         },
         "classnamespace": "dsp.gen",
-        "rect": [ 279.0, 201.0, 644.0, 699.0 ],
+        "rect": [
+            279.0,
+            201.0,
+            644.0,
+            699.0
+        ],
         "boxes": [
             {
                 "box": {
-                    "color": [ 0.6666666666666666, 0.6470588235294118, 0.0, 1.0 ],
+                    "color": [
+                        0.6666666666666666,
+                        0.6470588235294118,
+                        0.0,
+                        1.0
+                    ],
                     "id": "obj-6",
                     "linecount": 3,
                     "maxclass": "newobj",
                     "numinlets": 1,
                     "numoutlets": 0,
-                    "patching_rect": [ 515.0, 610.0, 102.0, 49.0 ],
+                    "patching_rect": [
+                        515.0,
+                        610.0,
+                        102.0,
+                        49.0
+                    ],
                     "text": "out 4 \"pre-amp stepped random walk\""
                 }
             },
             {
                 "box": {
-                    "color": [ 0.6666666666666666, 0.6470588235294118, 0.0, 1.0 ],
+                    "color": [
+                        0.6666666666666666,
+                        0.6470588235294118,
+                        0.0,
+                        1.0
+                    ],
                     "id": "obj-7",
                     "linecount": 2,
                     "maxclass": "newobj",
                     "numinlets": 1,
                     "numoutlets": 0,
-                    "patching_rect": [ 350.0, 610.0, 129.0, 35.0 ],
+                    "patching_rect": [
+                        350.0,
+                        610.0,
+                        129.0,
+                        35.0
+                    ],
                     "text": "out 3 \"pre-amp smooth random walk\""
                 }
             },
             {
                 "box": {
-                    "color": [ 0.6666666666666666, 0.6470588235294118, 0.0, 1.0 ],
+                    "color": [
+                        0.6666666666666666,
+                        0.6470588235294118,
+                        0.0,
+                        1.0
+                    ],
                     "id": "obj-5",
                     "maxclass": "newobj",
                     "numinlets": 1,
                     "numoutlets": 0,
-                    "patching_rect": [ 185.0, 610.0, 148.0, 22.0 ],
+                    "patching_rect": [
+                        185.0,
+                        610.0,
+                        148.0,
+                        22.0
+                    ],
                     "text": "out 2 \"pre-amp freq pulse\""
                 }
             },
             {
                 "box": {
-                    "color": [ 0.6666666666666666, 0.6470588235294118, 0.0, 1.0 ],
+                    "color": [
+                        0.6666666666666666,
+                        0.6470588235294118,
+                        0.0,
+                        1.0
+                    ],
                     "id": "obj-1",
                     "maxclass": "newobj",
                     "numinlets": 0,
                     "numoutlets": 1,
-                    "outlettype": [ "" ],
-                    "patching_rect": [ 21.0, 12.0, 81.0, 22.0 ],
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        21.0,
+                        12.0,
+                        81.0,
+                        22.0
+                    ],
                     "text": "in 1 \"value in\""
                 }
             },
             {
                 "box": {
-                    "color": [ 0.6666666666666666, 0.6470588235294118, 0.0, 1.0 ],
+                    "color": [
+                        0.6666666666666666,
+                        0.6470588235294118,
+                        0.0,
+                        1.0
+                    ],
                     "id": "obj-2",
                     "maxclass": "newobj",
                     "numinlets": 0,
                     "numoutlets": 1,
-                    "outlettype": [ "" ],
-                    "patching_rect": [ 373.0, 12.0, 161.0, 22.0 ],
+                    "outlettype": [
+                        ""
+                    ],
+                    "patching_rect": [
+                        373.0,
+                        12.0,
+                        161.0,
+                        22.0
+                    ],
                     "text": "in 2 \"external clock (phasor)\""
                 }
             },
             {
                 "box": {
-                    "code": "/**\n * ============================================================================\n * @file offset-spline-random.gendsp / offset-spline-random.maxpat\n * @title OFFSET-SPLINE-RANDOM (Continuous Drunk Walk with 6-Point Hermite Spline)\n * @author Max Bruckert (assisted by Gemini)\n *\n * @description\n * Smooth random walk modulation source. Uses 6-point cubic spline interpolation\n * across sampled random walk steps to generate fluid, natural, organic control\n * voltages without discrete stair-stepping or zipper noise. Supports internal\n * phasor drive or external audio-rate trigger sampling.\n *\n * @inlets\n *   in1 : Audio / Signal Thru (Optional Carrier / Mix)\n *   in2 : External Clock Trigger (Sample trigger when trigmode = 1)\n *\n * @outlets\n *   out1 : Smooth Spline Interpolated Random CV\n *   out2 : Stepped Sample & Hold Random Walk\n *   out3 : New Point Trigger Impulse\n *   out4 : Normalized Internal Phasor Ramp\n *\n * @parameters\n *   amp       (0..1, def: 0.2)       : Output attenuation level\n *   trigmode  (0..1, def: 0)         : Clock source (0 = Internal phasor, 1 = External in2)\n *   frequency (0.01..500 Hz, def: 20): Internal trigger generator frequency\n *   range     (0..100, def: 50)      : Random walk step deviation intensity\n *   mode      (0..1, def: 1)         : Interpolation mode (0 = stepped S&H, 1 = smooth spline)\n * ============================================================================\n */\nParam amp(0.2, max=1, min=0);\nParam trigmode(0, max=1, default=0, min=0);\nParam frequency(20);\nParam range(50, max=100, min=0);\nParam mode(1, max=1, default=1, min=0);\n\n// --- Déclarations des mémoires ---\nDelay delay_fb(120);            // Délai pour le feedback du mixage\nHistory h_phase(0);             // Mémoire de la phase précédente\nHistory h_rand_walk(0);         // Accumulateur pour la marche aléatoire\nHistory p0(0), p1(0), p2(0), p3(0), p4(0), p5(0); // Registres à décalage pour spline\n\n// --- 1. Gestion du Trigger & Phase ---\n// Sélection entre le phasor interne et le signal d'entrée 2\nphasor_int = phasor(frequency, 0);\nphase = trigmode ? in2 : phasor_int;\n\n// Détection du front (trigger) : vrai quand la phase redémarre ou saute brusquement\n// On utilise delta() pour détecter un changement significatif (ex: passage de 0.9 à 0.1)\ntrig = abs(delta(phase)) > 0.5;\n\n// --- 2. Génération du Bruit (Box-Muller transform pour bruit Gaussien) ---\nn1 = noise();\nn2 = noise();\nu1 = abs(n1);\nu2 = n2 * PI;\n// Génération de la composante aléatoire\ngen_noise = sqrt(log(u1) * -0.25) * cos(u2); \n\n// --- 3. Marche Aléatoire & Registre à décalage ---\n// On met à l'échelle le bruit et on l'ajoute à la position précédente\nscale_amt = scale(range, 0, 100, 0, 4);\nstep = gen_noise * scale_amt;\nh_rand_walk = fold(h_rand_walk + (trig ? step : 0), -1, 1);\n\n// Mise à jour du registre à décalage lors d'un trigger (Bucket Brigade)\nif (trig) {\n    p5 = p4;\n    p4 = p3;\n    p3 = p2;\n    p2 = p1;\n    p1 = p0;\n    p0 = h_rand_walk;\n}\n\n// --- 4. Interpolation Spline ---\n// Génère une courbe douce entre les 6 derniers points stockés\nsig_spline = interp(phase, p5, p4, p3, p2, p1, p0, mode=\"spline6\");\nsig_stepped = p0; // Signal par paliers (non lissé)\n\n// --- 5. Mixage & Sorties ---\nsig_final = mode ? sig_spline : sig_stepped;\naudio_out = fixdenorm(sig_final * amp);\n\n// Traitement du signal d'entrée (Feedback Loop légère)\ntap_fb = delay_fb.read(120);\nmixed_input = mix(in1, tap_fb, 0.5);\ndelay_fb.write(mixed_input);\n\n// Sortie finale : mélange de l'entrée et du bruit généré\nout1 = fold(mixed_input + audio_out, -1, 1);\n\n// Sorties utilitaires\nout2 = trig;        // Signal de trigger\nout3 = sig_spline;  // Visualisation du lissage\nout4 = sig_stepped; // Visualisation des paliers",
+                    "code": "/**\n * ============================================================================\n * @file offset-spline-random.gendsp / offset-spline-random.maxpat\n * @title OFFSET-SPLINE-RANDOM (Continuous Drunk Walk with 6-Point Hermite Spline)\n * @author Max Bruckert (assisted by Gemini)\n *\n * @description\n * Smooth random walk modulation source. Uses 6-point cubic spline interpolation\n * across sampled random walk steps to generate fluid, natural, organic control\n * voltages without discrete stair-stepping or zipper noise. Supports internal\n * phasor drive or external audio-rate trigger sampling.\n *\n * @inlets\n *   in1 : Audio / Signal Thru (Optional Carrier / Mix)\n *   in2 : External Clock Trigger (Sample trigger when trigmode = 1)\n *\n * @outlets\n *   out1 : Folded Audio Output (mixed input + scaled random walk)\n *   out2 : Step Trigger Impulse\n *   out3 : Smooth Spline Interpolated Random Walk CV\n *   out4 : Stepped Sample & Hold Random Walk CV\n *\n * @parameters\n *   amp       (0..1, def: 0.2)       : Output attenuation level\n *   trigmode  (0..1, def: 0)         : Clock source (0 = Internal phasor, 1 = External in2)\n *   frequency (0.01..500 Hz, def: 20): Internal trigger generator frequency\n *   range     (0..100, def: 50)      : Random walk step deviation intensity\n *   mode      (0..1, def: 1)         : Interpolation mode (0 = stepped S&H, 1 = smooth spline)\n * ============================================================================\n */\nParam amp(0.2, max=1, min=0);\nParam trigmode(0, max=1, default=0, min=0);\nParam frequency(20, min=0.01, max=500);\nParam range(50, max=100, min=0);\nParam mode(1, max=1, default=1, min=0);\n\n// --- D\u00e9clarations des m\u00e9moires ---\nDelay delay_fb(120);            // D\u00e9lai pour le feedback du mixage\nHistory h_phase(0);             // M\u00e9moire de la phase pr\u00e9c\u00e9dente\nHistory h_rand_walk(0);         // Accumulateur pour la marche al\u00e9atoire\nHistory p0(0), p1(0), p2(0), p3(0), p4(0), p5(0); // Registres \u00e0 d\u00e9calage pour spline\n\n// --- 1. Gestion du Trigger & Phase ---\n// S\u00e9lection entre le phasor interne et le signal d'entr\u00e9e 2\nphasor_int = phasor(frequency, 0);\nphase = trigmode ? in2 : phasor_int;\n\n// D\u00e9tection du front (trigger) : vrai quand la phase red\u00e9marre ou saute brusquement\n// On utilise delta() pour d\u00e9tecter un changement significatif (ex: passage de 0.9 \u00e0 0.1)\ntrig = abs(delta(phase)) > 0.5;\n\n// --- 2. G\u00e9n\u00e9ration du Bruit (Box-Muller transform pour bruit Gaussien) ---\nn1 = noise();\nn2 = noise();\nu1 = abs(n1);\nu2 = n2 * PI;\n// G\u00e9n\u00e9ration de la composante al\u00e9atoire\ngen_noise = sqrt(log(max(u1, 0.000001)) * -2.0) * cos(u2); \n\n// --- 3. Marche Al\u00e9atoire & Registre \u00e0 d\u00e9calage ---\n// On met \u00e0 l'\u00e9chelle le bruit et on l'ajoute \u00e0 la position pr\u00e9c\u00e9dente\nscale_amt = scale(range, 0, 100, 0, 4);\nstep = gen_noise * scale_amt;\nh_rand_walk = fold(h_rand_walk + (trig ? step : 0), -1, 1);\n\n// Mise \u00e0 jour du registre \u00e0 d\u00e9calage lors d'un trigger (Bucket Brigade)\nif (trig) {\n    p5 = p4;\n    p4 = p3;\n    p3 = p2;\n    p2 = p1;\n    p1 = p0;\n    p0 = h_rand_walk;\n}\n\n// --- 4. Interpolation Spline ---\n// G\u00e9n\u00e8re une courbe douce entre les 6 derniers points stock\u00e9s\nsig_spline = interp(phase, p5, p4, p3, p2, p1, p0, mode=\"spline6\");\nsig_stepped = p0; // Signal par paliers (non liss\u00e9)\n\n// --- 5. Mixage & Sorties ---\nsig_final = mode ? sig_spline : sig_stepped;\naudio_out = fixdenorm(sig_final * amp);\n\n// Input signal processing (Subtle feedback loop)\ntap_fb = delay_fb.read(120);\nmixed_input = mix(in1, tap_fb, 0.5);\ndelay_fb.write(mixed_input);\n\n// Sortie finale : m\u00e9lange de l'entr\u00e9e et du bruit g\u00e9n\u00e9r\u00e9\nout1 = fold(mixed_input + audio_out, -1, 1);\n\n// Sorties utilitaires\nout2 = trig;        // Signal de trigger\nout3 = sig_spline;  // Spline smoothing monitor\nout4 = sig_stepped; // Visualisation des paliers",
                     "fontface": 0,
                     "fontname": "<Monospaced>",
                     "fontsize": 12.0,
@@ -80,18 +139,38 @@
                     "maxclass": "codebox",
                     "numinlets": 2,
                     "numoutlets": 4,
-                    "outlettype": [ "", "", "", "" ],
-                    "patching_rect": [ 21.0, 40.0, 513.0, 559.0 ]
+                    "outlettype": [
+                        "",
+                        "",
+                        "",
+                        ""
+                    ],
+                    "patching_rect": [
+                        21.0,
+                        40.0,
+                        513.0,
+                        559.0
+                    ]
                 }
             },
             {
                 "box": {
-                    "color": [ 0.6666666666666666, 0.6470588235294118, 0.0, 1.0 ],
+                    "color": [
+                        0.6666666666666666,
+                        0.6470588235294118,
+                        0.0,
+                        1.0
+                    ],
                     "id": "obj-4",
                     "maxclass": "newobj",
                     "numinlets": 1,
                     "numoutlets": 0,
-                    "patching_rect": [ 21.0, 610.0, 96.0, 22.0 ],
+                    "patching_rect": [
+                        21.0,
+                        610.0,
+                        96.0,
+                        22.0
+                    ],
                     "text": "out 1 \"result out\""
                 }
             }
@@ -99,38 +178,74 @@
         "lines": [
             {
                 "patchline": {
-                    "destination": [ "obj-3", 0 ],
-                    "source": [ "obj-1", 0 ]
+                    "destination": [
+                        "obj-3",
+                        0
+                    ],
+                    "source": [
+                        "obj-1",
+                        0
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-3", 1 ],
-                    "source": [ "obj-2", 0 ]
+                    "destination": [
+                        "obj-3",
+                        1
+                    ],
+                    "source": [
+                        "obj-2",
+                        0
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-4", 0 ],
-                    "source": [ "obj-3", 0 ]
+                    "destination": [
+                        "obj-4",
+                        0
+                    ],
+                    "source": [
+                        "obj-3",
+                        0
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-5", 0 ],
-                    "source": [ "obj-3", 1 ]
+                    "destination": [
+                        "obj-5",
+                        0
+                    ],
+                    "source": [
+                        "obj-3",
+                        1
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-6", 0 ],
-                    "source": [ "obj-3", 3 ]
+                    "destination": [
+                        "obj-6",
+                        0
+                    ],
+                    "source": [
+                        "obj-3",
+                        3
+                    ]
                 }
             },
             {
                 "patchline": {
-                    "destination": [ "obj-7", 0 ],
-                    "source": [ "obj-3", 2 ]
+                    "destination": [
+                        "obj-7",
+                        0
+                    ],
+                    "source": [
+                        "obj-3",
+                        2
+                    ]
                 }
             }
         ]

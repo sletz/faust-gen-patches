@@ -1,0 +1,232 @@
+{
+	"name": "multiband-drive",
+	"filename": "multiband-drive.dsp",
+	"version": "0.9.6",
+	"compile_options": "-lang wasm -double",
+	"library_list": ["dsp/genops.lib","/usr/local/share/faust/maths.lib","/usr/local/share/faust/platform.lib"],
+	"include_pathnames": ["dsp","/Users/letz/Developpements/RUST/faust-gen-patches/../faust-rs/target/share/faust","/usr/local/share/faust","/usr/share/faust"],
+	"size": 624,
+	"inputs": 2,
+	"outputs": 5,
+	"sr_index": 0,
+	"meta": [ 
+		{ "/Users/letz/Developpements/RUST/faust-gen-patches/dsp/genops.lib/license": "MIT" },
+		{ "/Users/letz/Developpements/RUST/faust-gen-patches/dsp/genops.lib/name": "genops" },
+		{ "/Users/letz/Developpements/RUST/faust-gen-patches/dsp/genops.lib/version": "1.0.0" },
+		{ "/usr/local/share/faust/maths.lib/author": "GRAME" },
+		{ "/usr/local/share/faust/maths.lib/copyright": "GRAME" },
+		{ "/usr/local/share/faust/maths.lib/license": "LicenseRef-LGPL-2.1-or-later-with-Faust-exception" },
+		{ "/usr/local/share/faust/maths.lib/name": "Faust Math Library" },
+		{ "/usr/local/share/faust/maths.lib/version": "2.9.3" },
+		{ "/usr/local/share/faust/platform.lib/name": "Generic Platform Library" },
+		{ "/usr/local/share/faust/platform.lib/version": "1.3.1" },
+		{ "author": "Max Bruckert (gen~), Faust port" },
+		{ "compile_options": "-lang wasm -double" },
+		{ "filename": "multiband-drive.dsp" },
+		{ "license": "MIT" },
+		{ "name": "multiband-drive" }
+	],
+	"ui": [ 
+		{
+			"type": "vgroup",
+			"label": "multiband-drive",
+			"items": [ 
+				{
+					"type": "hslider",
+					"label": "crossover1",
+					"varname": "fHslider1",
+					"shortname": "crossover1",
+					"address": "/multiband-drive/crossover1",
+					"index": 16,
+					"meta": [
+						{ "unit": "Hz" }
+					],
+					"init": 250,
+					"min": 20,
+					"max": 2000,
+					"step": 0.1
+				},
+				{
+					"type": "hslider",
+					"label": "crossover2",
+					"varname": "fHslider2",
+					"shortname": "crossover2",
+					"address": "/multiband-drive/crossover2",
+					"index": 24,
+					"meta": [
+						{ "unit": "Hz" }
+					],
+					"init": 3500,
+					"min": 200,
+					"max": 18000,
+					"step": 0.1
+				},
+				{
+					"type": "hslider",
+					"label": "gain",
+					"varname": "fHslider12",
+					"shortname": "gain",
+					"address": "/multiband-drive/gain",
+					"index": 120,
+					"meta": [
+						{ "unit": "dB" }
+					],
+					"init": 0,
+					"min": -24,
+					"max": 12,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "high_band_gain",
+					"varname": "fHslider11",
+					"shortname": "high_band_gain",
+					"address": "/multiband-drive/high_band_gain",
+					"index": 112,
+					"meta": [
+						{ "unit": "dB" }
+					],
+					"init": 0,
+					"min": -48,
+					"max": 12,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "high_drive_mix",
+					"varname": "fHslider9",
+					"shortname": "high_drive_mix",
+					"address": "/multiband-drive/high_drive_mix",
+					"index": 104,
+					"meta": [
+						{ "unit": "%" }
+					],
+					"init": 50,
+					"min": 0,
+					"max": 100,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "high_model_choice",
+					"varname": "fHslider10",
+					"shortname": "high_model_choice",
+					"address": "/multiband-drive/high_model_choice",
+					"index": 96,
+					"meta": [
+						{ "unit": "%" }
+					],
+					"init": 0,
+					"min": 0,
+					"max": 100,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "low_band_gain",
+					"varname": "fHslider5",
+					"shortname": "low_band_gain",
+					"address": "/multiband-drive/low_band_gain",
+					"index": 64,
+					"meta": [
+						{ "unit": "dB" }
+					],
+					"init": 0,
+					"min": -48,
+					"max": 12,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "low_drive_mix",
+					"varname": "fHslider3",
+					"shortname": "low_drive_mix",
+					"address": "/multiband-drive/low_drive_mix",
+					"index": 56,
+					"meta": [
+						{ "unit": "%" }
+					],
+					"init": 50,
+					"min": 0,
+					"max": 100,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "low_model_choice",
+					"varname": "fHslider4",
+					"shortname": "low_model_choice",
+					"address": "/multiband-drive/low_model_choice",
+					"index": 48,
+					"meta": [
+						{ "unit": "%" }
+					],
+					"init": 0,
+					"min": 0,
+					"max": 100,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "mid_band_gain",
+					"varname": "fHslider8",
+					"shortname": "mid_band_gain",
+					"address": "/multiband-drive/mid_band_gain",
+					"index": 88,
+					"meta": [
+						{ "unit": "dB" }
+					],
+					"init": 0,
+					"min": -48,
+					"max": 12,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "mid_drive_mix",
+					"varname": "fHslider6",
+					"shortname": "mid_drive_mix",
+					"address": "/multiband-drive/mid_drive_mix",
+					"index": 80,
+					"meta": [
+						{ "unit": "%" }
+					],
+					"init": 50,
+					"min": 0,
+					"max": 100,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "mid_model_choice",
+					"varname": "fHslider7",
+					"shortname": "mid_model_choice",
+					"address": "/multiband-drive/mid_model_choice",
+					"index": 72,
+					"meta": [
+						{ "unit": "%" }
+					],
+					"init": 33.3,
+					"min": 0,
+					"max": 100,
+					"step": 0.01
+				},
+				{
+					"type": "hslider",
+					"label": "mix",
+					"varname": "fHslider0",
+					"shortname": "mix",
+					"address": "/multiband-drive/mix",
+					"index": 8,
+					"meta": [
+						{ "unit": "%" }
+					],
+					"init": 100,
+					"min": 0,
+					"max": 100,
+					"step": 0.01
+				}
+			]
+		}
+	]
+}
